@@ -6,13 +6,14 @@ extends Node2D
 
 @export var background: Sprite2D
 @export var areas: Array[Rect2] = []
-@export var drops: int = 120
+@export var drops: int = 45
 @export var speed_min: float = 140.0
 @export var speed_max: float = 200.0
 @export var slant: float = -0.12  ## x per y
-@export var color: Color = Color(0.85, 0.93, 1.0, 0.6)
+@export var color: Color = Color(0.8, 0.9, 1.0, 0.45)
 @export var min_blue: int = 20  ## b - r
-@export var min_luma: float = 0.16
+@export var min_luma: float = 0.1
+@export var max_luma: float = 0.45  ## brighter = blinds/highlights, not outside
 
 const CELL: int = 2
 
@@ -47,7 +48,8 @@ func _build_mask() -> void:
 				if gx < 0 or gy < 0 or gx >= _gw or gy >= _gh:
 					continue
 				var c: Color = img.get_pixel(gx * CELL, gy * CELL)
-				if c.b8 - c.r8 >= min_blue and c.get_luminance() >= min_luma:
+				var l: float = c.get_luminance()
+				if c.b8 - c.r8 >= min_blue and l >= min_luma and l <= max_luma:
 					_mask[gy * _gw + gx] = 1
 
 
