@@ -4,7 +4,7 @@ Claude читает этот файл в начале каждой сессии 
 Режим согласования: STRICT
 Текущий этап: Э2 стиль принят (G2) → Э3 s01_precinct: визуал
 Следующий шаг: Э1 — GDD-lite (нужны от пользователя: сеттинг, сюжет, жанр/вид, идея первой сцены, референсы в art/refs/)
-Ждёт согласования: выбор bg_desk — art/drafts/bg_desk/probe (a/b/c)
+Ждёт согласования: пакет 2 — phone, newspaper, casefile, note по 2 варианта (8 генераций)
 
 ## Окружение
 Godot: 4.7.2, путь: /Applications/Godot.app/Contents/MacOS/Godot
@@ -14,9 +14,10 @@ Codex CLI: 0.169.0 (Node 26 LTS через nvm), вход: да (ChatGPT)
 ## Сцены
 | Сцена | ТЗ | Визуал | План | Реализация | Приёмка |
 |---|---|---|---|---|---|
-| s01_precinct | дизайн DRAFT | ТЗ DRAFT; bg_exposition APPROVED | — | — | — |
+| s01_precinct | дизайн DRAFT | ТЗ DRAFT; bg_exposition, bg_desk APPROVED | — | — | — |
 
 ## Последние действия (последние 5, новые сверху)
+- 2026-11-17 Э3: bg_desk APPROVED (v1_a без клавиатуры и ручки → v4_a), исходники в art/sources/s01
 - 2026-11-17 Э2→Э3: фон экспозиции APPROVED (v1_a 640×360), style_ref, 640×360 в project.godot, STYLE_GUIDE, ТЗ s01
 - 2026-11-17 Э2: выбран v1_a 640×360; pixelize: --saturation/--colors/--dither; 4 варианта обработки
 - 2026-11-17 Э2: проба стиля — 3 фона экспозиции (Codex), прогон 480×270/640×360, 48 цветов
