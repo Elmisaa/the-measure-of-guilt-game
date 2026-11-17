@@ -17,7 +17,7 @@ Codex CLI: 0.169.0 (Node 26 LTS через nvm), вход: да (ChatGPT)
 | s01_precinct | дизайн DRAFT | — | — | — | — |
 
 ## Последние действия (последние 5, новые сверху)
-- 2026-11-17 Э1: правки пользователя — 1993, есть ходьба, только русский, сцена s01 без предложений Claude
+- 2026-11-17 Э1: правки пользователя — (год позже изменён на 1998), есть ходьба, только русский, сцена s01 без предложений Claude
 - 2026-11-17 Э1: референсы в art/refs/_style и s01_precinct, черновики GDD.md и дизайна s01_precinct
 - 2026-11-17 Э0: вход в Codex, тест $imagegen → pixelize OK; референсы: art/refs/<scene>/ + tools/ref_sheet.py; флаг codex exec -s workspace-write
 - 2026-11-17 Э0: Node LTS, Codex CLI, плагин Codex; project.godot (пиксельные настройки), папки, .gitignore, tools/ (pixelize, inspect_assets, make_preview), git init

@@ -42,9 +42,9 @@ def harden_alpha(img: Image.Image, threshold: int = 128) -> Image.Image:
     return Image.merge("RGBA", (r, g, b, a))
 
 
-def fit_into_cell(frame: Image.Image, cw: int, ch: int, fit: str) -> Image.Image:
+def fit_into_cell(frame: Image.Image, cw: int, ch: int, fit: str, resample: str = "nearest") -> Image.Image:
     if fit == "stretch":
-        return frame.resize((cw, ch), Image.NEAREST)
+        return frame.resize((cw, ch), Image.BOX if resample == "box" else Image.NEAREST)
     bbox = frame.getbbox()
     if bbox is None:
         return Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
@@ -81,7 +81,9 @@ def main() -> int:
     ap.add_argument("--size", required=True, help="cell size WxH, e.g. 32x32")
     ap.add_argument("--frames", type=int, default=1, help="frames in a single row of the input")
     ap.add_argument("--fit", choices=["contain", "stretch"], default="contain",
-                    help="contain: crop to content and keep aspect; stretch: resize whole frame (backgrounds/tiles)")
+                    help="contain: crop to content and keep aspect; stretch: center-crop to --size aspect, then resize (backgrounds)")
+    ap.add_argument("--resample", choices=["nearest", "box"], default="nearest",
+                    help="downscale filter for stretch: box averages colors (smoother for painted backgrounds)")
     ap.add_argument("--tolerance", type=int, default=60, help="magenta background tolerance")
     ap.add_argument("--keep-bg", action="store_true", help="do not remove background (opaque backgrounds)")
     ap.add_argument("--palette", type=Path, default=None, help="palette PNG (default art/palette.png)")
@@ -91,12 +93,21 @@ def main() -> int:
 
     cw, ch = (int(v) for v in args.size.lower().split("x"))
     src = Image.open(args.input).convert("RGBA")
+    if args.fit == "stretch" and args.frames == 1:
+        # Center-crop to the target aspect first, so backgrounds are not distorted.
+        target = cw / ch
+        if src.width / src.height > target:
+            nw = round(src.height * target)
+            src = src.crop(((src.width - nw) // 2, 0, (src.width + nw) // 2, src.height))
+        else:
+            nh = round(src.width / target)
+            src = src.crop((0, (src.height - nh) // 2, src.width, (src.height + nh) // 2))
     if not args.keep_bg:
         src = remove_background(src, args.tolerance)
 
     fw = src.width // args.frames
     frames = [src.crop((i * fw, 0, (i + 1) * fw, src.height)) for i in range(args.frames)]
-    cells = [harden_alpha(fit_into_cell(f, cw, ch, args.fit)) for f in frames]
+    cells = [harden_alpha(fit_into_cell(f, cw, ch, args.fit, args.resample)) for f in frames]
 
     sheet = Image.new("RGBA", (cw * len(cells), ch), (0, 0, 0, 0))
     for i, cell in enumerate(cells):
