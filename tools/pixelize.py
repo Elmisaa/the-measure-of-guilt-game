@@ -51,7 +51,7 @@ def fit_into_cell(frame: Image.Image, cw: int, ch: int, fit: str, resample: str 
     content = frame.crop(bbox)
     scale = min(cw / content.width, ch / content.height)
     nw, nh = max(1, round(content.width * scale)), max(1, round(content.height * scale))
-    content = content.resize((nw, nh), Image.NEAREST)
+    content = content.resize((nw, nh), Image.BOX if resample == "box" else Image.NEAREST)
     cell = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
     cell.paste(content, ((cw - nw) // 2, ch - nh), content)  # bottom-center: feet on the ground
     return cell
@@ -121,6 +121,7 @@ def main() -> int:
     ap.add_argument("--saturation", type=float, default=1.0, help="1.0 = as is, 0.8 = 20%% less saturated")
     ap.add_argument("--colors", type=int, default=0, help="reduce to N adaptive colors (used with --no-palette)")
     ap.add_argument("--dither", type=float, default=0.0, help="ordered Bayer dither strength, e.g. 24")
+    ap.add_argument("--trim", action="store_true", help="single object: crop transparent margins")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
 
@@ -153,6 +154,11 @@ def main() -> int:
     if not palette and not args.no_palette:
         print("warning: palette not found, colors not snapped", file=sys.stderr)
     sheet = quantize(sheet, palette)
+
+    if args.trim and args.frames == 1:
+        bbox = sheet.getbbox()
+        if bbox:
+            sheet = sheet.crop(bbox)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.out)
