@@ -1,0 +1,5 @@
+.godot/
+art/drafts/
+.DS_Store
+__pycache__/
+*.import.tmp
