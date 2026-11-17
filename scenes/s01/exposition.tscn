@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/ui/thought_box.gd" id="4_thought"]
 [ext_resource type="Script" path="res://scripts/fx/light_flicker.gd" id="fx_light"]
 [ext_resource type="Script" path="res://scripts/fx/frame_spin.gd" id="fx_spin"]
+[ext_resource type="Script" path="res://scripts/fx/window_rain.gd" id="fx_rain"]
 [ext_resource type="Texture2D" path="res://assets/fx/s01/fan_a.png" id="fan_a"]
 [ext_resource type="Texture2D" path="res://assets/fx/s01/fan_b.png" id="fan_b"]
 [ext_resource type="Texture2D" path="res://assets/fx/s01/fan_c.png" id="fan_c"]
@@ -32,6 +33,11 @@ script = ExtResource("1_script")
 [node name="Background" type="Sprite2D" parent="."]
 texture = ExtResource("2_bg")
 centered = false
+
+[node name="Rain" type="Node2D" parent="." node_paths=PackedStringArray("background")]
+script = ExtResource("fx_rain")
+background = NodePath("../Background")
+areas = Array[Rect2]([Rect2(0, 0, 136, 186), Rect2(196, 70, 56, 116)])
 
 [node name="Fans" type="Node2D" parent="."]
 
