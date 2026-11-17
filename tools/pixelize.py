@@ -75,6 +75,36 @@ def quantize(img: Image.Image, palette: list[tuple[int, int, int]]) -> Image.Ima
     return img
 
 
+BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+
+
+def grade(img: Image.Image, saturation: float, colors: int, dither: float) -> Image.Image:
+    """Desaturate, then reduce to N adaptive colors, optionally with ordered (Bayer) dithering.
+
+    dither is the strength in RGB units (0 = off, ~16-32 = subtle retro texture).
+    """
+    from PIL import ImageEnhance
+
+    alpha = img.getchannel("A")
+    rgb = img.convert("RGB")
+    if saturation != 1.0:
+        rgb = ImageEnhance.Color(rgb).enhance(saturation)
+    if colors:
+        pal_img = rgb.quantize(colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        if dither > 0:
+            import numpy as np
+
+            a = np.asarray(rgb, dtype=np.float32)
+            h, w = a.shape[:2]
+            m = (np.array(BAYER4, dtype=np.float32) + 0.5) / 16.0 - 0.5
+            a += np.tile(m, (h // 4 + 1, w // 4 + 1))[:h, :w, None] * dither
+            rgb = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+        rgb = rgb.quantize(palette=pal_img, dither=Image.Dither.NONE).convert("RGB")
+    out = rgb.convert("RGBA")
+    out.putalpha(alpha)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input", type=Path)
@@ -88,6 +118,9 @@ def main() -> int:
     ap.add_argument("--keep-bg", action="store_true", help="do not remove background (opaque backgrounds)")
     ap.add_argument("--palette", type=Path, default=None, help="palette PNG (default art/palette.png)")
     ap.add_argument("--no-palette", action="store_true")
+    ap.add_argument("--saturation", type=float, default=1.0, help="1.0 = as is, 0.8 = 20%% less saturated")
+    ap.add_argument("--colors", type=int, default=0, help="reduce to N adaptive colors (used with --no-palette)")
+    ap.add_argument("--dither", type=float, default=0.0, help="ordered Bayer dither strength, e.g. 24")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
 
@@ -112,6 +145,9 @@ def main() -> int:
     sheet = Image.new("RGBA", (cw * len(cells), ch), (0, 0, 0, 0))
     for i, cell in enumerate(cells):
         sheet.paste(cell, (i * cw, 0))
+
+    if args.saturation != 1.0 or args.colors or args.dither:
+        sheet = grade(sheet, args.saturation, args.colors, args.dither)
 
     palette = [] if args.no_palette else load_palette(args.palette)
     if not palette and not args.no_palette:
