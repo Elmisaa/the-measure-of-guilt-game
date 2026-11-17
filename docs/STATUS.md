@@ -4,7 +4,7 @@ Claude читает этот файл в начале каждой сессии 
 Режим согласования: STRICT
 Текущий этап: Э2 стиль принят (G2) → Э3 s01_precinct: визуал
 Следующий шаг: Э1 — GDD-lite (нужны от пользователя: сеттинг, сюжет, жанр/вид, идея первой сцены, референсы в art/refs/)
-Ждёт согласования: ТЗ art/briefs/s01_precinct.md → затем пакет 1 (bg_desk, 3 генерации)
+Ждёт согласования: выбор bg_desk — art/drafts/bg_desk/probe (a/b/c)
 
 ## Окружение
 Godot: 4.7.2, путь: /Applications/Godot.app/Contents/MacOS/Godot
