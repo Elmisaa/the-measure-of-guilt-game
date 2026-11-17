@@ -14,7 +14,7 @@
 | bg_desk | фон | 640×360 | Стол Алексея строго сверху, тёмное дерево — основа v1_a как есть (кружка, пепельница на своих местах), убраны клавиатура и ручка. Свободные места — под телефон и 3 документа. Финал: `assets/backgrounds/s01/desk.png` | style_ref, refs/s01_precinct/01 | APPROVED (v4_a) |
 | prop_phone | объект | ~110×90 | Офисный телефон 1998 (бежевый/светло-серый, трубка на рычаге, витой шнур, кнопки линий, маленький ЖК), вид сверху, свет как на bg_desk, без надписей. `assets/props/s01/phone.png` | bg_desk, style_ref | TODO |
 | prop_newspaper | объект | ~150×120 | Мятая газетная вырезка на столе, вид сверху, строки текста неразборчивы. `assets/props/s01/newspaper.png` | style_ref | TODO |
-| prop_casefile | объект | ~150×115 | Полицейская папка дела (manila folder) с бланком и скрепкой, вид сверху. `assets/props/s01/casefile.png` | style_ref | TODO |
+| prop_casefile | объект | ~150×115 | Полицейская папка дела (manila folder) с бланком и скрепкой, вид сверху. `assets/props/s01/casefile.png` | style_ref | PICKED (v2_a, v2_b — обе нравятся) |
 | prop_note | объект | ~90×80 | Записка на клочке бумаги / стикере, от руки, неразборчиво. `assets/props/s01/note.png` | style_ref | TODO |
 | close_newspaper | крупный план | ~300×330 | Газета крупно, мятая, **пустая плашка под шапку** (The New York Times) и **пустое место под заголовок и колонку текста** — текст рисует Godot. `assets/props/s01/close_newspaper.png` | refs/s01_precinct/02 | TODO |
 | close_casefile | крупный план | ~300×330 | Бланк дела крупно: шапка-полоса, графы-линии, место под фото, **без текста**. `assets/props/s01/close_casefile.png` | refs/s01_precinct/02 | TODO |
