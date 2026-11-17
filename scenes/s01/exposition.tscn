@@ -1,0 +1,120 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/s01/exposition.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/s01/exposition.png" id="2_bg"]
+[ext_resource type="Script" path="res://scripts/ui/hint_marker.gd" id="3_marker"]
+[ext_resource type="Script" path="res://scripts/ui/thought_box.gd" id="4_thought"]
+
+[sub_resource type="Gradient" id="dust_fade"]
+offsets = PackedFloat32Array(0, 0.2, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+
+[node name="Exposition" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("2_bg")
+centered = false
+
+[node name="DustWindow" type="CPUParticles2D" parent="."]
+position = Vector2(170, 125)
+amount = 30
+lifetime = 10.0
+preprocess = 10.0
+emission_shape = 3
+emission_rect_extents = Vector2(80, 60)
+direction = Vector2(1, 0.3)
+spread = 180.0
+gravity = Vector2(0.4, 0.3)
+initial_velocity_min = 0.5
+initial_velocity_max = 2.0
+color = Color(0.65, 0.85, 1, 0.4)
+color_ramp = SubResource("dust_fade")
+
+[node name="DustLamp" type="CPUParticles2D" parent="."]
+position = Vector2(378, 178)
+amount = 14
+lifetime = 7.0
+preprocess = 7.0
+emission_shape = 3
+emission_rect_extents = Vector2(24, 20)
+direction = Vector2(0, -1)
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 0.8
+initial_velocity_max = 2.5
+color = Color(1, 0.85, 0.6, 0.55)
+color_ramp = SubResource("dust_fade")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Markers" type="Control" parent="UI/Root"]
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Badge" type="Control" parent="UI/Root/Markers"]
+anchors_preset = 0
+offset_left = 172.0
+offset_top = 113.0
+offset_right = 184.0
+offset_bottom = 125.0
+script = ExtResource("3_marker")
+marker_id = "badge"
+
+[node name="Monitor" type="Control" parent="UI/Root/Markers"]
+anchors_preset = 0
+offset_left = 102.0
+offset_top = 231.0
+offset_right = 114.0
+offset_bottom = 243.0
+script = ExtResource("3_marker")
+marker_id = "monitor"
+
+[node name="Chair" type="Control" parent="UI/Root/Markers"]
+anchors_preset = 0
+offset_left = 489.0
+offset_top = 221.0
+offset_right = 501.0
+offset_bottom = 233.0
+script = ExtResource("3_marker")
+marker_id = "chair"
+
+[node name="Speech" type="VBoxContainer" parent="UI/Root"]
+anchors_preset = 0
+offset_left = 215.0
+offset_top = 140.0
+offset_right = 475.0
+offset_bottom = 172.0
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="Speaker" type="Label" parent="UI/Root/Speech"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Line" type="Label" parent="UI/Root/Speech"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+visible_characters_behavior = 1
+
+[node name="ThoughtBox" type="PanelContainer" parent="UI/Root"]
+script = ExtResource("4_thought")
+
+[node name="StudyButton" type="Button" parent="UI/Root"]
+anchors_preset = 0
+offset_left = 207.0
+offset_top = 139.0
+offset_right = 352.0
+offset_bottom = 166.0
+focus_mode = 0
+mouse_default_cursor_shape = 2

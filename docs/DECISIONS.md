@@ -14,3 +14,9 @@
 
 ## 9. Шрифт: Pixeloid (2026-11-18)
 Pixeloid Sans / Sans Bold / Mono (GGBotNet, SIL OFL 1.1), 9 px. Файлы и лицензия — `assets/fonts/pixeloid/`. Указать в титрах.
+
+## 10. Каркас сцен: SceneRouter + тексты в JSON (2026-11-18)
+- Автозагрузка `SceneRouter` (`scripts/autoload/scene_router.gd`): переходы между сценами с затемнением, `SceneRouter.go_to(path)`.
+- Реплики, мысли, подсказки — в `data/dialogues/<scene>.json` (загрузчик `DialogueData`). При экспорте добавить `*.json` в фильтр ресурсов.
+- Общая тема UI `assets/ui/main_theme.tres` (Pixeloid 9px, без сглаживания), снап 2D к пикселям.
+- UI-компоненты: `HintMarker` (мигающий маркер-мысль), `ThoughtBox` (мысли снизу).
