@@ -29,7 +29,7 @@ fill_to = Vector2(1, 0.5)
 
 [sub_resource type="Gradient" id="shade_grad"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.5, 0.5, 0.5, 1, 0.7, 0.7, 0.7, 1, 1, 1, 1, 1)
+colors = PackedColorArray(0.35, 0.35, 0.35, 1, 0.65, 0.65, 0.65, 1, 1, 1, 1, 1)
 
 [sub_resource type="GradientTexture2D" id="shade_tex"]
 gradient = SubResource("shade_grad")
@@ -128,7 +128,7 @@ base_energy = 0.1
 breath_amount = 0.04
 breath_speed = 0.3
 
-[node name="TubeLight" type="PointLight2D" parent="Lights"]
+[node name="TubeLight" type="PointLight2D" parent="Lights" node_paths=PackedStringArray("dim_node")]
 position = Vector2(405, 102)
 scale = Vector2(2.2, 0.6)
 color = Color(0.45, 1, 0.8, 1)
@@ -138,10 +138,15 @@ script = ExtResource("fx_light")
 base_energy = 0.18
 breath_amount = 0.03
 breath_speed = 0.8
-stutters_per_minute = 3.0
+stutters_per_minute = 0.0
 stutter_energy = 0.0
+flicker_every_min = 4.0
+flicker_every_max = 9.0
+flicker_length_min = 0.4
+flicker_length_max = 1.2
+dim_node = NodePath("../TubeDim")
 
-[node name="LampLight" type="PointLight2D" parent="Lights" node_paths=PackedStringArray("dim_node")]
+[node name="LampLight" type="PointLight2D" parent="Lights"]
 position = Vector2(380, 185)
 scale = Vector2(0.9, 0.9)
 color = Color(1, 0.7, 0.4, 1)
@@ -151,16 +156,12 @@ script = ExtResource("fx_light")
 base_energy = 0.35
 breath_amount = 0.06
 breath_speed = 0.6
-stutter_energy = 0.0
-flicker_every_min = 6.0
-flicker_every_max = 12.0
-dim_node = NodePath("../LampDim")
 
-[node name="LampDim" type="Sprite2D" parent="Lights"]
+[node name="TubeDim" type="Sprite2D" parent="Lights"]
 visible = false
 material = SubResource("mul_mat")
-position = Vector2(380, 196)
-scale = Vector2(1.6, 2.2)
+position = Vector2(405, 104)
+scale = Vector2(1.8, 0.8)
 texture = SubResource("shade_tex")
 
 [node name="UI" type="CanvasLayer" parent="."]
