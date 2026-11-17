@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bro1kvoe7mfid"
-path="res://.godot/imported/06_ui_exposition_speech_markers.webp-f815c01bbc44c951632877c95d4907bf.ctex"
+uid="uid://00aqdjaebd1i"
+path="res://.godot/imported/fan_a.png-cc274d5e43965d8ccec258aaba255920.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/refs/s01_precinct/06_ui_exposition_speech_markers.webp"
-dest_files=["res://.godot/imported/06_ui_exposition_speech_markers.webp-f815c01bbc44c951632877c95d4907bf.ctex"]
+source_file="res://assets/fx/s01/fan_a.png"
+dest_files=["res://.godot/imported/fan_a.png-cc274d5e43965d8ccec258aaba255920.ctex"]
 
 [params]
 

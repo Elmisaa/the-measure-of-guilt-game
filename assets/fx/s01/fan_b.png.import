@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cuicndrrps3yf"
-path="res://.godot/imported/exposition_v1_a.png-8eb251ea179768f05675af2abc5ceb6f.ctex"
+uid="uid://bkjgfcpxtjobx"
+path="res://.godot/imported/fan_b.png-93dd9a6610946ec7eebf86c2bb42c877.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/sources/s01/exposition_v1_a.png"
-dest_files=["res://.godot/imported/exposition_v1_a.png-8eb251ea179768f05675af2abc5ceb6f.ctex"]
+source_file="res://assets/fx/s01/fan_b.png"
+dest_files=["res://.godot/imported/fan_b.png-93dd9a6610946ec7eebf86c2bb42c877.ctex"]
 
 [params]
 

@@ -49,5 +49,22 @@ func _run() -> void:
 		push_error("FAIL not on desk: %s" % [current_scene]); ok = false
 	await _wait(0.6)
 	await _shot("4_desk")
+	var desk: Node = current_scene
+	var casefile: DeskDocument = desk.get_node("Documents/Casefile")
+	casefile._animate(true)
+	await _wait(0.5)
+	await _shot("5_desk_hover")
+	casefile._animate(false)
+	casefile.clicked.emit("casefile")
+	await _wait(0.4)
+	var view: DocumentView = desk.get_node("DocumentView")
+	if not view.is_open():
+		push_error("FAIL close-up not open"); ok = false
+	await _wait(1.0)
+	await _shot("6_closeup")
+	view.close()
+	await _wait(0.5)
+	if view.is_open() or not casefile.interactive:
+		push_error("FAIL close-up did not close"); ok = false
 	print("S01 FLOW: ", "OK" if ok else "FAILED")
 	quit(0 if ok else 1)

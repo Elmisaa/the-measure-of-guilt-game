@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b0nixybw8ua8n"
-path="res://.godot/imported/05_desk_target.png-6a81d76366c5956b4b27fc86e3fd5559.ctex"
+uid="uid://cit210vwlxvib"
+path="res://.godot/imported/fan_c.png-851f8f1029f86b0fe2c215e4c3deec15.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/refs/s01_precinct/05_desk_target.png"
-dest_files=["res://.godot/imported/05_desk_target.png-6a81d76366c5956b4b27fc86e3fd5559.ctex"]
+source_file="res://assets/fx/s01/fan_c.png"
+dest_files=["res://.godot/imported/fan_c.png-851f8f1029f86b0fe2c215e4c3deec15.ctex"]
 
 [params]
 

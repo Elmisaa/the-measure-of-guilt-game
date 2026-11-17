@@ -20,3 +20,7 @@ Pixeloid Sans / Sans Bold / Mono (GGBotNet, SIL OFL 1.1), 9 px. Файлы и л
 - Реплики, мысли, подсказки — в `data/dialogues/<scene>.json` (загрузчик `DialogueData`). При экспорте добавить `*.json` в фильтр ресурсов.
 - Общая тема UI `assets/ui/main_theme.tres` (Pixeloid 9px, без сглаживания), снап 2D к пикселям.
 - UI-компоненты: `HintMarker` (мигающий маркер-мысль), `ThoughtBox` (мысли снизу).
+
+## 11. Освещение и art/.gdignore (2026-11-18)
+- Динамический свет — PointLight2D + `LightFlicker` (`scripts/fx/`), текстура света — радиальный градиент. Свет слабый, чтобы не менять палитру фонов.
+- `art/.gdignore`: Godot не импортирует исходники/черновики/референсы; в игру идёт только `assets/`.

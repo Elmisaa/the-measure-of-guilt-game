@@ -6,6 +6,21 @@
 [ext_resource type="Texture2D" path="res://assets/props/s01/casefile.png" id="4_casefile"]
 [ext_resource type="Texture2D" path="res://assets/props/s01/note.png" id="5_note"]
 [ext_resource type="Script" path="res://scripts/ui/thought_box.gd" id="6_thought"]
+[ext_resource type="Script" path="res://scripts/s01/desk_document.gd" id="7_doc"]
+[ext_resource type="Script" path="res://scripts/fx/light_flicker.gd" id="fx_light"]
+[ext_resource type="Script" path="res://scripts/ui/document_view.gd" id="8_view"]
+
+[sub_resource type="Gradient" id="light_grad"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.35, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="light_tex"]
+gradient = SubResource("light_grad")
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [node name="Desk" type="Node2D"]
 script = ExtResource("1_script")
@@ -17,19 +32,38 @@ centered = false
 [node name="Documents" type="Node2D" parent="."]
 
 [node name="Papers" type="Sprite2D" parent="Documents"]
+script = ExtResource("7_doc")
+doc_id = "papers"
 position = Vector2(115, 165)
 texture = ExtResource("3_papers")
 centered = false
 
 [node name="Casefile" type="Sprite2D" parent="Documents"]
+script = ExtResource("7_doc")
+doc_id = "casefile"
 position = Vector2(238, 152)
 texture = ExtResource("4_casefile")
 centered = false
 
 [node name="Note" type="Sprite2D" parent="Documents"]
+script = ExtResource("7_doc")
+doc_id = "note"
 position = Vector2(374, 204)
 texture = ExtResource("5_note")
 centered = false
+
+[node name="Lights" type="Node2D" parent="."]
+
+[node name="LampLight" type="PointLight2D" parent="Lights"]
+position = Vector2(110, 60)
+scale = Vector2(1.7, 1.7)
+color = Color(1, 0.75, 0.45, 1)
+energy = 0.16
+texture = SubResource("light_tex")
+script = ExtResource("fx_light")
+base_energy = 0.16
+breath_amount = 0.04
+breath_speed = 0.6
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -53,3 +87,6 @@ horizontal_alignment = 1
 
 [node name="ThoughtBox" type="PanelContainer" parent="UI/Root"]
 script = ExtResource("6_thought")
+
+[node name="DocumentView" type="CanvasLayer" parent="."]
+script = ExtResource("8_view")

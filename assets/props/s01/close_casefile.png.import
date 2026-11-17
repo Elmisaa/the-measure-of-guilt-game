@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://7u3ceejc1l7l"
-path="res://.godot/imported/02_closeup_poster_thought.jpg-35d77a5757972d1162ec6a5fb7cfac86.ctex"
+uid="uid://bcytn4s8hrsy1"
+path="res://.godot/imported/close_casefile.png-44821490ba914c71456b78964699ff77.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/refs/s01_precinct/02_closeup_poster_thought.jpg"
-dest_files=["res://.godot/imported/02_closeup_poster_thought.jpg-35d77a5757972d1162ec6a5fb7cfac86.ctex"]
+source_file="res://assets/props/s01/close_casefile.png"
+dest_files=["res://.godot/imported/close_casefile.png-44821490ba914c71456b78964699ff77.ctex"]
 
 [params]
 
