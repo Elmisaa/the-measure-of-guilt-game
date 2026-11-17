@@ -1,5 +1,5 @@
 ; Engine configuration file.
-; Base resolution is set at stage E2 (see docs/STYLE_GUIDE.md).
+; Base resolution 640x360 (docs/DECISIONS.md #5), x3 = 1920x1080.
 
 config_version=5
 
@@ -10,6 +10,10 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]
 
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1920
+window/size/window_height_override=1080
 window/stretch/mode="viewport"
 window/stretch/aspect="keep"
 window/stretch/scale_mode="integer"
