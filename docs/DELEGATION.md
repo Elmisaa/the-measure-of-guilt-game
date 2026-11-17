@@ -28,7 +28,7 @@ Codex тратит лимит ChatGPT Plus, а не лимит Claude, поэт�
 
 **Графика** (одна задача на один ассет или небольшую группу):
 ```bash
-codex exec --full-auto -i art/style_ref.png "\$imagegen <задача по шаблону ниже>"
+codex exec -s workspace-write -i art/style_ref.png "\$imagegen <задача по шаблону ниже>"
 ```
 или через субагента плагина: `/codex:rescue --background <задача>`.
 

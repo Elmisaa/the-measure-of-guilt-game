@@ -38,7 +38,7 @@ Review gate не включать.
 
 ## Проверка генерации картинок (1 тестовая картинка)
 ```bash
-codex exec --full-auto "\$imagegen pixel art green slime, solid #FF00FF background, save to art/drafts/_test/slime.png"
+codex exec -s workspace-write "\$imagegen pixel art green slime, solid #FF00FF background, save to art/drafts/_test/slime.png"
 python3 tools/inspect_assets.py art/drafts/_test/
 ```
 
