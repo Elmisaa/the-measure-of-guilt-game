@@ -28,6 +28,7 @@ def main() -> int:
     ap.add_argument("--width", type=int, required=True, help="frame width in base pixels")
     ap.add_argument("--squash", type=float, default=0.3, help="vertical scale for perspective")
     ap.add_argument("--tolerance", type=int, default=60)
+    ap.add_argument("--scale", type=int, default=1, help="pixel size: render at width/scale, then nearest-upscale")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
 
@@ -36,7 +37,7 @@ def main() -> int:
     side = max(src.size)
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.paste(src, ((side - src.width) // 2, (side - src.height) // 2))
-    w = args.width
+    w = args.width // args.scale
     h = max(1, round(w * args.squash))
     step = 360.0 / args.blades / args.frames
     frames = []
@@ -46,6 +47,9 @@ def main() -> int:
     sheet = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
     for i, f in enumerate(frames):
         sheet.paste(f, (i * w, 0))
+    if args.scale > 1:
+        sheet = sheet.resize((sheet.width * args.scale, sheet.height * args.scale), Image.NEAREST)
+        w, h = w * args.scale, h * args.scale
     args.out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.out)
     print(f"ok {args.out} {sheet.width}x{sheet.height} frames={len(frames)} cell={w}x{h}")

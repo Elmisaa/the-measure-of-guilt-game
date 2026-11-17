@@ -52,7 +52,7 @@ func open(doc: Dictionary) -> void:
 	_paper.texture = tex
 	var s: Vector2 = tex.get_size()
 	_paper.size = s
-	_paper.position = Vector2(floorf((640.0 - s.x) / 2.0), floorf((330.0 - s.y) / 2.0))
+	_paper.position = Vector2(floorf((640.0 - s.x) / 4.0) * 2.0, floorf((330.0 - s.y) / 4.0) * 2.0)  # keep on the 2px grid
 	var r: Array = doc.get("text_rect", [0, 0, s.x, s.y])
 	_text.position = _paper.position + Vector2(r[0], r[1])
 	_text.size = Vector2(r[2], r[3])

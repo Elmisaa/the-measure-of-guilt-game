@@ -37,7 +37,7 @@ centered = false
 
 [node name="FanA" type="Sprite2D" parent="Fans"]
 modulate = Color(0.85, 0.9, 0.95, 1)
-position = Vector2(222, 43)
+position = Vector2(222, 44)
 texture = ExtResource("fan_a")
 hframes = 8
 script = ExtResource("fx_spin")
@@ -45,7 +45,7 @@ fps = 10.0
 
 [node name="FanB" type="Sprite2D" parent="Fans"]
 modulate = Color(0.75, 0.8, 0.85, 0.9)
-position = Vector2(543, 74)
+position = Vector2(544, 75)
 texture = ExtResource("fan_b")
 hframes = 8
 script = ExtResource("fx_spin")
@@ -53,7 +53,7 @@ fps = 9.0
 
 [node name="FanC" type="Sprite2D" parent="Fans"]
 modulate = Color(0.7, 0.75, 0.8, 0.8)
-position = Vector2(320, 108)
+position = Vector2(320, 109)
 texture = ExtResource("fan_c")
 hframes = 8
 script = ExtResource("fx_spin")
@@ -61,7 +61,7 @@ fps = 8.0
 
 [node name="DustWindow" type="CPUParticles2D" parent="."]
 position = Vector2(170, 125)
-amount = 30
+amount = 22
 lifetime = 10.0
 preprocess = 10.0
 emission_shape = 3
@@ -73,10 +73,12 @@ initial_velocity_min = 0.5
 initial_velocity_max = 2.0
 color = Color(0.65, 0.85, 1, 0.4)
 color_ramp = SubResource("dust_fade")
+scale_amount_min = 2.0
+scale_amount_max = 2.0
 
 [node name="DustLamp" type="CPUParticles2D" parent="."]
 position = Vector2(378, 178)
-amount = 14
+amount = 10
 lifetime = 7.0
 preprocess = 7.0
 emission_shape = 3
@@ -88,6 +90,8 @@ initial_velocity_min = 0.8
 initial_velocity_max = 2.5
 color = Color(1, 0.85, 0.6, 0.55)
 color_ramp = SubResource("dust_fade")
+scale_amount_min = 2.0
+scale_amount_max = 2.0
 
 [node name="Lights" type="Node2D" parent="."]
 
@@ -144,27 +148,27 @@ mouse_filter = 2
 [node name="Badge" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
 offset_left = 172.0
-offset_top = 113.0
+offset_top = 112.0
 offset_right = 184.0
-offset_bottom = 125.0
+offset_bottom = 124.0
 script = ExtResource("3_marker")
 marker_id = "badge"
 
 [node name="Monitor" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
 offset_left = 102.0
-offset_top = 231.0
+offset_top = 230.0
 offset_right = 114.0
-offset_bottom = 243.0
+offset_bottom = 242.0
 script = ExtResource("3_marker")
 marker_id = "monitor"
 
 [node name="Chair" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
-offset_left = 489.0
-offset_top = 221.0
-offset_right = 501.0
-offset_bottom = 233.0
+offset_left = 488.0
+offset_top = 220.0
+offset_right = 500.0
+offset_bottom = 232.0
 script = ExtResource("3_marker")
 marker_id = "chair"
 

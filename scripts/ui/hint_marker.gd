@@ -5,8 +5,8 @@ extends Control
 signal activated(marker_id: String)
 
 @export var marker_id: String = ""
-@export var base_alpha: float = 0.12
-@export var peak_alpha: float = 0.6
+@export var base_alpha: float = 0.35
+@export var peak_alpha: float = 0.9
 @export var min_interval: float = 3.0
 @export var max_interval: float = 8.0
 @export var blink_time: float = 1.4
@@ -50,9 +50,9 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var c: Vector2 = (size / 2.0).floor()
-	draw_rect(Rect2(c - Vector2(2, 2), Vector2(4, 4)), Color(0.0, 0.0, 0.0, _alpha * 0.6))
-	draw_rect(Rect2(c - Vector2(1, 1), Vector2(2, 2)), Color(0.85, 0.95, 1.0, _alpha))
+	# 2x pixel grid: 4x4 light core inside a 2px dark border.
+	draw_rect(Rect2(Vector2(2, 2), Vector2(8, 8)), Color(0.0, 0.0, 0.0, _alpha * 0.6))
+	draw_rect(Rect2(Vector2(4, 4), Vector2(4, 4)), Color(0.85, 0.95, 1.0, _alpha))
 
 
 func _gui_input(event: InputEvent) -> void:

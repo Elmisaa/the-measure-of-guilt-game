@@ -9,7 +9,7 @@ signal clicked(doc_id: String)
 @export var lift: float = 2.0
 @export var twitch_degrees: float = 1.5
 
-const SHADOW_REST: Vector2 = Vector2(3, 4)
+const SHADOW_REST: Vector2 = Vector2(4, 4)
 const SHADOW_LIFTED: Vector2 = Vector2(4, 6)
 
 var interactive: bool = true
