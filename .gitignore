@@ -5,3 +5,4 @@ __pycache__/
 *.import.tmp
 art/refs/**/_sheet.jpg
 *.crdownload
+art/sources/audio/
