@@ -159,9 +159,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		if is_fully_read():
-			close()
-		else:
-			_step()  # Esc can't skip Alexei's thoughts: it just turns the page
+			close()  # Esc never turns dialogue pages; it only closes a fully read document
 	elif event.is_action_pressed("ui_accept"):
 		get_viewport().set_input_as_handled()
 		_step()

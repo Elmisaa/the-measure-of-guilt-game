@@ -88,6 +88,9 @@ func _run() -> void:
 	await _wait(0.3)
 	if not view.is_open():
 		push_error("FAIL document closed before reading the thoughts"); ok = false
+	if view._page != 0:
+		push_error("FAIL Esc turned a dialogue page"); ok = false
+	view._step()  # player presses Space -> next page
 	await _wait(0.3)
 	if view._pages.size() < 2:
 		push_error("FAIL long reaction not paged: %d" % view._pages.size()); ok = false
