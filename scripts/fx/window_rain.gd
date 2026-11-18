@@ -15,7 +15,7 @@ extends Node2D
 @export var min_luma: float = 0.1
 @export var max_luma: float = 0.45  ## brighter = blinds/highlights, not outside
 
-const CELL: int = 2
+@export var cell: int = 2  ## art pixel size on screen
 
 var _mask: PackedByteArray = PackedByteArray()
 var _gw: int = 0
@@ -38,16 +38,16 @@ func _build_mask() -> void:
 	var img: Image = background.texture.get_image()
 	if img.is_compressed():
 		img.decompress()
-	_gw = img.get_width() / CELL
-	_gh = img.get_height() / CELL
+	_gw = img.get_width() / cell
+	_gh = img.get_height() / cell
 	_mask.resize(_gw * _gh)
 	_mask.fill(0)
 	for r: Rect2 in areas:
-		for gy in range(int(r.position.y) / CELL, int(r.end.y) / CELL):
-			for gx in range(int(r.position.x) / CELL, int(r.end.x) / CELL):
+		for gy in range(int(r.position.y) / cell, int(r.end.y) / cell):
+			for gx in range(int(r.position.x) / cell, int(r.end.x) / cell):
 				if gx < 0 or gy < 0 or gx >= _gw or gy >= _gh:
 					continue
-				var c: Color = img.get_pixel(gx * CELL, gy * CELL)
+				var c: Color = img.get_pixel(gx * cell, gy * cell)
 				var l: float = c.get_luminance()
 				if c.b8 - c.r8 >= min_blue and l >= min_luma and l <= max_luma:
 					_mask[gy * _gw + gx] = 1
@@ -75,11 +75,11 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	for i in drops:
-		var gx: int = int(_pos[i].x) / CELL
-		var gy: int = int(_pos[i].y) / CELL
+		var gx: int = int(_pos[i].x) / cell
+		var gy: int = int(_pos[i].y) / cell
 		for k in _len[i]:
 			var y: int = gy - k
 			if gx < 0 or y < 0 or gx >= _gw or y >= _gh or _mask[y * _gw + gx] == 0:
 				continue
 			var a: float = color.a * (1.0 - float(k) / float(_len[i]))
-			draw_rect(Rect2(gx * CELL, y * CELL, CELL, CELL), Color(color, a))
+			draw_rect(Rect2(gx * cell, y * cell, cell, cell), Color(color, a))

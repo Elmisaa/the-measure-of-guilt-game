@@ -8,6 +8,7 @@ extends Sprite2D
 @export var stroke_time: float = 0.18
 @export var pause_min: float = 0.3
 @export var pause_max: float = 0.9
+@export var jitter_px: float = 2.0
 
 var _mat: ShaderMaterial
 var _x: float = 0.0
@@ -34,5 +35,5 @@ func _process(delta: float) -> void:
 		_x = 0.0
 		_jitter = false
 		_timer = randf_range(pause_min, pause_max)
-	var y: float = -2.0 if _jitter else 0.0
+	var y: float = -jitter_px if _jitter else 0.0
 	_mat.set_shader_parameter("offset_px", Vector2(_x, y))
