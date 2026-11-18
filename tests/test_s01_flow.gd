@@ -134,8 +134,11 @@ func _run() -> void:
 	if root.get_node("GameState").get_flag("report_cole_closed", true) != false:
 		push_error("FAIL report choice not stored"); ok = false
 	await _wait(4.0)
-	if not answer.visible or not audio._loop.playing:
-		push_error("FAIL phone not ringing after the report"); ok = false
+	if current_scene == null or current_scene.name != "Walk":
+		push_error("FAIL report did not lead to the walk hall: %s" % [current_scene]); ok = false
+	print("S01 FLOW: ", "OK" if ok else "FAILED")
+	quit(0 if ok else 1)
+	return
 	await _shot("10_phone")
 	answer.pressed.emit()
 	await _wait(0.5)

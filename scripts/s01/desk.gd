@@ -7,6 +7,7 @@ const MARKER_THOUGHT_TIME: float = 4.0
 const PHONE_DELAY: float = 1.5
 const DOC_COUNT: int = 3
 const CALL_SCENE: String = "res://scenes/s01/call.tscn"
+const WALK_SCENE: String = "res://scenes/s01/walk.tscn"
 const PICKUP_SFX: String = "res://assets/audio/sfx/pickup.wav"
 const PICKUP_HOLD: float = 1.2
 
@@ -99,7 +100,7 @@ func _on_terminal_closed() -> void:
 		_thought.show_text(_report_thought(), 0.0)
 		await get_tree().create_timer(PHONE_DELAY + 2.0).timeout
 		_thought.hide_box()
-		_start_phone()
+		SceneRouter.go_to(WALK_SCENE)  # Alexei wants coffee -> walking the hall
 	elif not _terminal_seen:
 		_thought.show_text(str(_term.get("thoughts", {}).get("computer_first_exit", "")), MARKER_THOUGHT_TIME)
 	_terminal_seen = true

@@ -17,6 +17,8 @@ const BRACKET: float = 5.0
 const BRACKET_COLOR: Color = Color(0.92, 0.95, 1.0, 0.55)
 
 var _hover: bool = false
+## Inactive spots show no hints and ignore the mouse (e.g. Alexei is too far away).
+var active: bool = true
 var _wait: float = 0.0
 var _glint: float = -1.0  # -1 idle, 0..1 sweep progress
 
@@ -30,7 +32,20 @@ func _ready() -> void:
 	_wait = randf_range(1.5, glint_every_max)
 
 
+func set_active(v: bool) -> void:
+	if v == active:
+		return
+	active = v
+	mouse_filter = Control.MOUSE_FILTER_STOP if v else Control.MOUSE_FILTER_IGNORE
+	if not v:
+		_hover = false
+		_glint = -1.0
+	queue_redraw()
+
+
 func _process(delta: float) -> void:
+	if not active:
+		return
 	if _glint < 0.0:
 		_wait -= delta
 		if _wait <= 0.0:
@@ -44,6 +59,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if not active:
+		return
 	if _glint >= 0.0:
 		# a narrow diagonal sheen sweeping left -> right, faded at both ends
 		var w: float = 6.0
