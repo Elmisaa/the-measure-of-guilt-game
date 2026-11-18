@@ -51,6 +51,7 @@
 - Коммит после каждого принятого шага: `[Э3][forest] approve visual`, `[Э4][forest] player movement`.
 - Перед крупными изменениями отдельная ветка `scene/<name>`, слияние после G4.
 - `art/drafts/` в git не коммитится (`.gitignore`), только `art/briefs/`, `art/previews/`, `assets/`.
+- Удалённый репозиторий: приватный `https://github.com/Elmisaa/2d-game` (origin, ветка `master`). Пушить после коммитов, когда пользователь просит или в конце рабочего дня.
 
 ## 5. Структура проекта
 ```
