@@ -6,11 +6,11 @@
 [ext_resource type="Script" path="res://scripts/fx/window_rain.gd" id="4_rain"]
 [ext_resource type="Shader" path="res://scripts/fx/write_wobble.gdshader" id="5_shader"]
 [ext_resource type="Script" path="res://scripts/fx/writing_hand.gd" id="6_hand"]
+[ext_resource type="Texture2D" path="res://assets/fx/s00/hand_mask.png" id="7_mask"]
 
 [sub_resource type="ShaderMaterial" id="write_mat"]
 shader = ExtResource("5_shader")
-shader_parameter/center_px = Vector2(310, 180)
-shader_parameter/radius_px = Vector2(34, 24)
+shader_parameter/mask_tex = ExtResource("7_mask")
 shader_parameter/offset_px = Vector2(0, 0)
 shader_parameter/grid = 2.0
 

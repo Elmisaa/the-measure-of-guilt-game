@@ -4,7 +4,7 @@ extends Sprite2D
 ## (next word), with small pauses. Offsets are in texture pixels.
 
 @export var stroke_step: float = 2.0
-@export var strokes_per_word: int = 4
+@export var strokes_per_word: int = 3
 @export var stroke_time: float = 0.18
 @export var pause_min: float = 0.3
 @export var pause_max: float = 0.9
