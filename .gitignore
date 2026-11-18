@@ -4,3 +4,4 @@ art/drafts/
 __pycache__/
 *.import.tmp
 art/refs/**/_sheet.jpg
+*.crdownload

@@ -3,6 +3,9 @@ extends Node
 ## Music starts at game launch and loops across scenes.
 
 const MUSIC: String = "res://assets/audio/music/866779__logicmoon__star-gazers.wav"
+## Start ambience (rain + thunder). Found by its freesound id in assets/audio/ or
+## assets/audio/music/, so the file can be dropped in as is; falls back to MUSIC.
+const START_AMBIENCE_ID: String = "877124"
 const BLIP: String = "res://assets/audio/sfx/voice_blip.wav"
 const MUSIC_DB: float = -10.0
 const BLIP_DB: float = -8.0
@@ -28,7 +31,10 @@ var _next_sfx: int = 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_music = AudioStreamPlayer.new()
-	_music.stream = load(MUSIC)
+	var start: AudioStream = load(_find_start_ambience())
+	if "loop" in start:
+		start.set("loop", true)
+	_music.stream = start
 	_music.volume_db = -60.0
 	_music.finished.connect(_music.play)  # loop
 	add_child(_music)
@@ -104,6 +110,18 @@ func bind_button(c: Control) -> void:
 		(c as BaseButton).pressed.connect(ui_click)
 
 
+func _find_start_ambience() -> String:
+	for dir_path: String in ["res://assets/audio/music/", "res://assets/audio/"]:
+		var d: DirAccess = DirAccess.open(dir_path)
+		if d == null:
+			continue
+		for f: String in d.get_files():
+			var name: String = f.trim_suffix(".import").trim_suffix(".remap")
+			if name.begins_with(START_AMBIENCE_ID) and (name.ends_with(".wav") or name.ends_with(".ogg") or name.ends_with(".mp3")):
+				return dir_path + name
+	return MUSIC
+
+
 func play_music(fade: float = 2.5) -> void:
 	_music.play()
 	create_tween().tween_property(_music, "volume_db", MUSIC_DB, fade)
@@ -118,11 +136,12 @@ func blip_phone(pitch: float = 1.0) -> void:
 
 
 ## One-shot sound effect.
-func sfx(path: String, db: float = -6.0) -> void:
+func sfx(path: String, db: float = -6.0, pitch: float = 1.0) -> void:
 	var p: AudioStreamPlayer = _sfx[_next_sfx]
 	_next_sfx = (_next_sfx + 1) % _sfx.size()
 	p.stream = load(path)
 	p.volume_db = db
+	p.pitch_scale = pitch
 	p.play()
 
 

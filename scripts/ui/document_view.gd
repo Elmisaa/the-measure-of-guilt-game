@@ -48,6 +48,9 @@ func _ready() -> void:
 
 ## doc: {"closeup": res path, "text_rect": [x, y, w, h] in close-up pixels, "text": "...", "reaction": "..."}
 func open(doc: Dictionary) -> void:
+	var audio: Node = get_node_or_null("/root/Audio")
+	if audio:
+		audio.sfx("res://assets/audio/sfx/page_flip.wav", -8.0, randf_range(0.95, 1.05))
 	var closeup: String = str(doc.get("closeup", ""))
 	if closeup.is_empty():
 		_open_placeholder(doc)

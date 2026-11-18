@@ -52,8 +52,10 @@ func _run() -> void:
 	await _shot("0_quote")
 	_press_accept()
 	await _wait(0.6)
-	if quote.modulate.a > 0.05:
-		push_error("FAIL quote not skipped"); ok = false
+	if quote.modulate.a < 0.9:
+		push_error("FAIL quote must not be skippable"); ok = false
+	while current_scene.get("_in_quote"):
+		await _wait(0.2)
 	await _wait(2.5)
 	if not letterbox.is_shown():
 		push_error("FAIL bars not shown"); ok = false
@@ -70,11 +72,12 @@ func _run() -> void:
 	if letterbox.is_shown():
 		push_error("FAIL bars still shown"); ok = false
 	await _shot("4_exposition")
-	# skip: first press skips the quote, second the cutscene
+	# skip: the quote plays fully, then a press skips the cutscene
 	change_scene_to_file("res://scenes/s00/intro.tscn")
 	await _wait(1.0)
-	_press_accept()
-	await _wait(1.5)
+	while current_scene.get("_in_quote"):
+		await _wait(0.2)
+	await _wait(0.5)
 	var ev: InputEventKey = InputEventKey.new()
 	ev.keycode = KEY_ESCAPE
 	ev.physical_keycode = KEY_ESCAPE

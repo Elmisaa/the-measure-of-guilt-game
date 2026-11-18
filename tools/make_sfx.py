@@ -8,6 +8,8 @@ knock.wav      — heavy muffled knock on a door, heard through a phone line
 hangup.wav     — receiver dropped / line cut: clatter + click
 dialtone.wav   — one cycle of a long monotonous tone + pause (loop it)
 blip_phone.wav — voice blip "through the phone": band-limited, buzzy
+paper_rustle.wav — soft rustle of a sheet (hover)
+page_flip.wav  — page turning: whoosh + soft snap (open a document)
 """
 from __future__ import annotations
 
@@ -99,6 +101,19 @@ def main() -> int:
         sq = 1.0 if math.sin(2 * math.pi * 300 * (1 - 0.08 * i / n) * t) > 0 else -1.0
         buzz.append((0.35 * sq + 0.5 * math.sin(2 * math.pi * 900 * t)) * env * 0.45)
     write(o / "blip_phone.wav", mix((0, buzz), (0, noise(55, 0.08, 3, 0.1, 10))))
+
+    # paper: bright crackly noise (low smoothing) shaped into a few short grains
+    def grain(ms_len: float, vol: float, seed: int) -> list[float]:
+        g = noise(ms_len, vol, 0.0, 0.25, seed)
+        n = len(g)
+        return [v * math.sin(math.pi * i / n) for i, v in enumerate(g)]
+    rnd = random.Random(11)
+    parts = [(ms(rnd.uniform(0, 160)), grain(rnd.uniform(25, 70), rnd.uniform(0.15, 0.35), 20 + k)) for k in range(7)]
+    write(o / "paper_rustle.wav", mix(*parts))
+    whoosh = noise(260, 0.5, 0.0, 0.55, 30)
+    whoosh = [v * math.sin(math.pi * i / len(whoosh)) ** 2 for i, v in enumerate(whoosh)]
+    snap = mix((0, noise(30, 0.7, 6, 0.2, 31)), (0, tone(180, 60, 0.25, 8)))
+    write(o / "page_flip.wav", mix((0, grain(60, 0.3, 32)), (ms(30), whoosh), (ms(250), snap), (ms(270), grain(50, 0.2, 33))))
     return 0
 
 

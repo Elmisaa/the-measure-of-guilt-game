@@ -44,6 +44,10 @@ func _process(_delta: float) -> void:
 	if over != _hover:
 		_hover = over
 		_animate(over)
+		if over:
+			var audio: Node = get_node_or_null("/root/Audio")
+			if audio:
+				audio.sfx("res://assets/audio/sfx/paper_rustle.wav", -14.0, randf_range(0.9, 1.15))
 		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if over else Input.CURSOR_ARROW)
 
 

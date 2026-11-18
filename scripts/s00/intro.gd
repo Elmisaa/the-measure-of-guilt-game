@@ -1,7 +1,7 @@
 extends Node2D
 ## s00: epigraph quote on black -> intro cutscene (window in the rain -> coffee on
 ## Alexei's desk) -> s01. Letterbox bars stay until s01, which retracts them.
-## Esc/Enter/click: during the quote skips the quote, during the cutscene skips to s01.
+## The quote can't be skipped; during the cutscene Esc/Enter/click skips to s01.
 
 const NEXT_SCENE: String = "res://scenes/s01/exposition.tscn"
 const FADE_IN: float = 1.0
@@ -69,9 +69,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var mb: InputEventMouseButton = event as InputEventMouseButton
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept") or (mb and mb.pressed):
 		get_viewport().set_input_as_handled()
-		if _in_quote:
-			_quote_skip = true
-		else:
+		if not _in_quote:  # the epigraph can't be skipped
 			_leave()
 
 
