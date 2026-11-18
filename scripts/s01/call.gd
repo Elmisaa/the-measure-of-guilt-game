@@ -6,6 +6,7 @@ extends Node2D
 const CHARS_PER_SEC: float = 32.0
 const START_DELAY: float = 0.8
 const SFX: String = "res://assets/audio/sfx/"
+const FATHER: String = "Отец"  ## speaker id of the voice on the phone
 const PUNCT: String = ".,!?…—-:;\"«»“”"
 
 @onready var _frame: Node2D = $Frame
@@ -153,7 +154,7 @@ func _say(line: Dictionary) -> void:
 	Hud.log_say(speaker, text, str(_all.get("speakers", {}).get(speaker, "#ffffff")))
 	_say_done += 1
 	_page_is_thought = false
-	_page_is_fyodor = speaker == "Фёдор"
+	_page_is_fyodor = speaker == FATHER
 	if line.get("caps", false):
 		text = text.to_upper()
 	if _page_is_fyodor:
@@ -221,10 +222,7 @@ func _on_leave() -> void:
 	var t: Tween = create_tween()
 	t.tween_method(func(db: float) -> void: Audio._loop.volume_db = db, -10.0, -50.0, 1.5)
 	t.tween_callback(Audio.stop_loop)
-	await get_tree().create_timer(0.6).timeout
-	_thought.show_text(str(_data.get("leave_thought", "")))
-	await get_tree().create_timer(4.5).timeout
-	_thought.hide_box()
+	await get_tree().create_timer(0.8).timeout
 	Hud.set_hud_visible(false)
 	var f: Tween = create_tween()
 	f.tween_property(_black, "color:a", 1.0, 1.5)

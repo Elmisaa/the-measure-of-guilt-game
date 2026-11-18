@@ -89,8 +89,7 @@ func _run() -> void:
 	await _shot("6_button")
 	btn.pressed.emit()
 	await _wait(2.0)
-	await _shot("7_leave_thought")
-	await _wait(6.0)
+	await _wait(1.5)
 	if not call.get_node("Fade/End").visible:
 		push_error("FAIL end not reached"); ok = false
 	if audio._loop.playing:
