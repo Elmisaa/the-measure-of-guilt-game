@@ -78,5 +78,23 @@ func _run() -> void:
 	await _wait(0.5)
 	if view.is_open() or not casefile.interactive:
 		push_error("FAIL close-up did not close"); ok = false
+	# remaining documents -> phone rings -> answer
+	for id: String in ["papers", "note"]:
+		desk.get_node("Documents/" + id.capitalize()).clicked.emit(id)
+		await _wait(1.6)
+		if id == "papers":
+			await _shot("9_placeholder_doc")
+		view.close()
+		await _wait(0.5)
+	await _wait(2.0)
+	var answer: Button = desk.get_node("UI/Root/AnswerButton")
+	var audio: Node = root.get_node("Audio")
+	if not answer.visible or not audio._loop.playing:
+		push_error("FAIL phone not ringing"); ok = false
+	await _shot("10_phone")
+	answer.pressed.emit()
+	await _wait(0.5)
+	if audio._loop.playing:
+		push_error("FAIL ring did not stop"); ok = false
 	print("S01 FLOW: ", "OK" if ok else "FAILED")
 	quit(0 if ok else 1)

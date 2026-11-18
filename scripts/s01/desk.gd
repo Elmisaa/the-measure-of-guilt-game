@@ -4,19 +4,28 @@ extends Node2D
 const THOUGHT_DELAY: float = 0.8
 const NOT_READY_TIME: float = 3.0
 const MARKER_THOUGHT_TIME: float = 4.0
+const PHONE_DELAY: float = 1.5
+const DOC_COUNT: int = 3
 
-@onready var _hint: Label = $UI/Root/Hint
 @onready var _thought: ThoughtBox = $UI/Root/ThoughtBox
 @onready var _docs: Node2D = $Documents
 @onready var _view: DocumentView = $DocumentView
 @onready var _markers: Control = $UI/Root/Markers
+@onready var _answer: Button = $UI/Root/AnswerButton
+
+var _viewed: Dictionary = {}
+var _current_doc: String = ""
+var _phone_ringing: bool = false
 
 var _data: Dictionary = {}
 
 
 func _ready() -> void:
 	_data = DialogueData.load_file("s01_precinct").get("desk", {})
-	_hint.text = str(_data.get("hint", ""))
+	_answer.visible = false
+	_answer.text = str(_data.get("answer_button", ""))
+	_answer.pressed.connect(_on_answer)
+	Audio.bind_button(_answer)
 	Hud.set_hud_visible(true)
 	Hud.set_objective(str(_data.get("objective", "")))
 	for d: Node in _docs.get_children():
@@ -33,9 +42,9 @@ func _ready() -> void:
 func _on_doc_clicked(doc_id: String) -> void:
 	var docs: Dictionary = _data.get("documents", {})
 	var doc: Dictionary = docs.get(doc_id, {})
-	if str(doc.get("closeup", "")).is_empty():
-		_thought.show_text(str(_data.get("not_ready", "")), NOT_READY_TIME)
+	if doc.is_empty():
 		return
+	_current_doc = doc_id
 	_thought.hide_box()
 	_set_docs_interactive(false)
 	_view.open(doc)
@@ -48,7 +57,30 @@ func _on_marker(marker_id: String) -> void:
 
 
 func _on_view_closed() -> void:
-	_set_docs_interactive(true)
+	_viewed[_current_doc] = true
+	if _viewed.size() >= DOC_COUNT and not _phone_ringing:
+		_phone_ringing = true
+		await get_tree().create_timer(PHONE_DELAY).timeout
+		_start_phone()
+	else:
+		_set_docs_interactive(true)
+
+
+## All documents read: the background music stops, only the phone rings until answered.
+func _start_phone() -> void:
+	Audio.stop_music(0.5)
+	Audio.play_loop(Audio.PHONE_RING)
+	Hud.set_objective(str(_data.get("phone_objective", "")))
+	_answer.modulate.a = 0.0
+	_answer.visible = true
+	create_tween().tween_property(_answer, "modulate:a", 1.0, 0.4)
+
+
+func _on_answer() -> void:
+	_answer.disabled = true
+	Audio.stop_loop()
+	create_tween().tween_property(_answer, "modulate:a", 0.0, 0.3)
+	_thought.show_text(str(_data.get("after_answer", "")))
 
 
 func _set_docs_interactive(value: bool) -> void:

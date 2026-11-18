@@ -5,17 +5,21 @@ extends Node
 const MUSIC: String = "res://assets/audio/music/866779__logicmoon__star-gazers.wav"
 const BLIP: String = "res://assets/audio/sfx/voice_blip.wav"
 const MUSIC_DB: float = -10.0
-const BLIP_DB: float = -14.0
+const BLIP_DB: float = -8.0
 const BLIP_VOICES: int = 4
 const UI_HOVER: String = "res://assets/audio/sfx/ui_hover.wav"
 const UI_CLICK: String = "res://assets/audio/sfx/ui_click.wav"
 const UI_DB: float = -12.0
+const ICON_DB: float = -26.0  ## HUD icons: barely audible
+const PHONE_RING: String = "res://assets/audio/sfx/629201__audacitier__phone-ringing-5.mp3"
 
 var _music: AudioStreamPlayer
 var _blips: Array[AudioStreamPlayer] = []
 var _next_blip: int = 0
 var _ui_hover: AudioStreamPlayer
 var _ui_click: AudioStreamPlayer
+var _icon_click: AudioStreamPlayer
+var _loop: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -34,6 +38,9 @@ func _ready() -> void:
 		_blips.append(p)
 	_ui_hover = _make_player(UI_HOVER, UI_DB - 4.0)
 	_ui_click = _make_player(UI_CLICK, UI_DB)
+	_icon_click = _make_player(UI_CLICK, ICON_DB)
+	_loop = AudioStreamPlayer.new()
+	add_child(_loop)
 	play_music()
 
 
@@ -52,6 +59,33 @@ func ui_hover() -> void:
 
 func ui_click() -> void:
 	_ui_click.play()
+
+
+## HUD icons: no hover sound, a very quiet click.
+func bind_icon(b: BaseButton) -> void:
+	b.pressed.connect(func() -> void:
+		_icon_click.pitch_scale = 1.3
+		_icon_click.play())
+
+
+func stop_music(fade: float = 0.6) -> void:
+	var t: Tween = create_tween()
+	t.tween_property(_music, "volume_db", -60.0, fade)
+	t.tween_callback(_music.stop)
+
+
+## Looping sound effect (phone ring), plays until stop_loop().
+func play_loop(path: String, db: float = -4.0) -> void:
+	var s: AudioStream = load(path)
+	if "loop" in s:
+		s.set("loop", true)
+	_loop.stream = s
+	_loop.volume_db = db
+	_loop.play()
+
+
+func stop_loop() -> void:
+	_loop.stop()
 
 
 ## Hover + click sounds for any Button / clickable Control.

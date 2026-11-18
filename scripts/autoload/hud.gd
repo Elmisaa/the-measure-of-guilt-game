@@ -63,7 +63,7 @@ func _make_icon(path: String, pos: Vector2, fallback: String) -> TextureButton:
 		b.add_child(l)
 	b.mouse_entered.connect(func() -> void: b.modulate = Color.WHITE)
 	b.mouse_exited.connect(func() -> void: b.modulate = Color(1, 1, 1, 0.8))
-	Audio.bind_button(b)
+	Audio.bind_icon(b)
 	_root.add_child(b)
 	return b
 

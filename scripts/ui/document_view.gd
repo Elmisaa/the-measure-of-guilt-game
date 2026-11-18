@@ -48,14 +48,20 @@ func _ready() -> void:
 
 ## doc: {"closeup": res path, "text_rect": [x, y, w, h] in close-up pixels, "text": "...", "reaction": "..."}
 func open(doc: Dictionary) -> void:
-	var tex: Texture2D = load(str(doc.get("closeup", "")))
-	_paper.texture = tex
-	var s: Vector2 = tex.get_size()
-	_paper.size = s
-	_paper.position = Vector2(floorf((640.0 - s.x) / 4.0) * 2.0, floorf((330.0 - s.y) / 4.0) * 2.0)  # keep on the 2px grid
-	var r: Array = doc.get("text_rect", [0, 0, s.x, s.y])
-	_text.position = _paper.position + Vector2(r[0], r[1])
-	_text.size = Vector2(r[2], r[3])
+	var closeup: String = str(doc.get("closeup", ""))
+	if closeup.is_empty():
+		_open_placeholder(doc)
+	else:
+		var tex: Texture2D = load(closeup)
+		_paper.texture = tex
+		_paper.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+		var s: Vector2 = tex.get_size()
+		_paper.size = s
+		_paper.position = Vector2(floorf((640.0 - s.x) / 4.0) * 2.0, floorf((330.0 - s.y) / 4.0) * 2.0)  # keep on the 2px grid
+		var r: Array = doc.get("text_rect", [0, 0, s.x, s.y])
+		_text.position = _paper.position + Vector2(r[0], r[1])
+		_text.size = Vector2(r[2], r[3])
+		_set_text_style(false)
 	_text.text = str(doc.get("text", ""))
 	_reaction = str(doc.get("reaction", ""))
 	_thought.hide_box()
@@ -64,6 +70,32 @@ func open(doc: Dictionary) -> void:
 	create_tween().tween_property(_root, "modulate:a", 1.0, FADE_TIME)
 	_timer = get_tree().create_timer(REACTION_DELAY)
 	_timer.timeout.connect(_show_reaction)
+
+
+## No close-up art yet: the desk sprite at 2x on the left, text on a dark panel on the right.
+func _open_placeholder(doc: Dictionary) -> void:
+	var tex: Texture2D = load(str(doc.get("sprite", "")))
+	var s: Vector2 = tex.get_size() * 2.0
+	_paper.texture = tex
+	_paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_paper.stretch_mode = TextureRect.STRETCH_SCALE
+	_paper.size = s
+	_paper.position = Vector2(40.0, floorf((330.0 - s.y) / 4.0) * 2.0)
+	_text.position = Vector2(_paper.position.x + s.x + 20.0, 24.0)
+	_text.size = Vector2(640.0 - _text.position.x - 24.0, 290.0)
+	_set_text_style(true)
+
+
+func _set_text_style(on_panel: bool) -> void:
+	if on_panel:
+		var sb: StyleBoxFlat = StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.05, 0.07, 0.95)
+		sb.set_content_margin_all(8.0)
+		_text.add_theme_stylebox_override("normal", sb)
+		_text.add_theme_color_override("font_color", Color(0.92, 0.92, 0.9))
+	else:
+		_text.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		_text.add_theme_color_override("font_color", INK)
 
 
 func is_open() -> bool:
