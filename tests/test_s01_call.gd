@@ -72,6 +72,8 @@ func _run() -> void:
 	if not audio._loop.playing:
 		push_error("FAIL no dial tone"); ok = false
 	await _shot("5_thought")
+	if call._saturation < 0.95:
+		push_error("FAIL colour did not return after the call: %.2f" % call._saturation); ok = false
 	var g2: int = 0
 	while not c_after(call) and g2 < 20:
 		var btn0: Button = call.get_node("UI/Root/LeaveButton")

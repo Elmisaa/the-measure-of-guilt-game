@@ -46,6 +46,7 @@ var _fyodor_fmt: String = "%s"
 var _say_count: int = 0
 var _say_done: int = 0
 var _saturation: float = 1.0
+var _call_over: bool = false  ## line went dead: colours come back
 
 const FYODOR_PAGE: int = 90
 const ALEXEI_PAGE: int = 80
@@ -81,8 +82,8 @@ func _process(delta: float) -> void:
 	_glitch_spike = maxf(0.0, _glitch_spike - delta * 1.5)
 	var gi: float = clampf(_tension * 0.45 + _glitch_spike, 0.0, 1.0)
 	# colours drain toward black-and-white as the call goes on
-	var target_sat: float = lerpf(1.0, MIN_SATURATION, float(_say_done) / maxf(1.0, float(_say_count)))
-	_saturation = move_toward(_saturation, target_sat, delta * 0.15)
+	var target_sat: float = 1.0 if _call_over else lerpf(1.0, MIN_SATURATION, float(_say_done) / maxf(1.0, float(_say_count)))
+	_saturation = move_toward(_saturation, target_sat, delta * (0.6 if _call_over else 0.15))
 	_glitch.visible = gi > 0.01 or _saturation < 0.99
 	var mat: ShaderMaterial = _glitch.material as ShaderMaterial
 	mat.set_shader_parameter("intensity", gi)
@@ -197,6 +198,7 @@ func _event(name: String) -> void:
 			_shake(2, 0.3)
 			_glitch_spike = 0.8
 			_set_tension(0.0)
+			_call_over = true
 			await get_tree().create_timer(0.8).timeout
 			Audio.play_loop(SFX + "dialtone.wav", -10.0)
 			await get_tree().create_timer(1.5).timeout
