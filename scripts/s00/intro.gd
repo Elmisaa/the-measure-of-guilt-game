@@ -9,7 +9,7 @@ const SHOT_TIME: float = 4.0
 const CROSS_TIME: float = 0.5
 const PAN_PX: float = 40.0  ## frames are 680 wide, view 640
 const QUOTE_FADE: float = 1.6
-const QUOTE_HOLD: float = 10.0
+const QUOTE_HOLD: float = 8.0
 const QUOTE_GAP: float = 0.8
 
 @onready var _window: Node2D = $Shots/Window
