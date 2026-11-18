@@ -11,6 +11,8 @@
 [ext_resource type="Script" path="res://scripts/ui/document_view.gd" id="8_view"]
 [ext_resource type="Script" path="res://scripts/ui/hint_marker.gd" id="9_marker"]
 [ext_resource type="Script" path="res://scripts/fx/jitter.gd" id="10_jitter"]
+[ext_resource type="Script" path="res://scripts/ui/click_zone.gd" id="11_zone"]
+[ext_resource type="Script" path="res://scripts/ui/terminal.gd" id="12_term"]
 
 [sub_resource type="Gradient" id="light_grad"]
 offsets = PackedFloat32Array(0, 0.45, 1)
@@ -78,6 +80,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="ComputerZone" type="Control" parent="UI/Root"]
+offset_left = 440.0
+offset_top = 4.0
+offset_right = 558.0
+offset_bottom = 122.0
+script = ExtResource("11_zone")
+
 [node name="Markers" type="Control" parent="UI/Root"]
 anchors_preset = 0
 mouse_filter = 2
@@ -134,3 +143,6 @@ script = ExtResource("6_thought")
 
 [node name="DocumentView" type="CanvasLayer" parent="."]
 script = ExtResource("8_view")
+
+[node name="Terminal" type="CanvasLayer" parent="."]
+script = ExtResource("12_term")

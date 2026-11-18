@@ -107,11 +107,35 @@ func _run() -> void:
 			await _shot("9_placeholder_doc")
 		view.close()
 		await _wait(0.5)
-	await _wait(2.0)
+	await _wait(0.6)
 	var answer: Button = desk.get_node("UI/Root/AnswerButton")
 	var audio: Node = root.get_node("Audio")
+	if answer.visible or audio._loop.playing:
+		push_error("FAIL phone rang before the report"); ok = false
+	# computer: database, cases, report with a choice
+	var term: Terminal = desk.get_node("Terminal")
+	if not term.report_unlocked:
+		push_error("FAIL report not unlocked after reading all documents"); ok = false
+	desk._open_terminal()
+	await _wait(2.2)
+	await _shot("11_terminal_menu")
+	term._show_result("Коул")
+	await _wait(0.3)
+	await _shot("12_terminal_search")
+	term._show_report_entry()
+	await _wait(0.3)
+	await _shot("13_terminal_report")
+	term._choices = {"cause": "b", "wall": "b", "verdict": "b"}
+	term._file_report()
+	await _wait(0.3)
+	term.close()
+	await _wait(0.5)
+	await _shot("14_report_thought")
+	if root.get_node("GameState").get_flag("report_cole_closed", true) != false:
+		push_error("FAIL report choice not stored"); ok = false
+	await _wait(4.0)
 	if not answer.visible or not audio._loop.playing:
-		push_error("FAIL phone not ringing"); ok = false
+		push_error("FAIL phone not ringing after the report"); ok = false
 	await _shot("10_phone")
 	answer.pressed.emit()
 	await _wait(0.5)

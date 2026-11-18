@@ -20,6 +20,7 @@ SceneRouter="*res://scripts/autoload/scene_router.gd"
 Letterbox="*res://scripts/autoload/letterbox.gd"
 Audio="*res://scripts/autoload/audio.gd"
 Hud="*res://scripts/autoload/hud.gd"
+GameState="*res://scripts/autoload/game_state.gd"
 
 [display]
 

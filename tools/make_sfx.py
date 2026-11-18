@@ -113,6 +113,10 @@ def main() -> int:
     whoosh = noise(260, 0.5, 0.0, 0.55, 30)
     whoosh = [v * math.sin(math.pi * i / len(whoosh)) ** 2 for i, v in enumerate(whoosh)]
     snap = mix((0, noise(30, 0.7, 6, 0.2, 31)), (0, tone(180, 60, 0.25, 8)))
+    # CRT power-on: thump + degauss hum + high whine settling
+    whine = tone(15000 / 2.0, 900, 0.05, 2)  # aliased to an audible high tone at 22 kHz
+    write(o / "crt_on.wav", mix((0, tone(55, 300, 0.7, 5, 1)), (0, noise(80, 0.5, 8, 0.4, 40)), (ms(40), tone(60, 700, 0.25, 3, 30, 0.1)), (ms(60), whine)))
+    write(o / "key_tick.wav", mix((0, noise(14, 0.6, 9, 0.15, 41)), (0, tone(1800, 12, 0.15, 9))))
     write(o / "page_flip.wav", mix((0, grain(60, 0.3, 32)), (ms(30), whoosh), (ms(250), snap), (ms(270), grain(50, 0.2, 33))))
     return 0
 

@@ -15,6 +15,12 @@ const PICKUP_HOLD: float = 1.2
 @onready var _view: DocumentView = $DocumentView
 @onready var _markers: Control = $UI/Root/Markers
 @onready var _answer: Button = $UI/Root/AnswerButton
+@onready var _computer: ClickZone = $UI/Root/ComputerZone
+@onready var _terminal: Terminal = $Terminal
+
+var _term: Dictionary = {}
+var _terminal_seen: bool = false
+var _report_choices: Dictionary = {}
 
 var _viewed: Dictionary = {}
 var _current_doc: String = ""
@@ -35,6 +41,10 @@ func _ready() -> void:
 		if d is DeskDocument:
 			(d as DeskDocument).clicked.connect(_on_doc_clicked)
 	_view.closed.connect(_on_view_closed)
+	_term = DialogueData.load_file("s01_terminal")
+	_computer.activated.connect(_open_terminal)
+	_terminal.closed.connect(_on_terminal_closed)
+	_terminal.report_filed.connect(func(c: Dictionary) -> void: _report_choices = c)
 	for m: Node in _markers.get_children():
 		if m is HintMarker:
 			(m as HintMarker).activated.connect(_on_marker)
@@ -61,12 +71,52 @@ func _on_marker(marker_id: String) -> void:
 
 func _on_view_closed() -> void:
 	_viewed[_current_doc] = true
-	if _viewed.size() >= DOC_COUNT and not _phone_ringing:
+	_set_docs_interactive(true)
+	if _viewed.size() >= DOC_COUNT and not _terminal.report_unlocked:
+		_terminal.report_unlocked = true  # all materials read -> the report can be filed
+		Hud.set_objective(str(_data.get("report_objective", "")))
+
+
+func _open_terminal() -> void:
+	if _phone_ringing or _view.is_open():
+		return
+	_thought.hide_box()
+	_set_docs_interactive(false)
+	_computer.set_enabled(false)
+	_terminal.open()
+
+
+## Closing the computer: first time — a thought; after the report — Alexei weighs
+## his choice, then the phone rings.
+func _on_terminal_closed() -> void:
+	_computer.set_enabled(true)
+	_set_docs_interactive(true)
+	if _terminal.report_done and not _phone_ringing:
 		_phone_ringing = true
-		await get_tree().create_timer(PHONE_DELAY).timeout
+		_computer.set_enabled(false)
+		_set_docs_interactive(false)
+		_thought.show_text(_report_thought(), 0.0)
+		await get_tree().create_timer(PHONE_DELAY + 2.0).timeout
+		_thought.hide_box()
 		_start_phone()
-	else:
-		_set_docs_interactive(true)
+	elif not _terminal_seen:
+		_thought.show_text(str(_term.get("thoughts", {}).get("computer_first_exit", "")), MARKER_THOUGHT_TIME)
+	_terminal_seen = true
+
+
+func _report_thought() -> String:
+	var closed_votes: int = 0
+	for v: String in _report_choices.values():
+		if v == "a":
+			closed_votes += 1
+	GameState.set_flag("report_cole", _report_choices)
+	GameState.set_flag("report_cole_closed", closed_votes == _report_choices.size())
+	var th: Dictionary = _term.get("thoughts", {})
+	if closed_votes == _report_choices.size():
+		return str(th.get("report_closed", ""))
+	if closed_votes == 0:
+		return str(th.get("report_open", ""))
+	return str(th.get("report_mixed", ""))
 
 
 ## All documents read: the background music stops, only the phone rings until answered.
