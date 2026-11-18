@@ -14,6 +14,7 @@ const MARKER_THOUGHT_TIME: float = 4.0
 @onready var _markers: Control = $UI/Root/Markers
 
 var _data: Dictionary = {}
+var _data_all: Dictionary = {}
 var _speakers: Dictionary = {}
 var _lines: Array = []
 var _index: int = -1
@@ -21,10 +22,13 @@ var _typing: Tween
 var _typing_label: Label
 var _started: bool = false
 var _done: bool = false
+var _voice_pitch: float = 1.0
+var _shown_chars: int = 0
 
 
 func _ready() -> void:
 	var all: Dictionary = DialogueData.load_file("s01_precinct")
+	_data_all = all
 	_data = all.get("exposition", {})
 	_speakers = all.get("speakers", {})
 	_lines = _data.get("lines", [])
@@ -53,6 +57,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_advance()
 
 
+## Speech blips: one soft blip every 2 letters while the line is being typed.
+func _process(_delta: float) -> void:
+	if not (_typing and _typing.is_running()) or _typing_label != _line:
+		return
+	var n: int = _line.visible_characters
+	if n < 0:
+		n = _line.text.length()
+	while _shown_chars < n:
+		var c: String = _line.text[_shown_chars]
+		_shown_chars += 1
+		if _shown_chars % 2 == 0 and c.strip_edges() != "" and not c in ".,!?…—-:;\"«»“”":
+			Audio.blip(_voice_pitch)
+
+
 func _advance() -> void:
 	if _typing and _typing.is_running():
 		_typing.kill()
@@ -77,6 +95,8 @@ func _next_line() -> void:
 	_speaker.text = speaker
 	_speaker.add_theme_color_override("font_color", Color.from_string(str(_speakers.get(speaker, "#ffffff")), Color.WHITE))
 	_line.text = text
+	_voice_pitch = float(_data_all.get("voice_pitch", {}).get(speaker, 1.0))
+	_shown_chars = 0
 	_fade(_speech, 1.0)
 	_type(_line)
 

@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Base resolution 640x360 (DECISIONS #5); window 1280x720 by default (DECISIONS #8).
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -13,6 +18,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 SceneRouter="*res://scripts/autoload/scene_router.gd"
 Letterbox="*res://scripts/autoload/letterbox.gd"
+Audio="*res://scripts/autoload/audio.gd"
 
 [display]
 
@@ -21,7 +27,6 @@ window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="viewport"
-window/stretch/aspect="keep"
 window/stretch/scale_mode="integer"
 
 [gui]
