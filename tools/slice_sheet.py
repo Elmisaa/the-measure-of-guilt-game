@@ -51,47 +51,58 @@ def main() -> int:
     ap.add_argument("--gif", type=Path)
     ap.add_argument("--fps", type=int, default=10)
     ap.add_argument("--frames", default="", help="subset for the gif, e.g. 2-9")
+    ap.add_argument("--rows", type=int, default=1, help="rows (directions) stacked vertically; one gif per row")
     args = ap.parse_args()
 
     img = remove_background(Image.open(args.input), args.tolerance)
-    spans = find_frames(img, args.min_gap, 8)
-    crops = []
-    for x0, x1 in spans:
-        c = img.crop((x0, 0, x1, img.height))
-        bb = c.getbbox()
-        if bb:
-            crops.append(c.crop((0, bb[1], c.width, bb[3])))
-    if not crops:
+    band_h = img.height // args.rows
+    rows: list[list[Image.Image]] = []
+    for r in range(args.rows):
+        band = img.crop((0, r * band_h, img.width, (r + 1) * band_h))
+        crops = []
+        for x0, x1 in find_frames(band, args.min_gap, 8):
+            c = band.crop((x0, 0, x1, band.height))
+            bb = c.getbbox()
+            if bb:
+                crops.append(c.crop((0, bb[1], c.width, bb[3])))
+        rows.append(crops)
+    allc = [c for r in rows for c in r]
+    if not allc:
         print("no frames found", file=sys.stderr)
         return 1
-    tallest = max(c.height for c in crops)
+    tallest = max(c.height for c in allc)
     k = args.height / tallest
-    small = [harden_alpha(c.convert("RGBa").resize((max(1, round(c.width * k)), max(1, round(c.height * k))), Image.BOX).convert("RGBA")) for c in crops]
-    cw = max(s.width for s in small) + 2
+    def shrink(c: Image.Image) -> Image.Image:
+        return harden_alpha(c.convert("RGBa").resize((max(1, round(c.width * k)), max(1, round(c.height * k))), Image.BOX).convert("RGBA"))
+    small_rows = [[shrink(c) for c in r] for r in rows]
+    cw = max(s.width for r in small_rows for s in r) + 2
     ch = args.height
-    sheet = Image.new("RGBA", (cw * len(small), ch), (0, 0, 0, 0))
-    for i, s in enumerate(small):
-        sheet.paste(s, (i * cw + (cw - s.width) // 2, ch - s.height), s)
+    ncol = max(len(r) for r in small_rows)
+    sheet = Image.new("RGBA", (cw * ncol, ch * len(small_rows)), (0, 0, 0, 0))
+    for ri, r in enumerate(small_rows):
+        for i, s in enumerate(r):
+            sheet.paste(s, (i * cw + (cw - s.width) // 2, ri * ch + ch - s.height), s)
     if args.scale > 1:
         sheet = sheet.resize((sheet.width * args.scale, sheet.height * args.scale), Image.NEAREST)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.out)
-    print(f"ok {args.out} frames={len(small)} cell={cw * args.scale}x{ch * args.scale} heights={[c.height for c in crops]}")
+    print(f"ok {args.out} rows={[len(r) for r in small_rows]} cell={cw * args.scale}x{ch * args.scale}")
     if args.gif:
         cwS, chS = cw * args.scale, ch * args.scale
-        idx = range(len(small))
-        if args.frames:
-            a, b = (int(v) for v in args.frames.split("-"))
-            idx = range(a, b + 1)
-        frames = []
-        for i in idx:
-            f = Image.new("RGBA", (cwS + 40, chS + 20), (24, 28, 34, 255))
-            cell = sheet.crop((i * cwS, 0, (i + 1) * cwS, chS))
-            f.alpha_composite(cell, (20, 10))
-            frames.append(f.convert("RGB").resize(((cwS + 40) * 3, (chS + 20) * 3), Image.NEAREST))
-        args.gif.parent.mkdir(parents=True, exist_ok=True)
-        frames[0].save(args.gif, save_all=True, append_images=frames[1:], duration=int(1000 / args.fps), loop=0)
-        print(f"ok {args.gif}")
+        for ri, r in enumerate(small_rows):
+            idx = range(len(r))
+            if args.frames:
+                a, b = (int(v) for v in args.frames.split("-"))
+                idx = range(a, min(b, len(r) - 1) + 1)
+            frames = []
+            for i in idx:
+                f = Image.new("RGBA", (cwS + 40, chS + 20), (24, 28, 34, 255))
+                f.alpha_composite(sheet.crop((i * cwS, ri * chS, (i + 1) * cwS, (ri + 1) * chS)), (20, 10))
+                frames.append(f.convert("RGB").resize(((cwS + 40) * 3, (chS + 20) * 3), Image.NEAREST))
+            g = args.gif if args.rows == 1 else args.gif.with_name(f"{args.gif.stem}_row{ri + 1}{args.gif.suffix}")
+            g.parent.mkdir(parents=True, exist_ok=True)
+            frames[0].save(g, save_all=True, append_images=frames[1:], duration=int(1000 / args.fps), loop=0)
+            print(f"ok {g}")
     return 0
 
 
