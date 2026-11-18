@@ -18,6 +18,8 @@
 | doc_note | объект | 74×80 @ (374,204) | Записка. `assets/props/s01/note.png` | refs/05 | APPROVED |
 | close_newspaper | крупный план | ~300×330 | Газета крупно, мятая, **пустая плашка под шапку** (The New York Times) и **пустое место под заголовок и колонку текста** — текст рисует Godot. `assets/props/s01/close_newspaper.png` | refs/s01_precinct/02 | TODO |
 | fx_fan | анимация | 160×35, 104×29, 72×14 ×8 кадров | Лопасти 3 потолочных вентиляторов (ротор Codex `art/drafts/fan/rotor_v1_a.png` → `tools/rotor_frames.py`). Фон экспозиции — с убранными лопастями (только области вентиляторов, остальное пиксель-в-пиксель v1_c). `assets/fx/s01/fan_{a,b,c}.png` | v1_c | DRAFT (на оценке) |
+| bg_call | фон | 640×360, пиксель 4x | Кадр звонка: зал из-за спины Алексея (стена с тёплыми окнами слева, колонна, тёмный зал), размыт и затемнён. Исходник `art/sources/s01/call_bg_plate_v1_a.png` (Codex по раскладке пользователя, реф 13) → blur 8 + яркость 0.85 + 4x. `assets/backgrounds/s01/call_bg.png` | refs 11–13, plan/ | APPROVED |
+| call_alexei_desk | слой | 640×360, пиксель 4x | Алексей со спины в кресле, трубка у левого уха, стол почти ребром (лампа, телефон, кружка, стакан с ручками, ЭЛТ). Вырезан с мадженты. `assets/props/s01/call_alexei_desk.png` | ref 11, desk3 | APPROVED |
 | close_casefile | крупный план | 233×316 | Раскрытая папка, пустой бланк; текст пишет Godot. `assets/props/s01/close_casefile.png` | doc_casefile | DRAFT (на оценке) |
 
 | close_note | крупный план | ~240×240 | Записка крупно: линованная/клетчатая бумага, загнутый угол, **без текста**. `assets/props/s01/close_note.png` | refs/s01_precinct/02 | TODO |
