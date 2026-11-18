@@ -149,16 +149,10 @@ func set_hud_visible(v: bool) -> void:
 		close_history()
 
 
-func set_objective(text: String, announce: bool = true) -> void:
-	if text == _objective:
-		return
+## Silent: the task is only shown when the player hovers/clicks the icon.
+func set_objective(text: String, _announce: bool = false) -> void:
 	_objective = text
 	_task_label.text = text
-	if announce and _task_btn.visible:
-		var t: Tween = create_tween()
-		t.tween_property(_task_btn, "scale", Vector2(1.25, 1.25), 0.12)
-		t.tween_property(_task_btn, "scale", Vector2.ONE, 0.2)
-		_show_task(TASK_SHOW_TIME)
 
 
 func log_say(speaker: String, text: String, color: String = "#ffffff") -> void:

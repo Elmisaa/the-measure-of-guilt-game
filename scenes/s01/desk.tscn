@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/fx/light_flicker.gd" id="fx_light"]
 [ext_resource type="Script" path="res://scripts/ui/document_view.gd" id="8_view"]
 [ext_resource type="Script" path="res://scripts/ui/hint_marker.gd" id="9_marker"]
+[ext_resource type="Script" path="res://scripts/fx/jitter.gd" id="10_jitter"]
 
 [sub_resource type="Gradient" id="light_grad"]
 offsets = PackedFloat32Array(0, 0.45, 1)
@@ -118,12 +119,15 @@ script = ExtResource("9_marker")
 marker_id = "ashtray"
 
 [node name="AnswerButton" type="Button" parent="UI/Root"]
-offset_left = 246.0
-offset_top = 290.0
-offset_right = 394.0
-offset_bottom = 318.0
+offset_left = 110.0
+offset_top = 174.0
+offset_right = 256.0
+offset_bottom = 202.0
 focus_mode = 0
 mouse_default_cursor_shape = 2
+
+[node name="Jitter" type="Node" parent="UI/Root/AnswerButton"]
+script = ExtResource("10_jitter")
 
 [node name="ThoughtBox" type="PanelContainer" parent="UI/Root"]
 script = ExtResource("6_thought")
