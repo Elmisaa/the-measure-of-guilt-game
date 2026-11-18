@@ -6,12 +6,13 @@ config_version=5
 [application]
 
 config/name="2D Game"
-run/main_scene="res://scenes/s01/exposition.tscn"
+run/main_scene="res://scenes/s00/intro.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
 SceneRouter="*res://scripts/autoload/scene_router.gd"
+Letterbox="*res://scripts/autoload/letterbox.gd"
 
 [display]
 

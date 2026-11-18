@@ -35,6 +35,9 @@ func _ready() -> void:
 	for m: Node in _markers.get_children():
 		if m is HintMarker:
 			(m as HintMarker).activated.connect(_on_marker)
+	if Letterbox.is_shown():
+		await get_tree().create_timer(0.4).timeout
+		await Letterbox.retract()
 	await get_tree().create_timer(START_DELAY).timeout
 	_started = true
 	_next_line()
