@@ -16,6 +16,10 @@ var _text: Label
 var _thought: ThoughtBox
 var _stage: int = 0  # 0 closed, 1 reading, 2 reaction shown
 var _reaction: String = ""
+var _pages: PackedStringArray = PackedStringArray()
+var _page: int = 0
+
+const REACTION_PAGE: int = 90
 var _timer: SceneTreeTimer
 
 
@@ -109,15 +113,21 @@ func _show_reaction() -> void:
 	if _stage != 1:
 		return
 	_stage = 2
-	if not _reaction.is_empty():
-		_thought.show_text(_reaction)
+	_page = 0
+	_pages = TextPager.pages(_reaction, REACTION_PAGE) if not _reaction.is_empty() else PackedStringArray()
+	if _pages.size() > 0:
+		_thought.show_text(_pages[0])
 
 
 func _step() -> void:
 	if _stage == 1:
 		_show_reaction()
 	elif _stage == 2:
-		close()
+		if _page < _pages.size() - 1:  # long reaction: one sentence group per click
+			_page += 1
+			_thought.show_text(_pages[_page])
+		else:
+			close()
 
 
 func close() -> void:

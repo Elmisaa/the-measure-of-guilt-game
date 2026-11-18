@@ -22,10 +22,15 @@ func _shot(name: String) -> void:
 	root.get_texture().get_image().save_png("res://art/previews/s01_call_" + name + ".png")
 
 
+func c_after(c: Node) -> bool:
+	return c._after_lines
+
+
 func _wait(sec: float) -> void:
 	await create_timer(sec).timeout
 
 
+## One player press: finish typing, or next page, or next line.
 func _click() -> void:
 	var c: Node = current_scene
 	while c._busy and not c._after_lines:
@@ -33,7 +38,11 @@ func _click() -> void:
 	if c._typing and c._typing.is_running():
 		c._typing.kill()
 		c._set_ratio(c._typing_node, 1.0)
-	c._next()
+	elif c._page < c._pages.size() - 1:
+		c._page += 1
+		c._show_page()
+	else:
+		c._next()
 
 
 func _run() -> void:
@@ -63,9 +72,14 @@ func _run() -> void:
 	if not audio._loop.playing:
 		push_error("FAIL no dial tone"); ok = false
 	await _shot("5_thought")
-	await _click()
-	await _wait(0.3)
-	await _click()  # -> button
+	var g2: int = 0
+	while not c_after(call) and g2 < 20:
+		var btn0: Button = call.get_node("UI/Root/LeaveButton")
+		if btn0.visible:
+			push_error("FAIL button shown before thoughts ended"); ok = false
+		await _click()
+		await _wait(0.3)
+		g2 += 1
 	await _wait(0.6)
 	var btn: Button = call.get_node("UI/Root/LeaveButton")
 	if not btn.visible:

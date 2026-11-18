@@ -38,6 +38,19 @@ var _shake_left: float = 0.0
 var _shake_amp: int = 0
 var _shake_step: float = 0.0
 var _after_lines: bool = false
+var _pages: PackedStringArray = PackedStringArray()
+var _page: int = 0
+var _page_is_fyodor: bool = false
+var _page_is_thought: bool = false
+var _fyodor_fmt: String = "%s"
+var _say_count: int = 0
+var _say_done: int = 0
+var _saturation: float = 1.0
+
+const FYODOR_PAGE: int = 90
+const ALEXEI_PAGE: int = 80
+const THOUGHT_PAGE: int = 90
+const MIN_SATURATION: float = 0.12
 
 
 func _ready() -> void:
@@ -55,6 +68,9 @@ func _ready() -> void:
 	_black.color.a = 0.0
 	_end_label.visible = false
 	_set_tension(0.0)
+	for l: Dictionary in _lines:
+		if str(l.get("type", "")) == "say":
+			_say_count += 1
 	await get_tree().create_timer(START_DELAY).timeout
 	_busy = false
 	_next()
@@ -64,8 +80,13 @@ func _process(delta: float) -> void:
 	# glitch intensity: base from tension + decaying spikes
 	_glitch_spike = maxf(0.0, _glitch_spike - delta * 1.5)
 	var gi: float = clampf(_tension * 0.45 + _glitch_spike, 0.0, 1.0)
-	_glitch.visible = gi > 0.01
-	(_glitch.material as ShaderMaterial).set_shader_parameter("intensity", gi)
+	# colours drain toward black-and-white as the call goes on
+	var target_sat: float = lerpf(1.0, MIN_SATURATION, float(_say_done) / maxf(1.0, float(_say_count)))
+	_saturation = move_toward(_saturation, target_sat, delta * 0.15)
+	_glitch.visible = gi > 0.01 or _saturation < 0.99
+	var mat: ShaderMaterial = _glitch.material as ShaderMaterial
+	mat.set_shader_parameter("intensity", gi)
+	mat.set_shader_parameter("saturation", _saturation)
 	# frame shake on whole pixels (4px grid of the frame art)
 	if _shake_left > 0.0:
 		_shake_left -= delta
@@ -87,6 +108,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _typing and _typing.is_running():
 			_typing.kill()
 			_set_ratio(_typing_node, 1.0)
+		elif _page < _pages.size() - 1:
+			_page += 1
+			_show_page()
 		else:
 			_next()
 
@@ -95,8 +119,11 @@ func _next() -> void:
 	if _after_lines:
 		return
 	_index += 1
+	_pages = PackedStringArray()
+	_page = 0
 	if _index >= _lines.size():
 		_after_lines = true
+		_thought.hide_box()
 		_show_button()
 		return
 	var line: Dictionary = _lines[_index]
@@ -105,7 +132,9 @@ func _next() -> void:
 			_event(str(line.get("event", "")))
 		"think":
 			_hide_speech()
-			_thought.show_text(str(line.get("text", "")))
+			_page_is_thought = true
+			_pages = TextPager.pages(str(line.get("text", "")), THOUGHT_PAGE)
+			_show_page()
 		_:
 			_say(line)
 
@@ -121,24 +150,29 @@ func _say(line: Dictionary) -> void:
 		Audio.play_track(str(_data.get("music", "")), 2.0, -8.0)
 	_pitch = float(_all.get("voice_pitch", {}).get(speaker, 1.0))
 	Hud.log_say(speaker, text, str(_all.get("speakers", {}).get(speaker, "#ffffff")))
-	if speaker == "Фёдор":
+	_say_done += 1
+	_page_is_thought = false
+	_page_is_fyodor = speaker == "Фёдор"
+	if line.get("caps", false):
+		text = text.to_upper()
+	if _page_is_fyodor:
 		_blip_phone = true
 		_fade(_alexei_box, 0.0)
 		_fyodor_name.text = speaker
 		_fyodor_name.add_theme_color_override("font_color", color)
 		var level: int = int(lerpf(1.0, 6.0, _tension))
 		var size: int = 18 if line.get("big", false) else 9
-		_fyodor_text.text = "[font_size=%d][shake rate=18.0 level=%d connected=1]%s[/shake][/font_size]" % [size, level, text]
+		_fyodor_fmt = "[font_size=%d][shake rate=18.0 level=%d connected=1]" % [size, level] + "%s[/shake][/font_size]"
 		_fade(_fyodor_box, 1.0)
-		_type(_fyodor_text, text.length())
+		_pages = TextPager.pages(text, FYODOR_PAGE)
 	else:
 		_blip_phone = false
 		_fade(_fyodor_box, 0.0)
 		_alexei_name.text = speaker
 		_alexei_name.add_theme_color_override("font_color", color)
-		_alexei_text.text = text
 		_fade(_alexei_box, 1.0)
-		_type(_alexei_text, text.length())
+		_pages = TextPager.pages(text, ALEXEI_PAGE)
+	_show_page()
 	if "!" in text:
 		_shake(1 + int(_tension * 2.0), 0.25)
 		_glitch_spike = maxf(_glitch_spike, 0.35 * _tension)
@@ -251,6 +285,22 @@ func _update_blips() -> void:
 				Audio.blip_phone(_pitch)
 			else:
 				Audio.blip(_pitch)
+
+
+## Shows the current page of the current line (speech or thought) with typing.
+func _show_page() -> void:
+	var s: String = _pages[_page]
+	if _page_is_thought:
+		_thought.show_text(s)
+		return
+	if _page_is_fyodor:
+		_fyodor_text.text = _fyodor_fmt % s
+		_type(_fyodor_text, s.length())
+	else:
+		_alexei_text.text = s
+		_type(_alexei_text, s.length())
+	if "!" in s and _page > 0:
+		_shake(1 + int(_tension * 2.0), 0.25)
 
 
 func _hide_speech() -> void:

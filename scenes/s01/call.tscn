@@ -38,6 +38,7 @@ light_mode = 1
 [sub_resource type="ShaderMaterial" id="glitch_mat"]
 shader = ExtResource("5_glitch")
 shader_parameter/intensity = 0.0
+shader_parameter/saturation = 1.0
 
 [node name="Call" type="Node2D"]
 script = ExtResource("1_script")

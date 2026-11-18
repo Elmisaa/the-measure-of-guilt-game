@@ -4,6 +4,7 @@ shader_type canvas_item;
 
 uniform sampler2D screen : hint_screen_texture, filter_nearest;
 uniform float intensity = 0.0;
+uniform float saturation = 1.0;  // 1 = full colour, 0 = black and white
 
 float hash(float n) { return fract(sin(n) * 43758.5453); }
 
@@ -19,5 +20,7 @@ void fragment() {
 	float n = hash(floor(uv.x * 160.0) * 3.1 + row * 7.7 + t);
 	c += (n - 0.5) * 0.16 * intensity;
 	c *= 1.0 - 0.1 * intensity * step(0.5, fract(uv.y * 90.0));
+	float g = dot(c, vec3(0.299, 0.587, 0.114));
+	c = mix(vec3(g), c, saturation);
 	COLOR = vec4(c, 1.0);
 }

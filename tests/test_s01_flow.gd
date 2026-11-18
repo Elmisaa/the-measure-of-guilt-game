@@ -80,6 +80,11 @@ func _run() -> void:
 		push_error("FAIL close-up not open"); ok = false
 	await _wait(1.0)
 	await _shot("6_closeup")
+	view._step()  # -> reaction page 1
+	await _wait(0.3)
+	if view._pages.size() < 2:
+		push_error("FAIL long reaction not paged: %d" % view._pages.size()); ok = false
+	await _shot("6b_reaction")
 	view.close()
 	await _wait(0.5)
 	if view.is_open() or not casefile.interactive:
