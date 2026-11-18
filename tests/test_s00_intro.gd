@@ -72,7 +72,7 @@ func _run() -> void:
 	if letterbox.is_shown():
 		push_error("FAIL bars still shown"); ok = false
 	await _shot("4_exposition")
-	# skip: the quote plays fully, then a press skips the cutscene
+	# no skip: a press during the cutscene changes nothing
 	change_scene_to_file("res://scenes/s00/intro.tscn")
 	await _wait(1.0)
 	while current_scene.get("_in_quote"):
@@ -83,8 +83,9 @@ func _run() -> void:
 	ev.physical_keycode = KEY_ESCAPE
 	ev.pressed = true
 	Input.parse_input_event(ev)
-	await _wait(1.5)
-	if _scene_name() != "Exposition":
-		push_error("FAIL skip did not go to exposition: %s" % _scene_name()); ok = false
+	_press_accept()
+	await _wait(1.0)
+	if _scene_name() != "Intro":
+		push_error("FAIL cutscene was skipped: %s" % _scene_name()); ok = false
 	print("S00 INTRO: ", "OK" if ok else "FAILED")
 	quit(0 if ok else 1)
