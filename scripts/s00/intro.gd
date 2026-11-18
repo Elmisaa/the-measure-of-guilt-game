@@ -24,6 +24,7 @@ var _quote_skip: bool = false
 
 func _ready() -> void:
 	Letterbox.show_bars()
+	Hud.set_hud_visible(false)
 	_coffee.visible = false
 	_fade.color.a = 1.0
 	_quote.text = str(DialogueData.load_file("s00_intro").get("quote", ""))

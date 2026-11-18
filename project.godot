@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 SceneRouter="*res://scripts/autoload/scene_router.gd"
 Letterbox="*res://scripts/autoload/letterbox.gd"
 Audio="*res://scripts/autoload/audio.gd"
+Hud="*res://scripts/autoload/hud.gd"
 
 [display]
 

@@ -40,6 +40,9 @@ func _process(delta: float) -> void:
 ## duration <= 0: stays until hide_box().
 func show_text(text: String, duration: float = 0.0) -> void:
 	_label.text = text
+	var hud: Node = get_node_or_null("/root/Hud")  # not the global name: class_name scripts may compile before autoloads
+	if hud and not text.is_empty():
+		hud.log_thought(text)
 	update_minimum_size()
 	var ms: Vector2 = get_combined_minimum_size().ceil()
 	offset_left = -floorf(ms.x / 2.0)

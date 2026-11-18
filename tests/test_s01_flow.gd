@@ -40,6 +40,18 @@ func _run() -> void:
 		await _wait(0.1)
 	var button: Button = expo.get_node("UI/Root/StudyButton")
 	await _wait(0.5)
+	var hud: Node = root.get_node("Hud")
+	if hud._log_box.get_child_count() < 2:
+		push_error("FAIL history has %d entries" % hud._log_box.get_child_count()); ok = false
+	if hud._objective.is_empty():
+		push_error("FAIL no objective"); ok = false
+	hud.open_history()
+	await _wait(0.3)
+	await _shot("7_history")
+	hud.close_history()
+	hud._show_task(5.0)
+	await _wait(0.2)
+	await _shot("8_task")
 	if not button.visible:
 		push_error("FAIL button not visible"); ok = false
 	await _shot("3_button")

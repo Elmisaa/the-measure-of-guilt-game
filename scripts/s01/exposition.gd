@@ -35,7 +35,10 @@ func _ready() -> void:
 	_speech.modulate.a = 0.0
 	_button.visible = false
 	_button.text = str(_data.get("button", ""))
+	Hud.set_hud_visible(true)
+	Hud.set_objective(str(_data.get("objective", "")), false)
 	_button.pressed.connect(_on_study_pressed)
+	Audio.bind_button(_button)
 	for m: Node in _markers.get_children():
 		if m is HintMarker:
 			(m as HintMarker).activated.connect(_on_marker)
@@ -48,7 +51,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _started or _done:
+	if not _started or _done or Hud.is_blocking():
 		return
 	var mb: InputEventMouseButton = event as InputEventMouseButton
 	var click: bool = mb != null and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT
@@ -95,6 +98,7 @@ func _next_line() -> void:
 	_speaker.text = speaker
 	_speaker.add_theme_color_override("font_color", Color.from_string(str(_speakers.get(speaker, "#ffffff")), Color.WHITE))
 	_line.text = text
+	Hud.log_say(speaker, text, str(_speakers.get(speaker, "#ffffff")))
 	_voice_pitch = float(_data_all.get("voice_pitch", {}).get(speaker, 1.0))
 	_shown_chars = 0
 	_fade(_speech, 1.0)
@@ -110,6 +114,7 @@ func _type(label: Label) -> void:
 
 func _finish() -> void:
 	_done = true
+	Hud.set_objective(str(_data.get("objective_done", "")))
 	_thought.hide_box()
 	_fade(_speech, 0.0)
 	_button.modulate.a = 0.0

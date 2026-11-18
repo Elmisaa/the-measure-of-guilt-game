@@ -7,10 +7,15 @@ const BLIP: String = "res://assets/audio/sfx/voice_blip.wav"
 const MUSIC_DB: float = -10.0
 const BLIP_DB: float = -14.0
 const BLIP_VOICES: int = 4
+const UI_HOVER: String = "res://assets/audio/sfx/ui_hover.wav"
+const UI_CLICK: String = "res://assets/audio/sfx/ui_click.wav"
+const UI_DB: float = -12.0
 
 var _music: AudioStreamPlayer
 var _blips: Array[AudioStreamPlayer] = []
 var _next_blip: int = 0
+var _ui_hover: AudioStreamPlayer
+var _ui_click: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -27,7 +32,33 @@ func _ready() -> void:
 		p.volume_db = BLIP_DB
 		add_child(p)
 		_blips.append(p)
+	_ui_hover = _make_player(UI_HOVER, UI_DB - 4.0)
+	_ui_click = _make_player(UI_CLICK, UI_DB)
 	play_music()
+
+
+func _make_player(path: String, db: float) -> AudioStreamPlayer:
+	var p: AudioStreamPlayer = AudioStreamPlayer.new()
+	p.stream = load(path)
+	p.volume_db = db
+	add_child(p)
+	return p
+
+
+func ui_hover() -> void:
+	_ui_hover.pitch_scale = randf_range(0.97, 1.03)
+	_ui_hover.play()
+
+
+func ui_click() -> void:
+	_ui_click.play()
+
+
+## Hover + click sounds for any Button / clickable Control.
+func bind_button(c: Control) -> void:
+	c.mouse_entered.connect(ui_hover)
+	if c is BaseButton:
+		(c as BaseButton).pressed.connect(ui_click)
 
 
 func play_music(fade: float = 2.5) -> void:

@@ -17,6 +17,8 @@ var _data: Dictionary = {}
 func _ready() -> void:
 	_data = DialogueData.load_file("s01_precinct").get("desk", {})
 	_hint.text = str(_data.get("hint", ""))
+	Hud.set_hud_visible(true)
+	Hud.set_objective(str(_data.get("objective", "")))
 	for d: Node in _docs.get_children():
 		if d is DeskDocument:
 			(d as DeskDocument).clicked.connect(_on_doc_clicked)

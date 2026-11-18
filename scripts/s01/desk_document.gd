@@ -38,7 +38,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var over: bool = interactive and _is_mouse_over()
+	var hud: Node = get_node_or_null("/root/Hud")
+	var blocked: bool = hud != null and hud.is_blocking()
+	var over: bool = interactive and not blocked and _is_mouse_over()
 	if over != _hover:
 		_hover = over
 		_animate(over)
