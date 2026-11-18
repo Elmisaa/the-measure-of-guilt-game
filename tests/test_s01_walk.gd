@@ -71,8 +71,8 @@ func _run() -> void:
 	await _wait(0.8)
 	Input.action_release("move_up")
 	var pl: Node2D = w.get_node("World/Player")
-	if pl.scale.x >= 0.99:
-		push_error("FAIL depth did not shrink the player"); ok = false
+	if pl.depth_row() == 0:
+		push_error("FAIL depth did not switch to a smaller row"); ok = false
 	await _shot("4_depth")
 	await _walk_to(w, 420.0)
 	await _wait(0.2)

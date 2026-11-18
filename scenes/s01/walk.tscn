@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/s01/walk.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/s01/walk_hall.png" id="2_bg"]
 [ext_resource type="Script" path="res://scripts/s01/walk_player.gd" id="3_player"]
-[ext_resource type="Texture2D" path="res://assets/characters/alexei/walk_side.png" id="4_sheet"]
+[ext_resource type="Texture2D" path="res://assets/characters/alexei/walk_rig.png" id="4_sheet"]
 [ext_resource type="Script" path="res://scripts/ui/thought_box.gd" id="5_thought"]
 [ext_resource type="Script" path="res://scripts/fx/light_flicker.gd" id="6_light"]
 
@@ -98,9 +98,11 @@ breath_speed = 0.4
 position = Vector2(360, 346)
 script = ExtResource("3_player")
 sheet = ExtResource("4_sheet")
+depth_rows = 3
 
 [node name="Prompt" type="Label" parent="World"]
 visible = false
+z_index = 1000
 offset_right = 120.0
 offset_bottom = 12.0
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 0.85)

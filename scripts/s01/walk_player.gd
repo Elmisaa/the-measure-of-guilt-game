@@ -8,6 +8,8 @@ signal moved(x: float)
 
 @export var sheet: Texture2D
 @export var frames: int = 10
+## Rows in the sheet = the same animation pre-rendered at smaller sizes (depth).
+@export var depth_rows: int = 1
 @export var speed: float = 90.0
 @export var grid: float = 4.0
 
@@ -23,6 +25,7 @@ var frozen: bool = false
 var _sprite: Sprite2D
 var _t: float = 0.0
 var _walking: bool = false
+var _row: int = 0
 
 
 func _ready() -> void:
@@ -30,8 +33,9 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = sheet
 	_sprite.hframes = frames
+	_sprite.vframes = depth_rows
 	_sprite.centered = true
-	_sprite.offset = Vector2(0, -sheet.get_height() / 2.0)
+	_sprite.offset = Vector2(0, -sheet.get_height() / float(depth_rows) / 2.0)
 	add_child(_sprite)
 
 
@@ -59,23 +63,23 @@ func _process(delta: float) -> void:
 		position.y = clampf(position.y + vdir * depth_speed * delta, y_far, y_near)
 	_apply_depth()
 	_t += delta
-	if _walking:
-		_sprite.frame = 2 + int(_t * 10.0) % (frames - 2)
-	else:
-		_sprite.frame = int(_t * 1.5) % 2
+	var col: int = 2 + int(_t * 9.0) % (frames - 2) if _walking else int(_t * 1.5) % 2
+	_sprite.frame = _row * frames + col
 	# keep the art on the room's pixel grid
 	_sprite.position.x = roundf(position.x / grid) * grid - position.x
 
 
-## Farther from the camera = a bit smaller; snapped to a few sizes so pixels stay even.
+## Farther from the camera = smaller: pick a pre-rendered row (clean pixels, no scaling).
 func _apply_depth() -> void:
-	if y_far == y_near:
+	if y_far == y_near or depth_rows <= 1:
 		return
-	var k: float = clampf((position.y - y_far) / (y_near - y_far), 0.0, 1.0)
-	var s: float = lerpf(scale_far, 1.0, k)
-	s = roundf(s * 25.0) / 25.0
-	scale = Vector2(s, s)
+	var k: float = clampf((position.y - y_far) / (y_near - y_far), 0.0, 1.0)  # 0 far .. 1 near
+	_row = clampi(int(roundf((1.0 - k) * float(depth_rows - 1))), 0, depth_rows - 1)
 	z_index = int(position.y)
+
+
+func depth_row() -> int:
+	return _row
 
 
 func face_right(v: bool) -> void:
