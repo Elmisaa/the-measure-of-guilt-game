@@ -105,6 +105,11 @@ func _set_text_style(on_panel: bool) -> void:
 		_text.add_theme_color_override("font_color", INK)
 
 
+## True once the reaction has been shown up to its last page.
+func is_fully_read() -> bool:
+	return _stage == 2 and _page >= _pages.size() - 1
+
+
 func is_open() -> bool:
 	return _stage != 0
 
@@ -116,7 +121,7 @@ func _show_reaction() -> void:
 	_page = 0
 	_pages = TextPager.pages(_reaction, REACTION_PAGE) if not _reaction.is_empty() else PackedStringArray()
 	if _pages.size() > 0:
-		_thought.show_text(_pages[0])
+		_thought.show_text(_pages[0], 0.0, _pages.size() > 1)
 
 
 func _step() -> void:
@@ -125,7 +130,7 @@ func _step() -> void:
 	elif _stage == 2:
 		if _page < _pages.size() - 1:  # long reaction: one sentence group per click
 			_page += 1
-			_thought.show_text(_pages[_page])
+			_thought.show_text(_pages[_page], 0.0, _page < _pages.size() - 1)
 		else:
 			close()
 
@@ -153,7 +158,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
-		close()
+		if is_fully_read():
+			close()
+		else:
+			_step()  # Esc can't skip Alexei's thoughts: it just turns the page
 	elif event.is_action_pressed("ui_accept"):
 		get_viewport().set_input_as_handled()
 		_step()

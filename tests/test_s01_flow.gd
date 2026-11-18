@@ -80,7 +80,14 @@ func _run() -> void:
 		push_error("FAIL close-up not open"); ok = false
 	await _wait(1.0)
 	await _shot("6_closeup")
-	view._step()  # -> reaction page 1
+	var esc: InputEventKey = InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.physical_keycode = KEY_ESCAPE
+	esc.pressed = true
+	Input.parse_input_event(esc)  # Esc must not close before the thoughts are read
+	await _wait(0.3)
+	if not view.is_open():
+		push_error("FAIL document closed before reading the thoughts"); ok = false
 	await _wait(0.3)
 	if view._pages.size() < 2:
 		push_error("FAIL long reaction not paged: %d" % view._pages.size()); ok = false

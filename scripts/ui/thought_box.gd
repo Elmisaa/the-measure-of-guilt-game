@@ -7,6 +7,8 @@ const FADE_TIME: float = 0.25
 const MAX_LINE_CHARS: int = 95
 
 var _label: Label
+var _more: Label  ## blinking "..." — there is more to read, press Space/click
+var _blink_t: float = 0.0
 var _tween: Tween
 var _hide_left: float = -1.0
 
@@ -24,22 +26,38 @@ func _ready() -> void:
 	anchor_right = 0.5
 	anchor_top = 1.0
 	anchor_bottom = 1.0
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(row)
 	_label = Label.new()
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_label)
+	row.add_child(_label)
+	_more = Label.new()
+	_more.text = "..."
+	_more.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_more.size_flags_vertical = Control.SIZE_SHRINK_END
+	_more.add_theme_color_override("font_color", Color(0.7, 0.85, 0.9))
+	_more.visible = false
+	row.add_child(_more)
 	modulate.a = 0.0
 	visible = false
 
 
 func _process(delta: float) -> void:
+	if _more.visible:
+		_blink_t += delta
+		_more.modulate.a = 1.0 if fmod(_blink_t, 1.0) < 0.6 else 0.15
 	if _hide_left > 0.0:
 		_hide_left -= delta
 		if _hide_left <= 0.0:
 			hide_box()
 
 
-## duration <= 0: stays until hide_box().
-func show_text(text: String, duration: float = 0.0) -> void:
+## duration <= 0: stays until hide_box(). more: show a blinking "..." (text continues).
+func show_text(text: String, duration: float = 0.0, more: bool = false) -> void:
+	_more.visible = more
+	_blink_t = 0.0
 	_label.text = _two_lines(text) if text.length() > MAX_LINE_CHARS else text
 	var hud: Node = get_node_or_null("/root/Hud")  # not the global name: class_name scripts may compile before autoloads
 	if hud and not text.is_empty():

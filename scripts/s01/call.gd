@@ -294,7 +294,7 @@ func _update_blips() -> void:
 func _show_page() -> void:
 	var s: String = _pages[_page]
 	if _page_is_thought:
-		_thought.show_text(s)
+		_thought.show_text(s, 0.0, _page < _pages.size() - 1)
 		return
 	if _page_is_fyodor:
 		_fyodor_text.text = _fyodor_fmt % s
