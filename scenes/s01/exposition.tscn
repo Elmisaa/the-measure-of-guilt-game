@@ -181,28 +181,28 @@ mouse_filter = 2
 
 [node name="Badge" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
-offset_left = 172.0
-offset_top = 112.0
-offset_right = 184.0
-offset_bottom = 124.0
+offset_left = 166.0
+offset_top = 100.0
+offset_right = 192.0
+offset_bottom = 134.0
 script = ExtResource("3_marker")
 marker_id = "badge"
 
 [node name="Monitor" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
-offset_left = 102.0
-offset_top = 230.0
-offset_right = 114.0
-offset_bottom = 242.0
+offset_left = 66.0
+offset_top = 206.0
+offset_right = 140.0
+offset_bottom = 276.0
 script = ExtResource("3_marker")
 marker_id = "monitor"
 
 [node name="Chair" type="Control" parent="UI/Root/Markers"]
 anchors_preset = 0
-offset_left = 488.0
-offset_top = 220.0
-offset_right = 500.0
-offset_bottom = 232.0
+offset_left = 468.0
+offset_top = 206.0
+offset_right = 522.0
+offset_bottom = 262.0
 script = ExtResource("3_marker")
 marker_id = "chair"
 

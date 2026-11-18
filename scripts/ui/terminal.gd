@@ -15,6 +15,9 @@ const TEXT_W: float = 488.0
 
 var report_unlocked: bool = false
 var report_done: bool = false
+## Shown once, the first time the computer boots (set by the scene).
+var first_thought: String = ""
+var _first_thought_done: bool = false
 
 var _d: Dictionary = {}
 var _root: Control
@@ -26,6 +29,10 @@ var _choices: Dictionary = {}
 var _open: bool = false
 var _btn_normal: StyleBoxEmpty = StyleBoxEmpty.new()
 var _btn_hover: StyleBoxFlat
+var _thought: ThoughtBox
+var _wait_choice: bool = false
+
+const CHOICE_THOUGHT_TIME: float = 2.2
 
 
 func _ready() -> void:
@@ -54,8 +61,8 @@ func _build() -> void:
 	sb.anti_aliasing = false
 	sb.set_content_margin_all(14)
 	bezel.add_theme_stylebox_override("panel", sb)
-	bezel.position = Vector2(52, 38)
-	bezel.size = Vector2(536, 308)
+	bezel.position = Vector2(52, 36)
+	bezel.size = Vector2(532, 288)
 	_root.add_child(bezel)
 	var col: VBoxContainer = VBoxContainer.new()
 	col.add_theme_constant_override("separation", 6)
@@ -71,7 +78,7 @@ func _build() -> void:
 	line.custom_minimum_size = Vector2(0, 1)
 	col.add_child(line)
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(TEXT_W, 224)
+	scroll.custom_minimum_size = Vector2(TEXT_W, 204)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(scroll)
 	_body = VBoxContainer.new()
@@ -90,6 +97,9 @@ func _build() -> void:
 	sm.shader = sh
 	scan.material = sm
 	_root.add_child(scan)
+	# Alexei's thoughts while he works at the computer (below the monitor)
+	_thought = ThoughtBox.new()
+	_root.add_child(_thought)
 
 
 # --- public --------------------------------------------------------------
@@ -109,6 +119,9 @@ func open() -> void:
 	await get_tree().create_timer(0.5).timeout
 	if _open:
 		_show_menu()
+		if not _first_thought_done and not first_thought.is_empty():
+			_first_thought_done = true
+			_thought.show_text(first_thought, 5.0)
 
 
 func is_open() -> bool:
@@ -116,6 +129,7 @@ func is_open() -> bool:
 
 
 func close() -> void:
+	_thought.hide_box()
 	_open = false
 	visible = false
 	closed.emit()
@@ -209,14 +223,32 @@ func _show_question(i: int) -> void:
 	_screen(_show_menu if i == 0 else func() -> void: _show_question(i - 1))
 	_body.add_child(_label(str(r["title"]), GREEN_DIM))
 	_body.add_child(_label("%d/%d  %s" % [i + 1, qs.size(), str(q["field"])], GREEN))
+	if q.has("think"):
+		_thought.show_text(str(q["think"]))
 	for opt: String in ["a", "b"]:
 		var n: String = "1" if opt == "a" else "2"
-		_item("%s. %s" % [n, str(q[opt])], func() -> void:
-			_choices[str(q["id"])] = opt
-			_show_question(i + 1), n)
+		_item("%s. %s" % [n, str(q[opt])], func() -> void: _choose(i, q, opt), n)
+
+
+## A choice: Alexei reacts in a thought, then the next question.
+func _choose(i: int, q: Dictionary, opt: String) -> void:
+	if _wait_choice:
+		return
+	_choices[str(q["id"])] = opt
+	var think: String = str(q.get("think_" + opt, ""))
+	if think.is_empty():
+		_show_question(i + 1)
+		return
+	_wait_choice = true
+	_thought.show_text(think)
+	await get_tree().create_timer(CHOICE_THOUGHT_TIME).timeout
+	_wait_choice = false
+	if _open:
+		_show_question(i + 1)
 
 
 func _show_sign() -> void:
+	_thought.hide_box()
 	var r: Dictionary = _d["report"]
 	_screen(func() -> void: _show_question(r["questions"].size() - 1))
 	_body.add_child(_label(str(r["title"]), GREEN_DIM))
@@ -316,6 +348,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var k: InputEventKey = event as InputEventKey
 	if k == null or not k.pressed or k.echo:
+		return
+	if _wait_choice:
+		get_viewport().set_input_as_handled()
 		return
 	if k.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()

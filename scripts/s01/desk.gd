@@ -43,6 +43,7 @@ func _ready() -> void:
 	_view.closed.connect(_on_view_closed)
 	_term = DialogueData.load_file("s01_terminal")
 	_computer.activated.connect(_open_terminal)
+	_terminal.first_thought = str(_data.get("markers", {}).get("computer", ""))
 	_terminal.closed.connect(_on_terminal_closed)
 	_terminal.report_filed.connect(func(c: Dictionary) -> void: _report_choices = c)
 	for m: Node in _markers.get_children():
