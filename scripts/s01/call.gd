@@ -199,6 +199,7 @@ func _event(name: String) -> void:
 			_glitch_spike = 0.8
 			_set_tension(0.0)
 			_call_over = true
+			_saturation = 1.0  # colour snaps back at once
 			await get_tree().create_timer(0.8).timeout
 			Audio.play_loop(SFX + "dialtone.wav", -10.0)
 			await get_tree().create_timer(1.5).timeout
