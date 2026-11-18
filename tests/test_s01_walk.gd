@@ -63,12 +63,26 @@ func _run() -> void:
 	if w._state != "coffee2":
 		push_error("FAIL state after first coffee: %s" % w._state); ok = false
 	w._interact("coffee")
-	await _wait(3.4)
-	if w._state != "phone" or not root.get_node("Audio")._loop.playing:
-		push_error("FAIL phone not ringing: %s" % w._state); ok = false
-	await _shot("4_phone")
+	await _wait(6.0)
+	if w._state != "home" or root.get_node("Audio")._loop.playing:
+		push_error("FAIL after second coffee should be free 'home' state, no ring: %s" % w._state); ok = false
+	# depth: step toward the wall
+	Input.action_press("move_up")
+	await _wait(0.8)
+	Input.action_release("move_up")
+	var pl: Node2D = w.get_node("World/Player")
+	if pl.scale.x >= 0.99:
+		push_error("FAIL depth did not shrink the player"); ok = false
+	await _shot("4_depth")
 	await _walk_to(w, 420.0)
 	await _wait(0.2)
+	if w._near != "desk":
+		push_error("FAIL not near desk (pack): %s" % w._near); ok = false
+	w._interact("desk")
+	await _wait(3.0)
+	if w._state != "phone" or not root.get_node("Audio")._loop.playing:
+		push_error("FAIL phone not ringing after packing: %s" % w._state); ok = false
+	await _shot("5_phone")
 	if w._near != "desk":
 		push_error("FAIL not near desk: %s x=%.0f busy=%s frozen=%s" % [w._near, w.get_node("World/Player").position.x, w._busy, w.get_node("World/Player").frozen]); ok = false
 	w._interact("desk")

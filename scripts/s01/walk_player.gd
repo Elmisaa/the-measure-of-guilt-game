@@ -11,6 +11,11 @@ signal moved(x: float)
 @export var speed: float = 90.0
 @export var grid: float = 4.0
 
+## Depth: W/S step toward the wall (y_far) or back (y_near); smaller when farther.
+var y_far: float = 346.0
+var y_near: float = 346.0
+var scale_far: float = 1.0
+@export var depth_speed: float = 40.0
 var min_x: float = 0.0
 var max_x: float = 2000.0
 var frozen: bool = false
@@ -31,7 +36,7 @@ func _ready() -> void:
 
 
 func _ensure_actions() -> void:
-	for pair: Array in [["move_left", [KEY_A, KEY_LEFT]], ["move_right", [KEY_D, KEY_RIGHT]], ["interact", [KEY_E]]]:
+	for pair: Array in [["move_left", [KEY_A, KEY_LEFT]], ["move_right", [KEY_D, KEY_RIGHT]], ["move_up", [KEY_W, KEY_UP]], ["move_down", [KEY_S, KEY_DOWN]], ["interact", [KEY_E]]]:
 		var action: String = pair[0]
 		if InputMap.has_action(action):
 			continue
@@ -44,11 +49,15 @@ func _ensure_actions() -> void:
 
 func _process(delta: float) -> void:
 	var dir: float = 0.0 if frozen else Input.get_axis("move_left", "move_right")
-	_walking = absf(dir) > 0.1
-	if _walking:
+	var vdir: float = 0.0 if frozen or y_far == y_near else Input.get_axis("move_up", "move_down")
+	_walking = absf(dir) > 0.1 or absf(vdir) > 0.1
+	if absf(dir) > 0.1:
 		position.x = clampf(position.x + dir * speed * delta, min_x, max_x)
 		_sprite.flip_h = dir < 0.0
 		moved.emit(position.x)
+	if absf(vdir) > 0.1:
+		position.y = clampf(position.y + vdir * depth_speed * delta, y_far, y_near)
+	_apply_depth()
 	_t += delta
 	if _walking:
 		_sprite.frame = 2 + int(_t * 10.0) % (frames - 2)
@@ -56,6 +65,17 @@ func _process(delta: float) -> void:
 		_sprite.frame = int(_t * 1.5) % 2
 	# keep the art on the room's pixel grid
 	_sprite.position.x = roundf(position.x / grid) * grid - position.x
+
+
+## Farther from the camera = a bit smaller; snapped to a few sizes so pixels stay even.
+func _apply_depth() -> void:
+	if y_far == y_near:
+		return
+	var k: float = clampf((position.y - y_far) / (y_near - y_far), 0.0, 1.0)
+	var s: float = lerpf(scale_far, 1.0, k)
+	s = roundf(s * 25.0) / 25.0
+	scale = Vector2(s, s)
+	z_index = int(position.y)
 
 
 func face_right(v: bool) -> void:

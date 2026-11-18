@@ -1,6 +1,7 @@
 extends Node2D
 ## s01: after the report Alexei wants coffee — walk through the hall (side view).
-## Coffee → a second cup → the phone rings at his desk → walk back → answer → the call.
+## Coffee → a second cup → "time to go home" → the player explores freely and decides
+## when to go to the desk → pack things → the phone rings right there → answer → the call.
 ## Spots and thoughts: data/dialogues/s01_walk.json. A/D or arrows walk, E/Space/click use.
 
 const CALL_SCENE: String = "res://scenes/s01/call.tscn"
@@ -31,6 +32,11 @@ func _ready() -> void:
 	_player.min_x = b[0]
 	_player.max_x = b[1]
 	_player.position.x = float(_d.get("spawn_x", 360))
+	var dep: Dictionary = _d.get("depth", {})
+	_player.y_far = float(dep.get("y_far", 346))
+	_player.y_near = float(dep.get("y_near", 346))
+	_player.scale_far = float(dep.get("scale_far", 1.0))
+	_player.position.y = _player.y_near
 	for s: Dictionary in _d.get("spots", []):
 		_add_spot(s)
 	Hud.set_hud_visible(true)
@@ -87,6 +93,8 @@ func _update_near() -> void:
 func _label_for(id: String) -> String:
 	if id == "desk" and _state == "phone":
 		return str(_d["coffee"]["desk_answer"])
+	if id == "desk" and _state == "home":
+		return str(_d["coffee"]["desk_pack"])
 	return str(_spots[id]["name"])
 
 
@@ -107,6 +115,8 @@ func _interact(id: String) -> void:
 		"desk":
 			if _state == "phone":
 				_answer_phone()
+			elif _state == "home":
+				_pack()
 			else:
 				_thought.show_text(str(_spots[id]["thought"]), THOUGHT_TIME)
 		_:
@@ -132,16 +142,29 @@ func _coffee() -> void:
 		"coffee2":
 			_busy = true
 			_player.frozen = true
-			_thought.show_text(str(c["second"]))
-			await get_tree().create_timer(2.8).timeout
-			Audio.play_loop(RING, -12.0)  # far away, at his desk
-			_thought.show_text(str(c["phone_thought"]), THOUGHT_TIME)
-			_state = "phone"
-			Hud.set_objective(str(_d["objectives"]["phone"]))
+			for line: String in c["second"]:
+				_thought.show_text(line)
+				await get_tree().create_timer(2.6).timeout
+			_thought.hide_box()
+			_state = "home"  # free to explore; he goes to the desk when the player decides
+			Hud.set_objective(str(_d["objectives"]["home"]))
 			_player.frozen = false
 			_busy = false
 		_:
 			pass
+
+
+## Packing up at the desk — and the phone rings right next to him.
+func _pack() -> void:
+	_busy = true
+	_player.frozen = true
+	_thought.show_text(str(_d["coffee"]["pack"]))
+	await get_tree().create_timer(2.6).timeout
+	Audio.play_loop(RING, -4.0)
+	_thought.show_text(str(_d["coffee"]["phone_thought"]), THOUGHT_TIME)
+	_state = "phone"
+	Hud.set_objective(str(_d["objectives"]["phone"]))
+	_busy = false
 
 
 func _answer_phone() -> void:
