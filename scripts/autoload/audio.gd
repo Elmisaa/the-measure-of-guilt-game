@@ -20,6 +20,9 @@ var _ui_hover: AudioStreamPlayer
 var _ui_click: AudioStreamPlayer
 var _icon_click: AudioStreamPlayer
 var _loop: AudioStreamPlayer
+var _phone_blips: Array[AudioStreamPlayer] = []
+var _sfx: Array[AudioStreamPlayer] = []
+var _next_sfx: int = 0
 
 
 func _ready() -> void:
@@ -41,6 +44,12 @@ func _ready() -> void:
 	_icon_click = _make_player(UI_CLICK, ICON_DB)
 	_loop = AudioStreamPlayer.new()
 	add_child(_loop)
+	for i in BLIP_VOICES:
+		_phone_blips.append(_make_player("res://assets/audio/sfx/blip_phone.wav", BLIP_DB - 2.0))
+	for i in 4:
+		var p: AudioStreamPlayer = AudioStreamPlayer.new()
+		add_child(p)
+		_sfx.append(p)
 	play_music()
 
 
@@ -98,6 +107,35 @@ func bind_button(c: Control) -> void:
 func play_music(fade: float = 2.5) -> void:
 	_music.play()
 	create_tween().tween_property(_music, "volume_db", MUSIC_DB, fade)
+
+
+## Voice heard through a phone: buzzy, band-limited blip.
+func blip_phone(pitch: float = 1.0) -> void:
+	var p: AudioStreamPlayer = _phone_blips[_next_blip]
+	_next_blip = (_next_blip + 1) % _phone_blips.size()
+	p.pitch_scale = pitch * randf_range(0.88, 1.15)
+	p.play()
+
+
+## One-shot sound effect.
+func sfx(path: String, db: float = -6.0) -> void:
+	var p: AudioStreamPlayer = _sfx[_next_sfx]
+	_next_sfx = (_next_sfx + 1) % _sfx.size()
+	p.stream = load(path)
+	p.volume_db = db
+	p.play()
+
+
+## Switch background music to another looping track.
+func play_track(path: String, fade: float = 1.5, db: float = MUSIC_DB) -> void:
+	_music.stop()
+	var s: AudioStream = load(path)
+	if "loop" in s:
+		s.set("loop", true)
+	_music.stream = s
+	_music.volume_db = -60.0
+	_music.play()
+	create_tween().tween_property(_music, "volume_db", db, fade)
 
 
 ## Speech blip; pitch ~1.0 per speaker, randomized a little so it sounds like syllables.

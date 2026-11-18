@@ -17,7 +17,8 @@ func _ready() -> void:
 	add_child(_rect)
 
 
-func go_to(path: String) -> void:
+## hold: seconds to stay on black between scenes (e.g. "picking up the phone").
+func go_to(path: String, hold: float = 0.0) -> void:
 	if _busy:
 		return
 	_busy = true
@@ -25,6 +26,8 @@ func go_to(path: String) -> void:
 	var t: Tween = create_tween()
 	t.tween_property(_rect, "modulate:a", 1.0, FADE_TIME)
 	await t.finished
+	if hold > 0.0:
+		await get_tree().create_timer(hold).timeout
 	var err: Error = get_tree().change_scene_to_file(path)
 	if err != OK:
 		push_error("SceneRouter: cannot open %s (%s)" % [path, error_string(err)])

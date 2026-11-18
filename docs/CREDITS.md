@@ -7,3 +7,6 @@
 | Звук речи voice_blip | сгенерирован `tools/make_blip.py` | свой | assets/audio/sfx/ |
 | Звонок телефона (freesound #629201) | audacitier | **уточнить** | assets/audio/sfx/ |
 | «Lone Ranger guitar theme 2» (freesound #875527) | theojt | **уточнить** | assets/audio/music/ |
+| «Horror Beneath the Silence» (freesound #880038) | daniel_brooks | **уточнить** | assets/audio/music/ |
+| «Heartbeat tense» (freesound #879917) | woodbetweenstudio | **уточнить** (пока не используется) | assets/audio/sfx/ |
+| pickup / knock / hangup / dialtone / blip_phone | черновики, `tools/make_sfx.py` | свой | assets/audio/sfx/ |

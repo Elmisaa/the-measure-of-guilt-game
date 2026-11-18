@@ -46,3 +46,6 @@ Pixeloid Sans / Sans Bold / Mono (GGBotNet, SIL OFL 1.1), 9 px. Файлы и л
 - Задания — `objective` в JSON сцены. Журнал пишется автоматически: реплики (exposition) и все мысли (ThoughtBox).
 - Звуки UI: `ui_hover`/`ui_click` (`tools/make_ui_sounds.py`), подключение — `Audio.bind_button(control)`.
 - В скриптах с class_name не обращаться к автозагрузкам по имени (в тестах `-s` они компилируются раньше) — брать через `/root/<Имя>`.
+
+## 17. Тесты не мешают пользователю (2026-11-18)
+Автотесты гонять `--headless`. Скриншоты — только с окном за экраном: `--position 20000,20000`. В каждом тесте — `SAFETY_TIMEOUT` (90 с), чтобы окно никогда не зависало.

@@ -6,6 +6,9 @@ const NOT_READY_TIME: float = 3.0
 const MARKER_THOUGHT_TIME: float = 4.0
 const PHONE_DELAY: float = 1.5
 const DOC_COUNT: int = 3
+const CALL_SCENE: String = "res://scenes/s01/call.tscn"
+const PICKUP_SFX: String = "res://assets/audio/sfx/pickup.wav"
+const PICKUP_HOLD: float = 1.2
 
 @onready var _thought: ThoughtBox = $UI/Root/ThoughtBox
 @onready var _docs: Node2D = $Documents
@@ -76,11 +79,12 @@ func _start_phone() -> void:
 	create_tween().tween_property(_answer, "modulate:a", 1.0, 0.4)
 
 
+## Phone answered: ring stops, black screen while Alexei picks up the receiver, then the call.
 func _on_answer() -> void:
 	_answer.disabled = true
 	Audio.stop_loop()
-	create_tween().tween_property(_answer, "modulate:a", 0.0, 0.3)
-	_thought.show_text(str(_data.get("after_answer", "")))
+	Audio.sfx(PICKUP_SFX, -4.0)
+	SceneRouter.go_to(CALL_SCENE, PICKUP_HOLD)
 
 
 func _set_docs_interactive(value: bool) -> void:

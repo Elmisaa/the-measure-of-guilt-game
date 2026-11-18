@@ -4,6 +4,7 @@ extends PanelContainer
 
 const BOTTOM_MARGIN: float = 8.0
 const FADE_TIME: float = 0.25
+const MAX_LINE_CHARS: int = 95
 
 var _label: Label
 var _tween: Tween
@@ -39,7 +40,7 @@ func _process(delta: float) -> void:
 
 ## duration <= 0: stays until hide_box().
 func show_text(text: String, duration: float = 0.0) -> void:
-	_label.text = text
+	_label.text = _two_lines(text) if text.length() > MAX_LINE_CHARS else text
 	var hud: Node = get_node_or_null("/root/Hud")  # not the global name: class_name scripts may compile before autoloads
 	if hud and not text.is_empty():
 		hud.log_thought(text)
@@ -52,6 +53,17 @@ func show_text(text: String, duration: float = 0.0) -> void:
 	visible = true
 	_fade(1.0)
 	_hide_left = duration
+
+
+## Long thoughts: break once at the space nearest the middle (autowrap would
+## size the plate before it knows its width and blow it up to full screen).
+func _two_lines(text: String) -> String:
+	var mid: int = text.length() / 2
+	for d in mid:
+		for i: int in [mid - d, mid + d]:
+			if i > 0 and i < text.length() and text[i] == " ":
+				return text.substr(0, i) + "\n" + text.substr(i + 1)
+	return text
 
 
 func hide_box() -> void:

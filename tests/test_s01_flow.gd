@@ -6,8 +6,14 @@ extends SceneTree
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
 
 
+const SAFETY_TIMEOUT: float = 90.0  ## never leave a window hanging
+
+
 func _init() -> void:
 	_run.call_deferred()
+	create_timer(SAFETY_TIMEOUT).timeout.connect(func() -> void:
+		push_error("TEST TIMEOUT")
+		quit(2))
 
 
 func _shot(name: String) -> void:
