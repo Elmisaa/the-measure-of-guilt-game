@@ -7,7 +7,7 @@ Claude читает этот файл в начале каждой сессии 
 Ждёт согласования: участок с ходьбой — проба графики (4 генерации), выбор личного дела Алексея (docs/scenes/s01_walk_proposal.md)
 
 ## Окружение
-Godot: 4.7.2, путь: /Applications/Godot.app/Contents/MacOS/Godot
+Godot: 4.7.2. Путь к бинарнику задается локально через переменную GODOT_PATH (см. docs/SETUP_WINDOWS.md).
 Codex CLI: 0.169.0 (Node 26 LTS через nvm), вход: да (ChatGPT)
 Плагин Codex: codex@openai-codex 1.0.6 установлен (user scope), setup ready, review gate выключен
 
