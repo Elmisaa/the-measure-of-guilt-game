@@ -117,7 +117,9 @@ func _run() -> void:
 	if not term.report_unlocked:
 		push_error("FAIL report not unlocked after reading all documents"); ok = false
 	desk._open_terminal()
-	await _wait(2.2)
+	await _wait(10.5)  # first boot is long (memory check, modem...)
+	if not term._booted:
+		push_error("FAIL terminal did not finish booting"); ok = false
 	await _shot("11_terminal_menu")
 	term._show_result("Коул")
 	await _wait(0.3)
@@ -129,11 +131,30 @@ func _run() -> void:
 	term._file_report()
 	await _wait(0.3)
 	term.close()
-	await _wait(0.5)
+	await _wait(0.1)
+	await _shot("13b_crt_off")
+	await _wait(0.8)
 	await _shot("14_report_thought")
 	if root.get_node("GameState").get_flag("report_cole_closed", true) != false:
 		push_error("FAIL report choice not stored"); ok = false
-	await _wait(4.0)
+	await _wait(4.4)
+	# coffee break: "Взять кружку" -> item taken (HUD toast) -> "Встать" -> the hall
+	var btns: Array = desk.get_node("UI/Root").find_children("*", "Button", false, false).filter(func(b: Node) -> bool: return b != desk._answer and (b as Button).text == "Взять кружку")
+	if btns.is_empty():
+		push_error("FAIL no 'Взять кружку' button"); ok = false
+	else:
+		await _shot("15_take_cup")
+		(btns[0] as Button).pressed.emit()
+		await _wait(0.9)
+		if not root.get_node("GameState").has_item("cup_old"):
+			push_error("FAIL cup not taken"); ok = false
+		await _shot("16_cup_taken")
+		var st: Array = desk.get_node("UI/Root").find_children("*", "Button", false, false).filter(func(b: Node) -> bool: return (b as Button).text == "Встать")
+		if st.is_empty():
+			push_error("FAIL no 'Встать' button"); ok = false
+		else:
+			(st[0] as Button).pressed.emit()
+	await _wait(2.0)
 	if current_scene == null or current_scene.name != "Walk":
 		push_error("FAIL report did not lead to the walk hall: %s" % [current_scene]); ok = false
 	print("S01 FLOW: ", "OK" if ok else "FAILED")

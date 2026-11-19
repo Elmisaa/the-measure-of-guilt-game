@@ -27,12 +27,21 @@ var _hotkeys: Dictionary = {}
 var _back: Callable = Callable()
 var _choices: Dictionary = {}
 var _open: bool = false
+var _crt: Control
+var _flash: ColorRect
+var _closing: bool = false
+var _booted: bool = false
+var _boot_gen: int = 0
+const CRT_OFF: String = "res://assets/audio/sfx/crt_off.wav"
 var _btn_normal: StyleBoxEmpty = StyleBoxEmpty.new()
 var _btn_hover: StyleBoxFlat
 var _thought: ThoughtBox
-var _wait_choice: bool = false
+var _clock: Label
+## In-game time on the computer: starts at 01:47:00 and keeps running (real seconds).
+var _clock_secs: float = 1.0 * 3600.0 + 47.0 * 60.0
+const CLOCK_DATE: String = "18.11.98"
 
-const CHOICE_THOUGHT_TIME: float = 2.2
+const CHOICE_THOUGHT_TIME: float = 3.0
 
 
 func _ready() -> void:
@@ -63,7 +72,12 @@ func _build() -> void:
 	bezel.add_theme_stylebox_override("panel", sb)
 	bezel.position = Vector2(52, 36)
 	bezel.size = Vector2(532, 288)
-	_root.add_child(bezel)
+	_crt = Control.new()
+	_crt.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_crt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_crt.pivot_offset = bezel.position + bezel.size / 2.0
+	_root.add_child(_crt)
+	_crt.add_child(bezel)
 	var col: VBoxContainer = VBoxContainer.new()
 	col.add_theme_constant_override("separation", 6)
 	bezel.add_child(col)
@@ -72,7 +86,8 @@ func _build() -> void:
 	var title: Label = _label(str(_d.get("header", "")), GREEN)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_label(str(_d.get("clock", "")), GREEN_DIM))
+	_clock = _label(_clock_text(), GREEN_DIM)
+	head.add_child(_clock)
 	var line: ColorRect = ColorRect.new()
 	line.color = GREEN_DIM
 	line.custom_minimum_size = Vector2(0, 1)
@@ -96,7 +111,14 @@ func _build() -> void:
 	var sm: ShaderMaterial = ShaderMaterial.new()
 	sm.shader = sh
 	scan.material = sm
-	_root.add_child(scan)
+	_crt.add_child(scan)
+	# white glow for switching off (the picture collapses into a line, then a dot)
+	_flash = ColorRect.new()
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.position = scan.position
+	_flash.size = scan.size
+	_flash.color = Color(0.85, 1.0, 0.88, 0.0)
+	_crt.add_child(_flash)
 	# Alexei's thoughts while he works at the computer (below the monitor)
 	_thought = ThoughtBox.new()
 	_root.add_child(_thought)
@@ -105,18 +127,31 @@ func _build() -> void:
 # --- public --------------------------------------------------------------
 
 func open() -> void:
+	if _closing:
+		return
 	_open = true
 	visible = true
+	_crt.scale = Vector2.ONE
+	_flash.color.a = 0.0
 	_audio("sfx", "res://assets/audio/sfx/crt_on.wav", -6.0)
 	_clear()
 	_footer.visible = false
-	for l: String in _d.get("boot", []):
-		_body.add_child(_label(l, GREEN))
-		_audio("sfx", "res://assets/audio/sfx/key_tick.wav", -18.0)
-		await get_tree().create_timer(0.18).timeout
-		if not _open:
+	var lines: Array = _d.get("boot", []) if not _booted else _d.get("resume", [])
+	_boot_gen += 1
+	var gen: int = _boot_gen  # closing and reopening during the boot starts it again
+	for l: Variant in lines:
+		if not _open or gen != _boot_gen:
 			return
-	await get_tree().create_timer(0.5).timeout
+		if l is Dictionary:
+			await _boot_step(l)
+		else:
+			_body.add_child(_label(str(l), GREEN))
+			_audio("sfx", "res://assets/audio/sfx/key_tick.wav", -18.0)
+			await get_tree().create_timer(0.35 if _booted else 0.3).timeout
+	if not _open or gen != _boot_gen:
+		return
+	_booted = true
+	await get_tree().create_timer(0.7).timeout
 	if _open:
 		_show_menu()
 		if not _first_thought_done and not first_thought.is_empty():
@@ -124,14 +159,62 @@ func open() -> void:
 			_thought.show_text(first_thought, 5.0)
 
 
+## One animated boot line: memory counter, or dots appearing then a result.
+func _boot_step(l: Dictionary) -> void:
+	var lab: Label = _label(str(l.get("text", "")), GREEN)
+	_body.add_child(lab)
+	var base: String = lab.text
+	if l.has("mem"):
+		var total: int = int(l["mem"])
+		var kb: int = 0
+		while kb < total and _open and is_instance_valid(lab):
+			kb = mini(total, kb + 32)
+			lab.text = "%s %d" % [base, kb]
+			_audio("sfx", "res://assets/audio/sfx/key_tick.wav", -24.0)
+			await get_tree().create_timer(0.06).timeout
+		if not is_instance_valid(lab):
+			return
+		lab.text = "%s %d%s" % [base, total, str(l.get("result", ""))]
+	else:
+		var dt: float = float(l.get("dot_time", 0.16))
+		if l.get("modem", false):
+			_audio("sfx", "res://assets/audio/sfx/dialtone.wav", -22.0)
+		for i: int in int(l.get("dots", 3)):
+			if not _open or not is_instance_valid(lab):
+				return
+			lab.text = base + " " + ".".repeat(i + 1)
+			await get_tree().create_timer(dt).timeout
+		if not is_instance_valid(lab):
+			return
+		lab.text = lab.text + str(l.get("result", ""))
+	_audio("sfx", "res://assets/audio/sfx/key_tick.wav", -16.0)
+	await get_tree().create_timer(0.25).timeout
+
+
 func is_open() -> bool:
 	return _open
 
 
+## Switching off like an old CRT: a flash, the picture collapses to a line, then to a dot.
 func close() -> void:
+	if _closing:
+		return
+	_closing = true
 	_thought.hide_box()
 	_open = false
+	_audio("sfx", CRT_OFF, -8.0)
+	var t: Tween = create_tween()
+	t.tween_property(_flash, "color:a", 0.9, 0.06)
+	t.tween_property(_crt, "scale", Vector2(1.0, 0.012), 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(_crt, "scale", Vector2(0.004, 0.012), 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_interval(0.12)
+	t.tween_property(_crt, "modulate:a", 0.0, 0.1)
+	await t.finished
 	visible = false
+	_crt.scale = Vector2.ONE
+	_crt.modulate.a = 1.0
+	_flash.color.a = 0.0
+	_closing = false
 	closed.emit()
 
 
@@ -146,6 +229,8 @@ func _show_menu() -> void:
 		match id:
 			"search": cb = _show_search
 			"cases": cb = func() -> void: _show_list(str(_d["cases_title"]), _d["cases"], _show_menu)
+			"cards": cb = func() -> void: _show_list(str(_d["cards_title"]), _cards(), _show_menu)
+			"news": cb = func() -> void: _show_list(str(_d["news_title"]), _d["news"], _show_menu)
 			"inbox": cb = func() -> void: _show_list(str(_d["inbox_title"]), _d["memos"], _show_menu)
 			"report": cb = _show_report_entry
 			_: cb = close
@@ -157,7 +242,7 @@ func _show_search() -> void:
 	_body.add_child(_label(str(_d.get("search_prompt", "")), GREEN))
 	var le: LineEdit = LineEdit.new()
 	le.custom_minimum_size = Vector2(220, 0)
-	le.max_length = 20
+	le.max_length = 24
 	le.add_theme_color_override("font_color", GREEN)
 	le.add_theme_color_override("caret_color", GREEN)
 	var sb: StyleBoxFlat = StyleBoxFlat.new()
@@ -223,32 +308,21 @@ func _show_question(i: int) -> void:
 	_screen(_show_menu if i == 0 else func() -> void: _show_question(i - 1))
 	_body.add_child(_label(str(r["title"]), GREEN_DIM))
 	_body.add_child(_label("%d/%d  %s" % [i + 1, qs.size(), str(q["field"])], GREEN))
-	if q.has("think"):
-		_thought.show_text(str(q["think"]))
 	for opt: String in ["a", "b"]:
 		var n: String = "1" if opt == "a" else "2"
 		_item("%s. %s" % [n, str(q[opt])], func() -> void: _choose(i, q, opt), n)
 
 
-## A choice: Alexei reacts in a thought, then the next question.
+## A choice: one short thought from Alexei, and the next question right away (no waiting).
 func _choose(i: int, q: Dictionary, opt: String) -> void:
-	if _wait_choice:
-		return
 	_choices[str(q["id"])] = opt
 	var think: String = str(q.get("think_" + opt, ""))
-	if think.is_empty():
-		_show_question(i + 1)
-		return
-	_wait_choice = true
-	_thought.show_text(think)
-	await get_tree().create_timer(CHOICE_THOUGHT_TIME).timeout
-	_wait_choice = false
-	if _open:
-		_show_question(i + 1)
+	_show_question(i + 1)
+	if not think.is_empty() and _open:
+		_thought.show_text(think, CHOICE_THOUGHT_TIME)
 
 
 func _show_sign() -> void:
-	_thought.hide_box()
 	var r: Dictionary = _d["report"]
 	_screen(func() -> void: _show_question(r["questions"].size() - 1))
 	_body.add_child(_label(str(r["title"]), GREEN_DIM))
@@ -262,19 +336,33 @@ func _file_report() -> void:
 	report_done = true
 	_audio("ui_click")
 	_screen(_show_menu)
-	_body.add_child(_label(str(_d["report"]["filed"]), GREEN))
+	_body.add_child(_label(str(_d["report"]["filed"]).replace("01:52", clock_hm()), GREEN))
 	_item("0. ВЫХОД", close, "0")
 	report_filed.emit(_choices.duplicate())
 
 
 # --- helpers -------------------------------------------------------------
 
+## Cards = records by key, shown as a list.
+func _cards() -> Array:
+	var out: Array = []
+	for c: Dictionary in _d.get("cards", []):
+		out.append({"label": str(c["label"]), "text": str(_d["records"].get(str(c["key"]), ""))})
+	return out
+
+
 func _lookup(query: String) -> String:
-	var q: String = query.strip_edges().to_upper()
-	var aliases: Dictionary = {"КОУЛ": "COLE", "АЛЬВАРЕС": "ALVAREZ", "АЛЬВАРЕЗ": "ALVAREZ", "КЛЯЙН": "KLEIN", "КЛЕЙН": "KLEIN", "КАРАМАЗОВ": "KARAMAZOV"}
-	for a: String in aliases:
+	var q: String = " ".join(query.strip_edges().to_upper().split(" ", false)).replace(",", "")
+	var aliases: Dictionary = _d.get("aliases", {})
+	var keys: Array = aliases.keys()
+	keys.sort_custom(func(a: String, b: String) -> bool: return a.length() > b.length())  # "КАРАМАЗОВ ИВАН" before "КАРАМАЗОВ"
+	for a: String in keys:
 		if q.begins_with(a):
 			return str(aliases[a])
+	# "ИВАН КАРАМАЗОВ": the first name first
+	var parts: PackedStringArray = q.split(" ")
+	if parts.size() == 2 and aliases.has(parts[1] + " " + parts[0]):
+		return str(aliases[parts[1] + " " + parts[0]])
 	for k: String in _d.get("records", {}):
 		if q != "" and (q.begins_with(k) or k.begins_with(q)) and q.length() >= 3:
 			return k
@@ -343,14 +431,27 @@ func _audio(method: String, path: String = "", db: float = 0.0) -> void:
 		a.call(method)
 
 
+func _process(delta: float) -> void:
+	_clock_secs += delta  # time passes even while the computer is off
+	if _open:
+		_clock.text = _clock_text()
+
+
+func _clock_text() -> String:
+	var s: int = int(_clock_secs) % 86400
+	return "%s  %02d:%02d:%02d" % [CLOCK_DATE, s / 3600, (s / 60) % 60, s % 60]
+
+
+func clock_hm() -> String:
+	var s: int = int(_clock_secs) % 86400
+	return "%02d:%02d" % [s / 3600, (s / 60) % 60]
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not _open:
 		return
 	var k: InputEventKey = event as InputEventKey
 	if k == null or not k.pressed or k.echo:
-		return
-	if _wait_choice:
-		get_viewport().set_input_as_handled()
 		return
 	if k.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()

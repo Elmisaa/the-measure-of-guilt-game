@@ -1,11 +1,13 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/s01/walk.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/s01/walk_hall.png" id="2_bg"]
 [ext_resource type="Script" path="res://scripts/s01/walk_player.gd" id="3_player"]
-[ext_resource type="Texture2D" path="res://assets/characters/alexei/walk_rig.png" id="4_sheet"]
+[ext_resource type="Texture2D" path="res://assets/characters/alexei/walk_side_depth.png" id="4_sheet"]
 [ext_resource type="Script" path="res://scripts/ui/thought_box.gd" id="5_thought"]
 [ext_resource type="Script" path="res://scripts/fx/light_flicker.gd" id="6_light"]
+[ext_resource type="Texture2D" path="res://assets/characters/alexei/run_side_depth.png" id="7_run"]
+[ext_resource type="Script" path="res://scripts/props/radio.gd" id="8_radio"]
 
 [sub_resource type="Gradient" id="light_grad"]
 offsets = PackedFloat32Array(0, 0.45, 1)
@@ -94,11 +96,16 @@ breath_speed = 0.4
 
 [node name="Spots" type="Node2D" parent="World"]
 
+[node name="Radio" type="Node2D" parent="World"]
+position = Vector2(1700, 236)
+script = ExtResource("8_radio")
+
 [node name="Player" type="Node2D" parent="World"]
 position = Vector2(360, 346)
 script = ExtResource("3_player")
 sheet = ExtResource("4_sheet")
 depth_rows = 3
+run_sheet = ExtResource("7_run")
 
 [node name="Prompt" type="Label" parent="World"]
 visible = false

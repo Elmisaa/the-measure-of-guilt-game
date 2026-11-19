@@ -1,11 +1,12 @@
 class_name ClickZone
 extends Control
 ## Invisible clickable area over something painted into the background (e.g. the CRT
-## monitor). Shows a faint outline on hover; emits activated on click.
+## monitor). On hover — thin corner brackets (same as interactive items); click -> activated.
 
 signal activated
 
-@export var outline: Color = Color(0.8, 0.9, 1.0, 0.35)
+@export var outline: Color = Color(0.92, 0.95, 1.0, 0.55)
+const BRACKET: float = 5.0
 
 var _hover: bool = false
 var enabled: bool = true
@@ -27,7 +28,12 @@ func set_enabled(v: bool) -> void:
 
 func _draw() -> void:
 	if _hover and enabled:
-		draw_rect(Rect2(Vector2.ZERO, size).grow(-1), outline, false, 2.0)
+		var s: Vector2 = size - Vector2.ONE
+		for corner: Vector2 in [Vector2.ZERO, Vector2(s.x, 0), Vector2(0, s.y), s]:
+			var dx: float = BRACKET if corner.x == 0 else -BRACKET
+			var dy: float = BRACKET if corner.y == 0 else -BRACKET
+			draw_line(corner, corner + Vector2(dx, 0), outline, 1.0)
+			draw_line(corner, corner + Vector2(0, dy), outline, 1.0)
 
 
 func _gui_input(event: InputEvent) -> void:

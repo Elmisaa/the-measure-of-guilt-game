@@ -1,0 +1,386 @@
+{
+  "_note": "Предметы инвентаря. Тексты описаний и мыслей — [черновик Claude] на правку пользователя. actions: look — осмотреть (мысль или крупный план), drink, use. becomes — во что превращается после действия.",
+  "start": [
+    "pistol",
+    "bandage",
+    "baton",
+    "photo"
+  ],
+  "actions": {
+    "look": "Осмотреть",
+    "drink": "Выпить",
+    "use": "Использовать",
+    "take": "Взять",
+    "hold": "Взять в руку"
+  },
+  "items": {
+    "cup_old": {
+      "name": "Кружка со старым кофе",
+      "icon": "res://assets/ui/items/cup_old.png",
+      "desc": "Вчерашний, остывший. Взять в руку и вылить у раковины в туалете.",
+      "actions": {
+        "hold": "",
+        "look": "Плёнка сверху. Это пить уже нельзя."
+      }
+    },
+    "cup_empty": {
+      "name": "Кружка (чистая)",
+      "icon": "res://assets/ui/items/cup_empty.png",
+      "desc": "Чистая, пустая. Взять в руку и налить кофе у кофемашины.",
+      "actions": {
+        "hold": "",
+        "look": "Скол на ручке — с прошлой зимы. Зато чистая."
+      }
+    },
+    "cup_full": {
+      "name": "Кружка кофе",
+      "icon": "res://assets/ui/items/cup_full.png",
+      "desc": "Чёрный, без сахара. Ещё горячий. Взбодрит — силы вернутся.",
+      "actions": {
+        "drink": "Горячий. Сразу полегче.",
+        "look": "Пахнет жжёным. Машину не чистили с лета."
+      },
+      "becomes": {
+        "drink": "cup_empty"
+      },
+      "effects": {
+        "drink": {
+          "stamina": 1.0,
+          "sfx": "res://assets/audio/sfx/gulp.wav"
+        }
+      }
+    },
+    "pistol": {
+      "name": "Табельный пистолет",
+      "icon": "res://assets/ui/items/pistol.png",
+      "desc": "Glock 19, табельный. Пятнадцать патронов в магазине.",
+      "actions": {
+        "look": "Чищу его по воскресеньям. Надеюсь, так и останется — только чистить."
+      },
+      "closeup": "res://assets/props/closeups/pistol.png"
+    },
+    "bandage": {
+      "name": "Бинт",
+      "icon": "res://assets/ui/items/bandage.png",
+      "desc": "Стерильный бинт. Перевязать рану, если что.",
+      "actions": {
+        "use": "Я цел. Пока не нужно.",
+        "look": "Ношу с академии. Ни разу не пригодился."
+      }
+    },
+    "baton": {
+      "name": "Дубинка",
+      "icon": "res://assets/ui/items/baton.png",
+      "desc": "Тонфа, служебная. Тяжелее, чем кажется.",
+      "actions": {
+        "look": "Последний раз доставал её в девяносто третьем. Не люблю вспоминать."
+      }
+    },
+    "photo": {
+      "name": "Фото семьи",
+      "icon": "res://assets/ui/items/photo.png",
+      "desc": "Старая фотокарточка. Отец, мама и мы трое.",
+      "closeup": "res://assets/props/items/photo_family.png",
+      "actions": {
+        "look": "Отец, мама... Дмитрий, Иван. И я — самый младший. Больше мы так вместе не стояли."
+      },
+      "texts": [
+        {
+          "text": "Фёдор",
+          "rect": [
+            100,
+            -14,
+            80,
+            12
+          ],
+          "center": true,
+          "light": true
+        },
+        {
+          "text": "Софья",
+          "rect": [
+            200,
+            -14,
+            80,
+            12
+          ],
+          "center": true,
+          "light": true
+        },
+        {
+          "text": "Дмитрий",
+          "rect": [
+            55,
+            246,
+            80,
+            12
+          ],
+          "center": true,
+          "light": true
+        },
+        {
+          "text": "Иван",
+          "rect": [
+            150,
+            246,
+            80,
+            12
+          ],
+          "center": true,
+          "light": true
+        },
+        {
+          "text": "Алексей (я)",
+          "rect": [
+            250,
+            246,
+            80,
+            12
+          ],
+          "center": true,
+          "light": true
+        }
+      ]
+    },
+    "keys": {
+      "name": "Ключи",
+      "icon": "res://assets/ui/items/keys.png",
+      "desc": "От квартиры, от машины и маленький — от почтового ящика.",
+      "actions": {
+        "look": "Брелок — подарок Ивана. Пластиковая статуя Свободы."
+      }
+    },
+    "notebook": {
+      "name": "Блокнот",
+      "icon": "res://assets/ui/items/notebook.png",
+      "desc": "Мой рабочий блокнот. Половина страниц — про «Весы».",
+      "actions": {
+        "look": "Даты, адреса, четыре надписи. Ничего, что убедило бы капитана."
+      },
+      "closeup": "res://assets/props/closeups/notebook.png",
+      "closeup_text": "«Весы»:\n1. Хендерсон — 02.05\n2. Прайс — 19.07\n3. Ланг — 30.09\n4. Коул — 17.11\n\nУ каждого на стене — надпись.\nВсе четверо были оправданы судом.\nСовпадение?",
+      "text_rect": [
+        242,
+        44,
+        148,
+        232
+      ]
+    },
+    "umbrella": {
+      "name": "Зонт",
+      "icon": "res://assets/ui/items/umbrella.png",
+      "desc": "Чёрный, складной. Спица погнута.",
+      "actions": {
+        "look": "В такой дождь — лучше, чем ничего."
+      }
+    },
+    "cassette": {
+      "name": "Кассета",
+      "icon": "res://assets/ui/items/cassette.png",
+      "desc": "Без подписи. Лежала в моём шкафчике.",
+      "actions": {
+        "look": "«Для А. К.». Не мой почерк. Кто её сюда положил?"
+      },
+      "closeup": "res://assets/props/closeups/cassette.png",
+      "texts": [
+        {
+          "text": "Для А. К.",
+          "rect": [
+            26,
+            56,
+            192,
+            22
+          ],
+          "center": true
+        }
+      ]
+    },
+    "wanted_a": {
+      "name": "Ориентировка: Рой Галлахер",
+      "icon": "res://assets/ui/items/wanted.png",
+      "desc": "Копия ориентировки. Вооружённое ограбление.",
+      "closeup": "res://assets/props/closeups/wanted_a.png",
+      "actions": {
+        "look": "Шрам над бровью. Такого не забудешь."
+      },
+      "texts": [
+        {
+          "text": "РАЗЫСКИВАЕТСЯ",
+          "rect": [
+            28,
+            22,
+            90,
+            20
+          ]
+        },
+        {
+          "text": "Рой Галлахер, 46 лет\nВооружённое ограбление. Рост 188, шрам над левой бровью. Вооружён.",
+          "rect": [
+            12,
+            226,
+            152,
+            80
+          ],
+          "size": 8
+        }
+      ]
+    },
+    "wanted_b": {
+      "name": "Ориентировка: Тэдди Мэллой",
+      "icon": "res://assets/ui/items/wanted.png",
+      "desc": "Копия ориентировки. Поджог склада в Ред-Хуке.",
+      "closeup": "res://assets/props/closeups/wanted_b.png",
+      "actions": {
+        "look": "Совсем пацан. Капюшон, тощий — таких в Бруклине тысячи."
+      },
+      "texts": [
+        {
+          "text": "РАЗЫСКИВАЕТСЯ",
+          "rect": [
+            28,
+            22,
+            90,
+            20
+          ]
+        },
+        {
+          "text": "Тэдди Мэллой, 22 года\nПоджог склада в Ред-Хуке. Худощавый, носит серую толстовку с капюшоном.",
+          "rect": [
+            12,
+            226,
+            152,
+            80
+          ],
+          "size": 8
+        }
+      ]
+    },
+    "wanted_c": {
+      "name": "Ориентировка: Вера Кляйн",
+      "icon": "res://assets/ui/items/wanted.png",
+      "desc": "Копия ориентировки. Мошенничество, подделка документов.",
+      "closeup": "res://assets/props/closeups/wanted_c.png",
+      "actions": {
+        "look": "Смотрит прямо в объектив. Ей не страшно."
+      },
+      "texts": [
+        {
+          "text": "РАЗЫСКИВАЕТСЯ",
+          "rect": [
+            28,
+            22,
+            90,
+            20
+          ]
+        },
+        {
+          "text": "Вера Кляйн, 35 лет\nМошенничество, подделка документов. Короткая стрижка, говорит с акцентом.",
+          "rect": [
+            12,
+            226,
+            152,
+            80
+          ],
+          "size": 8
+        }
+      ]
+    },
+    "kowalski_notes": {
+      "name": "Записи Ковальски",
+      "icon": "res://assets/ui/items/kowalski_notes.png",
+      "desc": "Блокнот Ковальски. Метро, исчезновения, «человек без лица».",
+      "closeup": "res://assets/props/closeups/kowalski_notes.png",
+      "actions": {
+        "look": "Он верил в это. А его выставили за дверь."
+      },
+      "closeup_text": "12.02 — линия L, Бедфорд-авеню. Ещё один пропал. Свидетель: «высокий, в шляпе, а лица нет».\n03.03 — третий за зиму.\nДойл: «Ковальски, у тебя показатели».\nНикто не верит.",
+      "text_rect": [
+        224,
+        60,
+        164,
+        206
+      ]
+    },
+    "dictaphone": {
+      "name": "Диктофон",
+      "icon": "res://assets/ui/items/dictaphone.png",
+      "desc": "Кассетный диктофон Ковальски. Внутри плёнка.",
+      "actions": {
+        "look": "Батарейки сели. Надо будет найти новые."
+      }
+    },
+    "cosmetics": {
+      "name": "Косметичка",
+      "icon": "res://assets/ui/items/cosmetics.png",
+      "desc": "Косметичка Сары. Чужое не беру.",
+      "actions": {
+        "look": "Помада, пудреница, расчёска. И пластырь с мультяшным котом — явно для Эмили."
+      }
+    },
+    "samples": {
+      "name": "Образцы почерка",
+      "icon": "res://assets/ui/items/samples.png",
+      "desc": "Материалы экспертизы. Брать нельзя.",
+      "actions": {
+        "look": "Образцы почерка по делу Коула. Сара права: «Г» он писал иначе."
+      },
+      "closeup": "res://assets/props/closeups/samples.png"
+    },
+    "drawing": {
+      "name": "Детский рисунок",
+      "icon": "res://assets/ui/items/drawing.png",
+      "desc": "Рисунок Эмили.",
+      "actions": {
+        "look": "«Маме от Эмили». Сара — рыжая, Эмили с косичками, и кот. Хотел бы я так уметь. Может, когда-нибудь научусь рисовать."
+      },
+      "closeup": "res://assets/props/closeups/drawing.png",
+      "texts": [
+        {
+          "text": "Маме от Эмили",
+          "rect": [
+            40,
+            236,
+            200,
+            24
+          ],
+          "center": true
+        }
+      ]
+    }
+  },
+  "containers": {
+    "alexei_locker": {
+      "title": "Мой шкафчик",
+      "items": [
+        "keys",
+        "notebook",
+        "umbrella",
+        "cassette"
+      ]
+    },
+    "sarah_drawer": {
+      "title": "Ящик стола Сары",
+      "items": [
+        "cosmetics",
+        "samples",
+        "drawing"
+      ],
+      "no_take": true
+    },
+    "kowalski_drawer": {
+      "title": "Ящик стола Ковальски",
+      "items": [
+        "kowalski_notes",
+        "dictaphone"
+      ]
+    },
+    "wanted_board": {
+      "title": "Ориентировки (копии)",
+      "items": [
+        "wanted_a",
+        "wanted_b",
+        "wanted_c"
+      ]
+    }
+  }
+}

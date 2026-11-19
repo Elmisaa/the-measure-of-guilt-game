@@ -16,6 +16,12 @@ const UI_DB: float = -12.0
 const ICON_DB: float = -26.0  ## HUD icons: barely audible
 const PHONE_RING: String = "res://assets/audio/sfx/629201__audacitier__phone-ringing-5.mp3"
 
+## Alexei's "хм" (tools/make_hmm.py): only now and then, never the same take twice in a row.
+const HMMS: Array[String] = ["res://assets/audio/sfx/hmm_1.wav", "res://assets/audio/sfx/hmm_2.wav", "res://assets/audio/sfx/hmm_3.wav", "res://assets/audio/sfx/hmm_4.wav", "res://assets/audio/sfx/hmm_5.wav"]
+const HMM_CHANCE: float = 0.35
+const HMM_DB: float = -9.0
+var _hmm_last: int = -1
+var _hmm_ready_at: float = 4.0
 var _music: AudioStreamPlayer
 var _blips: Array[AudioStreamPlayer] = []
 var _next_blip: int = 0
@@ -56,6 +62,10 @@ func _ready() -> void:
 		var p: AudioStreamPlayer = AudioStreamPlayer.new()
 		add_child(p)
 		_sfx.append(p)
+	for c: Node in get_children():  # volume sliders (Settings): music vs everything else
+		if c is AudioStreamPlayer:
+			(c as AudioStreamPlayer).bus = "SFX"
+	_music.bus = "Music"
 	play_music()
 
 
@@ -136,6 +146,19 @@ func blip_phone(pitch: float = 1.0) -> void:
 
 
 ## One-shot sound effect.
+## Called when a thought appears: sometimes a "хм" (chance, plus a 12–22 s pause after each one).
+func thought_hum() -> void:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	if now < _hmm_ready_at or randf() > HMM_CHANCE:
+		return
+	var i: int = randi() % HMMS.size()
+	if i == _hmm_last:
+		i = (i + 1 + randi() % (HMMS.size() - 1)) % HMMS.size()
+	_hmm_last = i
+	_hmm_ready_at = now + randf_range(12.0, 22.0)
+	sfx(HMMS[i], HMM_DB, randf_range(0.97, 1.03))
+
+
 func sfx(path: String, db: float = -6.0, pitch: float = 1.0) -> void:
 	var p: AudioStreamPlayer = _sfx[_next_sfx]
 	_next_sfx = (_next_sfx + 1) % _sfx.size()
@@ -163,3 +186,10 @@ func blip(pitch: float = 1.0) -> void:
 	_next_blip = (_next_blip + 1) % _blips.size()
 	p.pitch_scale = pitch * randf_range(0.9, 1.12)
 	p.play()
+
+
+## Quieter background music while something else plays in the world (the radio).
+func duck_music(on: bool, fade: float = 0.8) -> void:
+	if not _music.playing:
+		return
+	create_tween().tween_property(_music, "volume_db", MUSIC_DB - 14.0 if on else MUSIC_DB, fade)

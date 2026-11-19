@@ -59,8 +59,9 @@ func _run() -> void:
 	await _wait(2.5)
 	if not letterbox.is_shown():
 		push_error("FAIL bars not shown"); ok = false
-	await _shot("1_window")
-	await _wait(5.0)
+	await _wait(1.5)
+	await _shot("1_window")  # with the place/date caption typed in
+	await _wait(6.5)
 	await _shot("2_coffee")
 	await _wait(1.6)
 	await _shot("2b_coffee")

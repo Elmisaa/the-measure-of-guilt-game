@@ -37,6 +37,11 @@ func show_bars() -> void:
 	_place(1.0)
 
 
+func hide_bars() -> void:
+	_shown = false
+	_place(0.0)
+
+
 func is_shown() -> bool:
 	return _shown
 

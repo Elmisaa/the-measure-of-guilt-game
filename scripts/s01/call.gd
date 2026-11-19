@@ -60,7 +60,7 @@ func _ready() -> void:
 	_data = _all.get("call", {})
 	_lines = _data.get("lines", [])
 	Hud.set_hud_visible(true)
-	Hud.set_objective(str(_data.get("objective", "")))
+	Hud.set_objective(str(_data.get("objective", "")), true)
 	_fyodor_box.modulate.a = 0.0
 	_alexei_box.modulate.a = 0.0
 	_button.visible = false
