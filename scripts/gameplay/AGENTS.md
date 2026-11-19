@@ -3,13 +3,11 @@
 ## Зона
 Твои файлы: scripts/gameplay/, scenes/gameplay/, tests/test_*.gd.
 Чужое (не править): scenes/s00|s01, scripts/s00|s01, data/dialogues/, art/.
-Общее (только с согласования): scripts/autoload/ — SceneRouter, GameState,
-Hud, Audio, Letterbox. Их правка ломает катсцены напарника.
+Общее (только с согласования): scripts/autoload/ — SceneRouter, GameState, Hud, Audio, Letterbox. Их правка ломает катсцены напарника.
 
 ## Контекст игры
 «Мера вины». Геймплей — перемещение по участку, осмотр улик, диалоги.
-Перед реализацией механики читай docs/GDD.md, затем
-docs/scenes/s01_precinct_design.md и docs/scenes/s01_walk_proposal.md.
+Перед реализацией механики читай docs/GDD.md, затем docs/scenes/s01_precinct_design.md и docs/scenes/s01_walk_proposal.md.
 
 ## Стандарты
 - Строгая типизация: `var speed: float = 80.0`, `func hit(dmg: int) -> void`.
@@ -20,7 +18,6 @@ docs/scenes/s01_precinct_design.md и docs/scenes/s01_walk_proposal.md.
 ## Проверка (обязательна после каждой правки .gd)
 1. LSP-диагностика GoPeak (порт 6005).
 2. Запуск сцены/проекта через GoPeak, чтение debug output.
-   Runtime-инспекция и скриншоты — только при запущенной игре (порт 7777).
 3. Баг логики → DAP-брейкпоинт (порт 6006).
 4. Fallback: "$GODOT_PATH" --headless --path . --check-only -s res://<путь>.gd
 5. Тесты по конвенции tests/test_*.gd, новую не изобретать.
@@ -29,8 +26,7 @@ docs/scenes/s01_precinct_design.md и docs/scenes/s01_walk_proposal.md.
 ## GoPeak
 - Профиль compact. Имена нормализованы: godot_*, точки → подчёркивания.
 - Один раз за сессию открой godot_tool_catalog, активируй группы lsp и dap.
-- Сцены правь MCP-инструментами; текстом только при недоступном MCP,
-  не ломая uid://, [ext_resource], id.
+- Сцены правь MCP-инструментами; текстом только при недоступном MCP, не ломая uid://, [ext_resource], id.
 
 ## Уровни
 Tier 1 — новая система, правка автозагрузок, стык с катсценами → план, ждёшь «OK».

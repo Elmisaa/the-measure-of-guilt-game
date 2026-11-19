@@ -43,7 +43,7 @@
 ## Код
 - Godot 4.x, GDScript со статической типизацией, имена файлов `snake_case`, классы `PascalCase`.
 - Не ломай формат `.tscn`/`.tres` (`[ext_resource]`, `uid://`, `id`).
-- Проверка: `"$GODOT_PATH" --headless --path . --check-only -s res://<путь>.gd` (путь задаётся переменной GODOT_PATH, см. docs/SETUP.md).
+- Проверка: `"$GODOT_PATH" --headless --path . --check-only -s res://<путь>.gd` (путь задаётся переменной GODOT_PATH, см. docs/SETUP_WINDOWS.md)
 
 ## Новые ракурсы локации
 Если в задаче есть `art/refs/<location>/plan/` (floor_plan.png, walls.png, plan.md) — это ЗАКОН для расстановки: стены, окна, мебель и предметы ставить строго по плану и развёртке; камера — где отмечена. Стиль-референсы не дают права переставлять предметы.
