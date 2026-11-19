@@ -1,0 +1,35 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // "model": "opencode/...",   ← впиши id из /models
+
+
+  "instructions": ["docs/STATUS.md"],
+
+  "permissions": [
+    { "action": "edit", "resource": "project.godot", "effect": "deny" },
+    { "action": "edit", "resource": "scenes/s00/*", "effect": "deny" },
+    { "action": "edit", "resource": "scenes/s01/*", "effect": "deny" },
+    { "action": "edit", "resource": "scripts/s00/*", "effect": "deny" },
+    { "action": "edit", "resource": "scripts/s01/*", "effect": "deny" },
+    { "action": "edit", "resource": "data/dialogues/*", "effect": "deny" },
+    { "action": "edit", "resource": "docs/ART_PIPELINE.md", "effect": "deny" },
+    { "action": "edit", "resource": "scripts/autoload/*", "effect": "ask" },
+    { "action": "edit", "resource": "docs/DECISIONS.md", "effect": "ask" },
+    { "action": "shell", "resource": "rm *", "effect": "deny" },
+    { "action": "shell", "resource": "git push *", "effect": "deny" }
+  ],
+
+  "mcp": {
+    "servers": {
+      "godot": {
+        "type": "local",
+        "command": ["gopeak"],
+        "environment": {
+          "GODOT_PATH": "{env:GODOT_PATH}",
+          "GOPEAK_TOOL_PROFILE": "compact"
+        }
+      }
+    }
+  }
+}
