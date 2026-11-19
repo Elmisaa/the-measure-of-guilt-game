@@ -19,7 +19,12 @@
     { "action": "shell", "resource": "rm *", "effect": "deny" },
     { "action": "shell", "resource": "git push *", "effect": "deny" }
   ],
-
+"lsp": {
+    "gdscript": {
+      "command": ["godot-lsp-stdio-bridge.cmd"],
+      "extensions": [".gd", ".gdshader"]
+    }
+  },
   "mcp": {
     "servers": {
       "godot": {
