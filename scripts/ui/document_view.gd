@@ -13,6 +13,11 @@ var _root: Control
 var _dim: ColorRect
 var _paper: TextureRect
 var _text: Label
+var _extra: Array[Label] = []  ## "texts": several small labels (stickers, poster header)
+## "photos": loose photos around the paper; drag them with the mouse (they come to the top).
+var _photos: Array[TextureRect] = []
+var _drag: TextureRect
+var _drag_off: Vector2
 var _thought: ThoughtBox
 var _stage: int = 0  # 0 closed, 1 reading, 2 reaction shown
 var _reaction: String = ""
@@ -70,6 +75,17 @@ func open(doc: Dictionary) -> void:
 		_text.size = Vector2(r[2], r[3])
 		_set_text_style(false)
 	_text.text = str(doc.get("text", ""))
+	for l: Label in _extra:
+		l.queue_free()
+	_extra.clear()
+	if closeup != "":
+		for t: Variant in doc.get("texts", []):
+			_add_extra(t as Dictionary)
+	for ph: TextureRect in _photos:
+		ph.queue_free()
+	_photos.clear()
+	for ph2: Variant in doc.get("photos", []):
+		_add_photo(ph2 as Dictionary)
 	_reaction = str(doc.get("reaction", ""))
 	_thought.hide_box()
 	visible = true
@@ -91,6 +107,65 @@ func _open_placeholder(doc: Dictionary) -> void:
 	_text.position = Vector2(_paper.position.x + s.x + 20.0, 24.0)
 	_text.size = Vector2(640.0 - _text.position.x - 24.0, 290.0)
 	_set_text_style(true)
+
+
+## {text, rect: [x, y, w, h] in close-up pixels, size (font px, optional), center (bool)}.
+func _add_extra(t: Dictionary) -> void:
+	var r: Array = t.get("rect", [0, 0, 100, 20])
+	var l: Label = Label.new()
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_color_override("font_color", INK)
+	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	l.add_theme_constant_override("line_spacing", 0)
+	if t.has("size"):
+		l.add_theme_font_size_override("font_size", int(t["size"]))
+	if bool(t.get("light", false)):  # a caption outside the paper (on the dark backdrop)
+		l.add_theme_color_override("font_color", Color(0.85, 0.82, 0.74))
+	if bool(t.get("center", false)):
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.position = _paper.position + Vector2(r[0], r[1])
+	l.size = Vector2(r[2], r[3])
+	l.text = str(t.get("text", ""))
+	_root.add_child(l)
+	_root.move_child(l, _thought.get_index())
+	_extra.append(l)
+
+
+## {tex, pos: [x, y] on screen}: a photo lying next to the paper.
+func _add_photo(d: Dictionary) -> void:
+	var tr: TextureRect = TextureRect.new()
+	tr.texture = load(str(d["tex"]))
+	tr.size = tr.texture.get_size()
+	var pos: Array = d.get("pos", [20, 20])
+	tr.position = Vector2(pos[0], pos[1])
+	tr.mouse_filter = Control.MOUSE_FILTER_STOP
+	tr.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	tr.gui_input.connect(func(e: InputEvent) -> void: _photo_input(tr, e))
+	_root.add_child(tr)
+	_root.move_child(tr, _thought.get_index())
+	_photos.append(tr)
+
+
+func _photo_input(tr: TextureRect, e: InputEvent) -> void:
+	var mb: InputEventMouseButton = e as InputEventMouseButton
+	if mb and mb.button_index == MOUSE_BUTTON_LEFT:
+		if mb.pressed:
+			_drag = tr
+			_drag_off = tr.get_global_mouse_position() - tr.position
+			_root.move_child(tr, _thought.get_index() - 1)  # on top of the other photos
+			var audio: Node = get_node_or_null("/root/Audio")
+			if audio:
+				audio.sfx("res://assets/audio/sfx/paper_rustle.wav", -14.0, randf_range(1.05, 1.2))
+		else:
+			_drag = null
+		tr.accept_event()
+	var mm: InputEventMouseMotion = e as InputEventMouseMotion
+	if mm and _drag == tr:
+		var p: Vector2 = tr.get_global_mouse_position() - _drag_off
+		p = p.clamp(Vector2(-tr.size.x / 2.0, -tr.size.y / 2.0), Vector2(640.0 - tr.size.x / 2.0, 360.0 - tr.size.y / 2.0))
+		tr.position = (p / 2.0).floor() * 2.0  # stay on the 2px grid
+		tr.accept_event()
 
 
 func _set_text_style(on_panel: bool) -> void:

@@ -54,14 +54,32 @@ func _process(delta: float) -> void:
 			hide_box()
 
 
+## Sometimes Alexei says "хм" when a new thought pops up (Audio.thought_hum); off for hints.
+var hum: bool = true
+var _raw: String = ""
+
+
+func get_text() -> String:
+	return _raw if visible else ""
+
+
+## Start the countdown for a thought shown "until hidden".
+func hide_in(sec: float) -> void:
+	_hide_left = sec
+
+
 ## duration <= 0: stays until hide_box(). more: show a blinking "..." (text continues).
 func show_text(text: String, duration: float = 0.0, more: bool = false) -> void:
 	_more.visible = more
 	_blink_t = 0.0
 	_label.text = _two_lines(text) if text.length() > MAX_LINE_CHARS else text
+	_raw = text
 	var hud: Node = get_node_or_null("/root/Hud")  # not the global name: class_name scripts may compile before autoloads
 	if hud and not text.is_empty():
 		hud.log_thought(text)
+	var audio: Node = get_node_or_null("/root/Audio")
+	if audio and hum and not text.is_empty() and not visible:
+		audio.thought_hum()
 	update_minimum_size()
 	var ms: Vector2 = get_combined_minimum_size().ceil()
 	offset_left = -floorf(ms.x / 2.0)

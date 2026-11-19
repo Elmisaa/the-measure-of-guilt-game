@@ -20,6 +20,8 @@
 | fx_fan | анимация | 160×35, 104×29, 72×14 ×8 кадров | Лопасти 3 потолочных вентиляторов (ротор Codex `art/drafts/fan/rotor_v1_a.png` → `tools/rotor_frames.py`). Фон экспозиции — с убранными лопастями (только области вентиляторов, остальное пиксель-в-пиксель v1_c). `assets/fx/s01/fan_{a,b,c}.png` | v1_c | DRAFT (на оценке) |
 | bg_call | фон | 640×360, пиксель 4x | Кадр звонка: зал из-за спины Алексея (стена с тёплыми окнами слева, колонна, тёмный зал), размыт и затемнён. Исходник `art/sources/s01/call_bg_plate_v1_a.png` (Codex по раскладке пользователя, реф 13) → blur 8 + яркость 0.85 + 4x. `assets/backgrounds/s01/call_bg.png` | refs 11–13, plan/ | APPROVED |
 | call_alexei_desk | слой | 640×360, пиксель 4x | Алексей со спины в кресле, трубка у левого уха, стол почти ребром (лампа, телефон, кружка, стакан с ручками, ЭЛТ). Вырезан с мадженты. `assets/props/s01/call_alexei_desk.png` | ref 11, desk3 | APPROVED |
+| walk_hall | фон | 2012×360, пиксель 4x | Зал с ходьбой, вид сбоку, по схеме `plan/walk_layout_v2.png` (Codex по схеме, склейка 2 частей). `assets/backgrounds/s01/walk_hall.png` | refs 15–20 | APPROVED |
+| alexei_walk_side | персонаж | 10 кадров, ~200 px, пиксель 4x | Алексей сбоку: 2 стоит + 8 шаг, подогнан под цвета зала (`tools/harmonize_walk.py`). `assets/characters/alexei/walk_side.png` | v5_a, ref 19 | APPROVED |
 | close_casefile | крупный план | 233×316 | Раскрытая папка, пустой бланк; текст пишет Godot. `assets/props/s01/close_casefile.png` | doc_casefile | DRAFT (на оценке) |
 
 | close_note | крупный план | ~240×240 | Записка крупно: линованная/клетчатая бумага, загнутый угол, **без текста**. `assets/props/s01/close_note.png` | refs/s01_precinct/02 | TODO |

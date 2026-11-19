@@ -1,0 +1,357 @@
+extends Node2D
+## s01: after the report Alexei wants coffee — walk through the hall (side view).
+## Coffee: pour into the empty cup at the machine, drink it from the inventory (I) → a second cup →
+## "time to go home" → the player explores freely and decides when to go to the desk → pack things →
+## the phone rings right there → answer → the call. Kowalski's desk has a radio (stations, off).
+## Spots and thoughts: data/dialogues/s01_walk.json. A/D or arrows walk, Shift run, E/click use (Space only pages thoughts), I things.
+
+const CALL_SCENE: String = "res://scenes/s01/call.tscn"
+const RING: String = "res://assets/audio/sfx/629201__audacitier__phone-ringing-5.mp3"
+const PICKUP: String = "res://assets/audio/sfx/pickup.wav"
+const POUR: String = "res://assets/audio/sfx/pour.wav"
+const DOOR: String = "res://assets/audio/sfx/door.wav"
+## Things Alexei must take from his locker before he can pack up at the desk (the cassette is optional).
+const HOME_THINGS: Array[String] = ["keys", "notebook", "umbrella"]
+const NEAR_MARGIN: float = 40.0
+const THOUGHT_TIME: float = 3.5
+const HALF_SCREEN: float = 320.0
+const TUTORIAL_TIME: float = 5.0
+const TUT_STEPS: Array[String] = ["move", "run", "interact", "inventory"]
+
+@onready var _player: WalkPlayer = $World/Player
+@onready var _camera: Camera2D = $World/Camera
+@onready var _spots_root: Node2D = $World/Spots
+@onready var _prompt: Label = $World/Prompt
+@onready var _thought: ThoughtBox = $UI/Root/ThoughtBox
+@onready var _radio: Radio = $World/Radio
+
+var _d: Dictionary = {}
+var _spots: Dictionary = {}  # id -> {marker, rect, name, thought, data}
+var _state: String = "wash"
+var _busy: bool = false
+var _near: String = ""
+var _room_w: float = 2012.0
+var _tut: String = "done"
+var _tut_t: float = 0.0
+
+
+func _ready() -> void:
+	_d = DialogueData.load_file("s01_walk")
+	_room_w = ($World/Background as Sprite2D).texture.get_width()
+	var b: Array = _d.get("bounds", [70, 1950])
+	_player.min_x = b[0]
+	_player.max_x = b[1]
+	_player.position.x = float(_d.get("spawn_x", 360))
+	var dep: Dictionary = _d.get("depth", {})
+	_player.y_far = float(dep.get("y_far", 346))
+	_player.y_near = float(dep.get("y_near", 346))
+	_player.scale_far = float(dep.get("scale_far", 1.0))
+	_player.position.y = _player.y_near
+	var back_x: Variant = GameState.get_flag("walk_return_x")
+	if back_x != null:  # coming back from the restroom: stand at its door
+		_player.position.x = float(back_x)
+		GameState.set_flag("walk_return_x", null)
+	for s: Dictionary in _d.get("spots", []):
+		_add_spot(s)
+	Hud.set_hud_visible(true)
+	Hud.show_stamina(true)
+	Hud.set_walk_mode(true)
+	GameState.item_used.connect(_on_item_used)
+	if not (GameState.has_item("cup_old") or GameState.has_item("cup_empty") or GameState.has_item("cup_full")):
+		GameState.items.append("cup_old")  # started here directly (tests/debug): the cup from the desk
+	GameState.inventory_changed.connect(_check_locker)
+	var saved: Variant = GameState.get_flag("walk_state")
+	var returning: bool = saved != null
+	_state = str(saved) if returning else ("wash" if GameState.has_item("cup_old") else "coffee1")
+	Hud.set_objective(str(_d["objectives"][_state]), true)
+	_update_locker_lock()
+	_radio.set_station(int(GameState.get_flag("radio_station", -1)))  # still playing when he comes back
+	_update_camera()
+	_tutorial_start(returning)
+
+
+## First time in the hall: a story thought (where the coffee is) and control hints one by one; each hint
+## stays until the player does it: walk -> run (Shift) -> use a thing (E, at the first prompt) -> things (I).
+## Progress lives in the "tutorial" flag, so it goes on after the restroom.
+func _tutorial_start(returning: bool) -> void:
+	_tut = str(GameState.get_flag("tutorial", TUT_STEPS[0]))
+	if not returning or _tut != "done":
+		# the thought stays on screen until the key hints are all done (then it fades)
+		_thought.show_text(str(_d["tutorial"]["enter"]), 0.0 if _tut != "done" else TUTORIAL_TIME)
+	_tut_show()
+
+
+func _tut_show() -> void:
+	if _tut == "done" or (_tut == "interact" and _near == ""):
+		Hud.hide_tutorial()
+		return
+	Hud.show_tutorial(str(_d["tutorial"][_tut]))
+
+
+func _tut_done(step: String) -> void:
+	if _tut != step:
+		return
+	var i: int = TUT_STEPS.find(step) + 1
+	_tut = TUT_STEPS[i] if i < TUT_STEPS.size() else "done"
+	_tut_t = 0.0
+	GameState.set_flag("tutorial", _tut)
+	_tut_show()
+	if _tut == "done" and _thought.get_text() == str(_d["tutorial"]["enter"]):
+		_thought.hide_in(2.0)  # the hints are done: let the thought go
+
+
+func _update_tutorial(delta: float) -> void:
+	match _tut:
+		"move":
+			if _player.is_walking():
+				_tut_t += delta
+				if _tut_t > 0.8:
+					_tut_done("move")
+		"run":
+			if _player.is_running():
+				_tut_t += delta
+				if _tut_t > 0.4:
+					_tut_done("run")
+		"interact":
+			if _near != "" and Hud.tutorial_text().is_empty():
+				_tut_show()
+		"inventory":
+			if Hud.is_inventory_open():
+				_tut_done("inventory")
+
+
+func _exit_tree() -> void:
+	Hud.hide_tutorial()
+	Hud.show_stamina(false)
+	Hud.set_walk_mode(false)
+
+
+func _add_spot(s: Dictionary) -> void:
+	var r: Array = s["rect"]
+	var m: HintMarker = HintMarker.new()
+	m.marker_id = str(s["id"])
+	m.position = Vector2(r[0], r[1])
+	m.size = Vector2(float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
+	_spots_root.add_child(m)
+	m.custom_minimum_size = m.size
+	m.mouse_enabled = false  # no cursor while walking: E only
+	m.activated.connect(func(id: String) -> void: _interact(id))
+	_spots[m.marker_id] = {"marker": m, "rect": r, "name": str(s["name"]), "thought": str(s.get("thought", "")), "data": s}
+
+
+func _process(delta: float) -> void:
+	_update_camera()
+	_update_near()
+	_update_tutorial(delta)
+
+
+func _update_camera() -> void:
+	var cx: float = clampf(_player.position.x, HALF_SCREEN, _room_w - HALF_SCREEN)
+	_camera.position = Vector2(roundf(cx / 4.0) * 4.0, 180.0)
+
+
+## Hints only on spots Alexei can reach; the nearest gets a prompt.
+func _update_near() -> void:
+	var px: float = _player.position.x
+	var best: String = ""
+	var best_d: float = INF
+	for id: String in _spots:
+		var r: Array = _spots[id]["rect"]
+		var near: bool = px >= float(r[0]) - NEAR_MARGIN and px <= float(r[2]) + NEAR_MARGIN
+		(_spots[id]["marker"] as HintMarker).set_active(near and not _busy)
+		if near:
+			var d: float = absf(px - (float(r[0]) + float(r[2])) / 2.0)
+			if d < best_d:
+				best_d = d
+				best = id
+	_near = best if not _busy else ""
+	_prompt.visible = _near != ""
+	if _prompt.visible:
+		var r2: Array = _spots[_near]["rect"]
+		_prompt.text = "E — " + _label_for(_near)
+		_prompt.position = Vector2(clampf(roundf((float(r2[0]) + float(r2[2])) / 2.0 - _prompt.size.x / 2.0), 4.0, _room_w - _prompt.size.x - 4.0), float(r2[1]) - 16.0)
+
+
+func _label_for(id: String) -> String:
+	if not Hud.held_item.is_empty() and id == "coffee":
+		return "%s → %s" % [str(GameState.item_def(Hud.held_item).get("name", "")), str(_spots[id]["name"])]
+	if id == "desk" and _state == "phone":
+		return str(_d["coffee"]["desk_answer"])
+	if id == "desk" and _state == "home":
+		return str(_d["coffee"]["desk_pack"])
+	if id == "coffee" and _state in ["coffee1", "coffee2"] and GameState.has_item("cup_empty"):
+		return str(_d["coffee"]["pour_label"])
+	if id == "radio":
+		var r: Dictionary = _d["radio"]
+		if not _radio.is_on():
+			return str(r["on"])
+		return str(r["off"]) if _radio.station() == _radio.stations.size() - 1 else str(r["next"])
+	return str(_spots[id]["name"])
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _busy or _near == "" or Hud.is_blocking():
+		return
+	if event.is_action_pressed("interact"):  # E only (Space pages thoughts)
+		get_viewport().set_input_as_handled()
+		_interact(_near)
+
+
+func _interact(id: String) -> void:
+	if _busy or not _spots.has(id):
+		return
+	_tut_done("interact")
+	if not Hud.held_item.is_empty() and id != "coffee" and str(_spots[id]["data"].get("kind", "")) != "door":
+		Hud.set_held("")  # the thing goes back to the bag; Alexei just looks / opens as usual
+	match id:
+		"coffee":
+			_coffee()
+		"radio":
+			_use_radio()
+		"desk":
+			if _state == "phone":
+				_answer_phone()
+			elif _state == "back_to_desk":
+				_pack()
+			elif _state == "home":
+				_thought.show_text(str(_d["coffee"]["need_things"]), THOUGHT_TIME)
+			else:
+				_thought.show_text(str(_spots[id]["thought"]), THOUGHT_TIME)
+		_:
+			var sd: Dictionary = _spots[id]["data"]
+			match str(sd.get("kind", "")):
+				"closeup":
+					_open_closeup(sd)
+					return
+				"container":
+					Hud.open_container(str(sd["container"]))
+					return
+				"door":
+					_go_through(sd)
+					return
+			var t: String = str(_spots[id]["thought"])
+			if not t.is_empty():
+				_thought.show_text(t, THOUGHT_TIME)
+
+
+## The coffee machine takes the clean cup from Alexei's hand (inventory -> "Взять в руку").
+func _coffee() -> void:
+	var c: Dictionary = _d["coffee"]
+	var held: String = Hud.held_item
+	if held.is_empty() and (GameState.has_item("cup_empty") or GameState.has_item("cup_old")) and _state in ["wash", "coffee1", "coffee2"]:
+		_thought.show_text(str(c["need_cup"]), THOUGHT_TIME)
+		return
+	if GameState.has_item("cup_full"):
+		_thought.show_text(str(c["cup_full"]), THOUGHT_TIME)
+		return
+	if GameState.has_item("cup_old"):
+		_thought.show_text(str(c["need_wash"]), THOUGHT_TIME)
+		return
+	if not (_state in ["coffee1", "coffee2"]) or not GameState.has_item("cup_empty"):
+		_thought.show_text(str(c["enough"]), THOUGHT_TIME)
+		return
+	_busy = true
+	_player.frozen = true
+	Hud.set_held("")
+	Audio.sfx(POUR, -6.0)
+	await get_tree().create_timer(1.4).timeout
+	GameState.replace_item("cup_empty", "cup_full")
+	var first: bool = _state == "coffee1"
+	GameState.item_thoughts["cup_full:drink"] = str(c["drink_first" if first else "drink_second"])
+	_thought.show_text(str(c["poured_first" if first else "poured_second"]), THOUGHT_TIME)
+	_state = "drink1" if first else "drink2"
+	Hud.set_objective(str(_d["objectives"][_state]))
+	_player.frozen = false
+	_busy = false
+
+
+func _open_closeup(sd: Dictionary) -> void:
+	var doc: Dictionary = {"closeup": str(sd["closeup"]), "text": str(sd.get("text", "")), "reaction": str(sd.get("reaction", ""))}
+	for k: String in ["text_rect", "texts", "text_rects"]:
+		if sd.has(k):
+			doc[k] = sd[k]
+	Hud.open_closeup(doc)
+
+
+## A door to another room: remember where we are in the story, then go.
+func _go_through(sd: Dictionary) -> void:
+	_busy = true
+	_player.frozen = true
+	GameState.set_flag("walk_state", _state)
+	GameState.set_flag("walk_return_x", _player.position.x)
+	GameState.set_flag("radio_station", _radio.station())
+	if _radio.is_on():
+		Audio.duck_music(false)
+	Audio.sfx(DOOR, -6.0)
+	SceneRouter.go_to(str(sd["target"]), 0.3)
+
+
+## The locker can be looked through any time; the things are taken only after the coffee.
+func _update_locker_lock() -> void:
+	if _state in ["wash", "coffee1", "drink1", "coffee2", "drink2"]:
+		GameState.take_locks["alexei_locker"] = str(_d["locker_wait"])
+	else:
+		GameState.take_locks.erase("alexei_locker")
+
+
+## All the things from the locker are on him: now back to the desk.
+func _check_locker() -> void:
+	if _state != "home":
+		return
+	for t: String in HOME_THINGS:
+		if not GameState.has_item(t):
+			return
+	_state = "back_to_desk"
+	Hud.set_objective(str(_d["objectives"][_state]))
+	_thought.show_text(str(_d["locker_done"]), THOUGHT_TIME)
+
+
+## Drinking happens in the inventory; the scene only moves the story on.
+func _on_item_used(id: String, action: String) -> void:
+	if id != "cup_full" or action != "drink":
+		return
+	GameState.item_thoughts.erase("cup_full:drink")
+	match _state:
+		"drink1":
+			_state = "coffee2"
+		"drink2":
+			_state = "home"  # free to explore; he goes to the desk when the player decides
+		_:
+			return
+	Hud.set_objective(str(_d["objectives"][_state]))
+	_update_locker_lock()
+
+
+func _use_radio() -> void:
+	var i: int = _radio.cycle()
+	var th: Array = _d["radio"]["thoughts"]
+	if i >= 0 and i < th.size():
+		var coded: bool = bool(_radio.stations[i].get("code", false))  # its caption is over the radio
+		_thought.show_text(str(th[i]) if coded else "%s.  %s" % [_radio.station_name(), str(th[i])], THOUGHT_TIME)
+	else:
+		_thought.hide_box()
+
+
+## Packing up at the desk — and the phone rings right next to him.
+func _pack() -> void:
+	_busy = true
+	_player.frozen = true
+	if _radio.is_on():
+		_radio.turn_off()
+	_thought.show_text(str(_d["coffee"]["pack"]))
+	await get_tree().create_timer(2.6).timeout
+	GameState.set_flag("walk_state", null)
+	GameState.set_flag("radio_station", -1)
+	Audio.play_loop(RING, -4.0)
+	_thought.show_text(str(_d["coffee"]["phone_thought"]), THOUGHT_TIME)
+	_state = "phone"
+	Hud.set_objective(str(_d["objectives"]["phone"]))
+	_busy = false
+
+
+func _answer_phone() -> void:
+	_busy = true
+	_player.frozen = true
+	Audio.stop_loop()
+	Audio.sfx(PICKUP, -4.0)
+	SceneRouter.go_to(CALL_SCENE, 1.2)

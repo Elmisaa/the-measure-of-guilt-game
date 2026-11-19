@@ -1,13 +1,14 @@
 class_name HintMarker
 extends Control
-## An interactive spot over a painted object. No visible marker: the object itself
-## hints that it can be used — a rare soft light glint passes over it, and on hover
-## thin corner brackets appear and the cursor becomes a hand. Click -> activated(id).
+## An interactive spot over a painted object. No visible marker: on hover thin corner
+## brackets appear and the cursor becomes a hand. Click -> activated(id).
+## (The periodic light glint is off — the user didn't like it; glint_enabled turns it back on.)
 ## The Control's rect should cover the object.
 
 signal activated(marker_id: String)
 
 @export var marker_id: String = ""
+@export var glint_enabled: bool = false
 @export var glint_every_min: float = 7.0
 @export var glint_every_max: float = 14.0
 @export var glint_time: float = 0.9
@@ -17,6 +18,8 @@ const BRACKET: float = 5.0
 const BRACKET_COLOR: Color = Color(0.92, 0.95, 1.0, 0.55)
 
 var _hover: bool = false
+## Inactive spots show no hints and ignore the mouse (e.g. Alexei is too far away).
+var active: bool = true
 var _wait: float = 0.0
 var _glint: float = -1.0  # -1 idle, 0..1 sweep progress
 
@@ -30,7 +33,28 @@ func _ready() -> void:
 	_wait = randf_range(1.5, glint_every_max)
 
 
+## Walking scenes have no cursor: markers there only light up, they are used with E.
+var mouse_enabled: bool = true:
+	set(v):
+		mouse_enabled = v
+		if not v:
+			mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func set_active(v: bool) -> void:
+	if v == active:
+		return
+	active = v
+	mouse_filter = Control.MOUSE_FILTER_STOP if v and mouse_enabled else Control.MOUSE_FILTER_IGNORE
+	if not v:
+		_hover = false
+		_glint = -1.0
+	queue_redraw()
+
+
 func _process(delta: float) -> void:
+	if not active or not glint_enabled:
+		return
 	if _glint < 0.0:
 		_wait -= delta
 		if _wait <= 0.0:
@@ -44,6 +68,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if not active:
+		return
 	if _glint >= 0.0:
 		# a narrow diagonal sheen sweeping left -> right, faded at both ends
 		var w: float = 6.0

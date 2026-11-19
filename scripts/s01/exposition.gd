@@ -36,7 +36,7 @@ func _ready() -> void:
 	_button.visible = false
 	_button.text = str(_data.get("button", ""))
 	Hud.set_hud_visible(true)
-	Hud.set_objective(str(_data.get("objective", "")), false)
+	Hud.set_objective(str(_data.get("objective", "")), true)
 	_button.pressed.connect(_on_study_pressed)
 	Audio.bind_button(_button)
 	for m: Node in _markers.get_children():

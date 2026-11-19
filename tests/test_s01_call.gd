@@ -53,18 +53,22 @@ func _run() -> void:
 	var audio: Node = root.get_node("Audio")
 	await _wait(1.5)
 	await _shot("1_fyodor")
+	var knock_i: int = 0
+	for i: int in call._lines.size():
+		if str(call._lines[i].get("event", "")) == "knock":
+			knock_i = i
 	var guard: int = 0
-	while call._index < 9 and guard < 30:  # up to the knock event
+	while call._index < knock_i and guard < 40:  # up to the knock event
 		await _click()
 		guard += 1
 		await _wait(0.35)
-		if call._index == 6:
+		if call._index == knock_i - 4:
 			await _wait(1.0)
 			await _shot("2_tension")
 	await _wait(0.8)
 	await _shot("3_knock")
 	await _wait(2.0)
-	if call._index != 10:
+	if call._index != knock_i + 1:
 		push_error("FAIL after knock index=%d" % call._index); ok = false
 	await _shot("4_scream")
 	await _click()  # -> hangup event
