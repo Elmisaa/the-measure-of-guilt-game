@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://dmyx0nq6vrxye"]
+
+[ext_resource type="PackedScene" path="res://scenes/gameplay/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://bltv6ngmdklic" path="res://scenes/gameplay/combat_hud.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/cover.tscn" id="3_cover"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/enemy_shooter.tscn" id="4_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/enemy_melee.tscn" id="5_melee"]
+[ext_resource type="Script" uid="uid://d4lk5bg4qtwax" path="res://scripts/gameplay/combat_encounter.gd" id="6_encounter"]
+[ext_resource type="Script" uid="uid://crmavcn4cxdko" path="res://scripts/gameplay/combat_camera.gd" id="7_camera"]
+
+[sub_resource type="Environment" id="env_combat"]
+background_mode = 1
+background_color = Color(0.08, 0.09, 0.12, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.35, 0.38, 0.45, 1)
+ambient_light_energy = 0.45
+
+[sub_resource type="StandardMaterial3D" id="mat_floor"]
+albedo_color = Color(0.15, 0.16, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="mesh_floor"]
+size = Vector3(24, 0.5, 8)
+
+[sub_resource type="BoxShape3D" id="shape_floor"]
+size = Vector3(24, 0.5, 8)
+
+[sub_resource type="StandardMaterial3D" id="mat_backwall"]
+albedo_color = Color(0.18, 0.18, 0.24, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="mesh_backwall"]
+size = Vector3(24, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="shape_backwall"]
+size = Vector3(24, 4, 0.5)
+
+[node name="TestArenaLit" type="Node3D" unique_id=987654321]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=115616673]
+environment = SubResource("env_combat")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=829349129]
+transform = Transform3D(0.87758255, 0.37554693, -0.2980157, 0, 0.62161, 0.7833269, 0.47942555, -0.687434, 0.54551405, 0, 0, 0)
+light_energy = 1.6
+shadow_enabled = true
+
+[node name="Floor" type="StaticBody3D" parent="." unique_id=2051950409]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor" unique_id=447084994]
+material_override = SubResource("mat_floor")
+mesh = SubResource("mesh_floor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=2113549598]
+shape = SubResource("shape_floor")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1641347776]
+transform = Transform3D(1, 0, 0, 0, 0.99288, -0.11915, 0, 0.11915, 0.99288, -4, 1.9, 7.5)
+fov = 60.0
+script = ExtResource("7_camera")
+
+[node name="Player" parent="." unique_id=610437980 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0)
+
+[node name="ConcreteColumn" parent="." unique_id=1152138559 instance=ExtResource("3_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, 0.35)
+is_destructible = false
+cover_size = Vector3(0.9, 2.2, 0.9)
+body_color = Color(0.4, 0.4, 0.45, 1)
+
+[node name="WoodenCrate1" parent="." unique_id=257523810 instance=ExtResource("3_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.35)
+cover_size = Vector3(1.4, 1.05, 1)
+body_color = Color(0.35, 0.22, 0.12, 1)
+
+[node name="WoodenCrate2" parent="." unique_id=435202363 instance=ExtResource("3_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0, 0.35)
+cover_size = Vector3(1.4, 1.05, 1)
+body_color = Color(0.35, 0.22, 0.12, 1)
+
+[node name="EnemyMelee" parent="." unique_id=2074358822 instance=ExtResource("5_melee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0, 0)
+
+[node name="EnemyShooter1" parent="." unique_id=1316517724 instance=ExtResource("4_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 0, 0)
+
+[node name="EnemyShooter2" parent="." unique_id=1483885389 instance=ExtResource("4_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, 0, 0)
+start_cooldown = 1.2
+
+[node name="BackWall" type="StaticBody3D" parent="." unique_id=384726192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -1.5)
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="BackWall" unique_id=827364159]
+material_override = SubResource("mat_backwall")
+mesh = SubResource("mesh_backwall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall" unique_id=291847562]
+shape = SubResource("shape_backwall")
+
+[node name="CombatEncounter" type="Node" parent="." unique_id=558912341]
+script = ExtResource("6_encounter")
+
+[node name="CombatHud" parent="." unique_id=1970231638 instance=ExtResource("2_hud")]

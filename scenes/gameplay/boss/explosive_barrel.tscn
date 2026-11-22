@@ -1,0 +1,69 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/boss/explosive_barrel.gd" id="1_explosive_barrel"]
+
+[sub_resource type="CylinderMesh" id="mesh_body"]
+height = 0.9
+radius = 0.3
+
+[sub_resource type="StandardMaterial3D" id="mat_body"]
+albedo_color = Color(0.7, 0.1, 0.1, 1)
+emission_enabled = true
+emission = Color(0.5, 0.05, 0.05, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="TorusMesh" id="mesh_ring"]
+inner_radius = 0.25
+outer_radius = 0.35
+
+[sub_resource type="StandardMaterial3D" id="mat_ring"]
+albedo_color = Color(1, 0.9, 0.0, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.0, 1)
+emission_energy_multiplier = 4.0
+shading_mode = 2
+transparency = 1
+
+[sub_resource type="SphereMesh" id="mesh_explosion"]
+radius = 2.2
+
+[sub_resource type="StandardMaterial3D" id="mat_explosion"]
+albedo_color = Color(1, 0.5, 0.0, 0.8)
+emission_enabled = true
+emission = Color(1, 0.4, 0.0, 1)
+emission_energy_multiplier = 10.0
+transparency = 1
+shading_mode = 2
+
+[sub_resource type="CylinderShape3D" id="shape_body"]
+height = 0.9
+radius = 0.3
+
+[node name="ExplosiveBarrel" type="Area3D"]
+collision_layer = 128
+collision_mask = 133
+script = ExtResource("1_explosive_barrel")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh_body")
+material_override = SubResource("mat_body")
+position = Vector3(0, 0.45, 0)
+
+[node name="TargetRing" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh_ring")
+material_override = SubResource("mat_ring")
+position = Vector3(0, 0.9, 0)
+rotation = Vector3(1.5708, 0, 0)
+
+[node name="ExplosionSphere" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh_explosion")
+material_override = SubResource("mat_explosion")
+visible = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape_body")
+position = Vector3(0, 0.45, 0)
+
+[node name="ExplosionTimer" type="Timer" parent="."]
+one_shot = true
+wait_time = 0.25

@@ -22,6 +22,7 @@ Letterbox="*res://scripts/autoload/letterbox.gd"
 Audio="*res://scripts/autoload/audio.gd"
 Hud="*res://scripts/autoload/hud.gd"
 GameState="*res://scripts/autoload/game_state.gd"
+MCPRuntime="*uid://bi5niog1bfuoo"
 
 [display]
 
@@ -30,7 +31,10 @@ window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="viewport"
-window/stretch/scale_mode="fractional"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/auto_reload/plugin.cfg", "res://addons/godot_mcp_editor/plugin.cfg", "res://addons/godot_mcp_runtime/plugin.cfg")
 
 [gui]
 

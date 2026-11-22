@@ -180,9 +180,9 @@ func _say(line: Dictionary) -> void:
 		_glitch_spike = maxf(_glitch_spike, 0.35 * _tension)
 
 
-func _event(name: String) -> void:
+func _event(event_name: String) -> void:
 	_busy = true
-	match name:
+	match event_name:
 		"knock":
 			_hide_speech()
 			await get_tree().create_timer(0.5).timeout
