@@ -1,12 +1,13 @@
 extends Node2D
 ## First screen: the precinct at night (full screen), the title, and a menu:
-## Новая игра / Настройки / Выход. Arrows/WASD + Enter, or the mouse.
+## Продолжить (latest save) / Новая игра / Загрузить / Настройки / Выход. Arrows/WASD + Enter, or the mouse.
 
 const INTRO: String = "res://scenes/s00/intro.tscn"
 const BACKGROUND: String = "res://assets/backgrounds/s01/exposition.png"  ## 640x360: fills the screen
 
 var _menu: VBoxContainer
 var _settings: SettingsPanel
+var _saves: SaveSlotsPanel
 var _ui: CanvasLayer
 var _starting: bool = false
 
@@ -44,7 +45,13 @@ func _ready() -> void:
 	_menu.position = Vector2(372, 172)
 	_menu.add_theme_constant_override("separation", 4)
 	_ui.add_child(_menu)
-	var items: Array = [["Новая игра", _new_game], ["Настройки", _open_settings], ["Выход", func() -> void: get_tree().quit()]]
+	var items: Array = []
+	if SaveGame.has_any():
+		items.append(["Продолжить", _continue])
+	items.append(["Новая игра", _new_game])
+	if SaveGame.has_any():
+		items.append(["Загрузить", func() -> void: _saves.open("load")])
+	items.append_array([["Настройки", _open_settings], ["Выход", func() -> void: get_tree().quit()]])
 	var buttons: Array[Button] = []
 	for it: Array in items:
 		var b: Button = MenuUI.button(str(it[0]))
@@ -62,7 +69,12 @@ func _ready() -> void:
 	_ui.add_child(ver)
 	_settings = SettingsPanel.new()
 	_ui.add_child(_settings)
-	_settings.closed.connect(func() -> void: buttons[1].grab_focus())
+	var settings_btn: Button = buttons[buttons.size() - 2]
+	_settings.closed.connect(func() -> void: settings_btn.grab_focus())
+	_saves = SaveSlotsPanel.new()
+	_ui.add_child(_saves)
+	_saves.closed.connect(func() -> void: buttons[0].grab_focus())
+	_saves.loading.connect(func() -> void: _starting = true)
 	buttons[0].grab_focus.call_deferred()
 
 
@@ -71,7 +83,15 @@ func _new_game() -> void:
 		return
 	_starting = true
 	GameState.new_game()
+	Hud.reset_journal()
 	SceneRouter.go_to(INTRO, 0.3)
+
+
+func _continue() -> void:
+	if _starting:
+		return
+	_starting = true
+	SaveGame.load_slot(SaveGame.latest())
 
 
 func _open_settings() -> void:
@@ -79,6 +99,6 @@ func _open_settings() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _settings.is_open() or _starting:
+	if _settings.is_open() or _saves.is_open() or _starting:
 		return
 	MenuUI.wasd_to_focus(event, get_viewport())

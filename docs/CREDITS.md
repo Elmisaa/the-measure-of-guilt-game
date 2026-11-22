@@ -17,3 +17,7 @@
 | «Public Domain Jazz» (радио, станция 2) | Pro Sensory / Alex McCulloch (opengameart.org/content/public-domain-jazz) — автор просит упомянуть имя | CC0 1.0 | assets/audio/music/radio/ |
 | Странная станция, шипение настройки | синтез, `tools/make_radio.py` | свой | assets/audio/music/radio/, assets/audio/sfx/ |
 | Иконки предметов, фото семьи, радио, бег Алексея | Codex $imagegen по ТЗ проекта | свой | assets/ui/items/, assets/props/, assets/characters/alexei/ |
+| «Days of Thunder» (s02_drive v1, больше не используется) | The Midnight | коммерческий трек | удалён из проекта |
+| Звуки машины (дверь, стартер, холостые, выключение, дворники) | синтез, `tools/make_car_sfx.py` | свой | assets/audio/sfx/ |
+| Кадры s02_drive, иконка пальто | Codex $imagegen по ТЗ проекта | свой | assets/backgrounds/s02/, assets/ui/items/coat.png |
+| Музыка кат-сцены s02_drive (18 с) | из видео пользователя (2026-11-23) | **уточнить источник и права** | assets/audio/music/drive_theme.wav |

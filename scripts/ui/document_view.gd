@@ -21,6 +21,8 @@ var _drag_off: Vector2
 var _thought: ThoughtBox
 var _stage: int = 0  # 0 closed, 1 reading, 2 reaction shown
 var _reaction: String = ""
+## The desk lamp is off: the paper and its text are dim (set before open()).
+var shade: Color = Color.WHITE
 var _pages: PackedStringArray = PackedStringArray()
 var _page: int = 0
 
@@ -87,6 +89,12 @@ func open(doc: Dictionary) -> void:
 	for ph2: Variant in doc.get("photos", []):
 		_add_photo(ph2 as Dictionary)
 	_reaction = str(doc.get("reaction", ""))
+	_paper.modulate = shade
+	_text.modulate = shade
+	for l2: Label in _extra:
+		l2.modulate = shade
+	for ph3: TextureRect in _photos:
+		ph3.modulate = shade
 	_thought.hide_box()
 	visible = true
 	_stage = 1

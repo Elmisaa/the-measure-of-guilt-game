@@ -64,16 +64,17 @@ func _run() -> void:
 	var cam: Camera2D = w.get_node("World/Camera")
 	await _shot("1_start")
 	var x0: float = w.get_node("World/Player").position.x
-	if not "A / D" in hud0().tutorial_text():
-		push_error("FAIL tutorial: walk hint missing: '%s'" % hud0().tutorial_text()); ok = false
+	if not hud0().tutorial_text().is_empty():
+		push_error("FAIL the top key hints are gone, but showing: '%s'" % hud0().tutorial_text()); ok = false
+	if not hud0().controls_hint_visible():
+		push_error("FAIL key legend not shown on the first entry"); ok = false
 	await _walk_to(w, 700.0)
 	if w.get_node("World/Player").position.x <= x0 + 100.0:
 		push_error("FAIL player did not move"); ok = false
 	if cam.position.x < 320.0 or cam.position.x > 2012.0 - 320.0:
 		push_error("FAIL camera out of bounds"); ok = false
 	await _shot("2_walking")
-	if not "Shift" in hud0().tutorial_text():
-		push_error("FAIL tutorial: run hint should follow walking: '%s'" % hud0().tutorial_text()); ok = false
+
 	# run (Shift) is faster than walking, uses the run sheet and spends stamina
 	var gs: Node = root.get_node("GameState")
 	var hud: Node = root.get_node("Hud")
@@ -88,8 +89,7 @@ func _run() -> void:
 		push_error("FAIL run is not faster"); ok = false
 	if not run_tex:
 		push_error("FAIL run sheet not used while running"); ok = false
-	if "Shift" in hud.tutorial_text() or str(gs.get_flag("tutorial")) != "interact":
-		push_error("FAIL tutorial: run hint should be gone after running: %s" % gs.get_flag("tutorial")); ok = false
+
 	if gs.stamina > 0.99:
 		push_error("FAIL stamina not spent: %.2f" % gs.stamina); ok = false
 	await _shot("2c_stamina")

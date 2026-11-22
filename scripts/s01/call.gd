@@ -6,6 +6,7 @@ extends Node2D
 const CHARS_PER_SEC: float = 32.0
 const START_DELAY: float = 0.8
 const SFX: String = "res://assets/audio/sfx/"
+const WALK_SCENE: String = "res://scenes/s01/walk.tscn"
 const FATHER: String = "Отец"  ## speaker id of the voice on the phone
 const PUNCT: String = ".,!?…—-:;\"«»“”"
 
@@ -227,8 +228,11 @@ func _on_leave() -> void:
 	var f: Tween = create_tween()
 	f.tween_property(_black, "color:a", 1.0, 1.5)
 	await f.finished
-	_end_label.text = str(_data.get("end_stub", ""))
-	_end_label.visible = true
+	# "Подняться": back in the hall — put the coat on and leave (walk.gd state "leave")
+	GameState.set_flag("walk_state", "leave")
+	GameState.set_flag("walk_return_x", null)
+	GameState.set_flag("radio_station", -1)
+	SceneRouter.go_to(WALK_SCENE, 0.6)
 
 
 # --- tension helpers ---------------------------------------------------

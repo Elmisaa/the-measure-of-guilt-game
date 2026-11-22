@@ -91,11 +91,14 @@ func _run() -> void:
 	if not btn.visible:
 		push_error("FAIL leave button not shown"); ok = false
 	await _shot("6_button")
+	if btn.text.strip_edges().trim_prefix("› ") != "Подняться" and not "Подняться" in btn.text:
+		push_error("FAIL button text: '%s'" % btn.text); ok = false
 	btn.pressed.emit()
 	await _wait(2.0)
-	await _wait(1.5)
-	if not call.get_node("Fade/End").visible:
-		push_error("FAIL end not reached"); ok = false
+	await _wait(2.5)
+	# "Подняться" -> back to the hall to put the coat on (state "leave")
+	if current_scene == null or current_scene.name != "Walk" or str(current_scene.get("_state")) != "leave":
+		push_error("FAIL leave did not return to the hall in state 'leave': %s" % [current_scene]); ok = false
 	if audio._loop.playing:
 		push_error("FAIL dial tone still playing"); ok = false
 	print("S01 CALL: ", "OK" if ok else "FAILED")

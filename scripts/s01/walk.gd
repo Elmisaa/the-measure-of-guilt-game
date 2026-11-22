@@ -3,9 +3,12 @@ extends Node2D
 ## Coffee: pour into the empty cup at the machine, drink it from the inventory (I) → a second cup →
 ## "time to go home" → the player explores freely and decides when to go to the desk → pack things →
 ## the phone rings right there → answer → the call. Kowalski's desk has a radio (stations, off).
+## After the call ("Подняться"), state "leave": take the coat from the locker, put it on (I → «Надеть»),
+## go out through the exit → the drive cutscene (s02).
 ## Spots and thoughts: data/dialogues/s01_walk.json. A/D or arrows walk, Shift run, E/click use (Space only pages thoughts), I things.
 
 const CALL_SCENE: String = "res://scenes/s01/call.tscn"
+const DRIVE_SCENE: String = "res://scenes/s02/drive.tscn"
 const RING: String = "res://assets/audio/sfx/629201__audacitier__phone-ringing-5.mp3"
 const PICKUP: String = "res://assets/audio/sfx/pickup.wav"
 const POUR: String = "res://assets/audio/sfx/pour.wav"
@@ -15,8 +18,14 @@ const HOME_THINGS: Array[String] = ["keys", "notebook", "umbrella"]
 const NEAR_MARGIN: float = 40.0
 const THOUGHT_TIME: float = 3.5
 const HALF_SCREEN: float = 320.0
-const TUTORIAL_TIME: float = 5.0
-const TUT_STEPS: Array[String] = ["move", "run", "interact", "inventory"]
+const ENTER_THOUGHT_TIME: float = 6.0
+## The city behind the hall windows moves slower than the room (tools/make_window_parallax.py).
+const WINDOW_SHADER: String = "res://scripts/fx/window_parallax.gdshader"
+const WINDOW_MASK: String = "res://assets/backgrounds/s01/walk_windows_mask.png"
+const WINDOW_CITY: String = "res://assets/backgrounds/s01/walk_windows_city.png"
+const WINDOW_CENTER_X: float = 640.0  ## camera x where the city sits as painted
+const WINDOW_PARALLAX: float = 0.14  ## city shift per px of camera move (the margin is 48 px)
+const WINDOW_MARGIN: float = 48.0
 
 @onready var _player: WalkPlayer = $World/Player
 @onready var _camera: Camera2D = $World/Camera
@@ -31,13 +40,13 @@ var _state: String = "wash"
 var _busy: bool = false
 var _near: String = ""
 var _room_w: float = 2012.0
-var _tut: String = "done"
-var _tut_t: float = 0.0
+var _window_mat: ShaderMaterial
 
 
 func _ready() -> void:
 	_d = DialogueData.load_file("s01_walk")
 	_room_w = ($World/Background as Sprite2D).texture.get_width()
+	_setup_windows()
 	var b: Array = _d.get("bounds", [70, 1950])
 	_player.min_x = b[0]
 	_player.max_x = b[1]
@@ -48,6 +57,11 @@ func _ready() -> void:
 	_player.scale_far = float(dep.get("scale_far", 1.0))
 	_player.position.y = _player.y_near
 	var back_x: Variant = GameState.get_flag("walk_return_x")
+	if not bool(GameState.get_flag("controls_hint_shown", false)):  # the key legend: once per game
+		GameState.set_flag("controls_hint_shown", true)
+		Hud.show_controls_hint.call_deferred()
+	if back_x == null and GameState.get_flag("walk_state") == "leave":
+		_player.position.x = float(_d["leave"]["spawn_x"])  # just got up from the desk after the call
 	if back_x != null:  # coming back from the restroom: stand at its door
 		_player.position.x = float(back_x)
 		GameState.set_flag("walk_return_x", null)
@@ -63,61 +77,27 @@ func _ready() -> void:
 	var saved: Variant = GameState.get_flag("walk_state")
 	var returning: bool = saved != null
 	_state = str(saved) if returning else ("wash" if GameState.has_item("cup_old") else "coffee1")
-	Hud.set_objective(str(_d["objectives"][_state]), true)
+	if _state == "leave":
+		GameState.item_thoughts["coat:wear"] = str(_d["leave"]["worn"])
+	Hud.set_objective(_objective(), true)
 	_update_locker_lock()
 	_radio.set_station(int(GameState.get_flag("radio_station", -1)))  # still playing when he comes back
 	_update_camera()
 	_tutorial_start(returning)
 
 
-## First time in the hall: a story thought (where the coffee is) and control hints one by one; each hint
-## stays until the player does it: walk -> run (Shift) -> use a thing (E, at the first prompt) -> things (I).
-## Progress lives in the "tutorial" flag, so it goes on after the restroom.
-func _tutorial_start(returning: bool) -> void:
-	_tut = str(GameState.get_flag("tutorial", TUT_STEPS[0]))
-	if not returning or _tut != "done":
-		# the thought stays on screen until the key hints are all done (then it fades)
-		_thought.show_text(str(_d["tutorial"]["enter"]), 0.0 if _tut != "done" else TUTORIAL_TIME)
-	_tut_show()
-
-
-func _tut_show() -> void:
-	if _tut == "done" or (_tut == "interact" and _near == ""):
-		Hud.hide_tutorial()
+## The first time in the hall only: where the coffee is (the key legend on the left is the HUD's).
+## After the call: "put the coat on and go". Neither comes back on later entries.
+func _tutorial_start(_returning: bool) -> void:
+	Hud.hide_tutorial()
+	if _state == "leave":
+		if not bool(GameState.get_flag("leave_entered", false)):
+			GameState.set_flag("leave_entered", true)
+			_thought.show_text(str(_d["leave"]["enter"]), ENTER_THOUGHT_TIME)
 		return
-	Hud.show_tutorial(str(_d["tutorial"][_tut]))
-
-
-func _tut_done(step: String) -> void:
-	if _tut != step:
-		return
-	var i: int = TUT_STEPS.find(step) + 1
-	_tut = TUT_STEPS[i] if i < TUT_STEPS.size() else "done"
-	_tut_t = 0.0
-	GameState.set_flag("tutorial", _tut)
-	_tut_show()
-	if _tut == "done" and _thought.get_text() == str(_d["tutorial"]["enter"]):
-		_thought.hide_in(2.0)  # the hints are done: let the thought go
-
-
-func _update_tutorial(delta: float) -> void:
-	match _tut:
-		"move":
-			if _player.is_walking():
-				_tut_t += delta
-				if _tut_t > 0.8:
-					_tut_done("move")
-		"run":
-			if _player.is_running():
-				_tut_t += delta
-				if _tut_t > 0.4:
-					_tut_done("run")
-		"interact":
-			if _near != "" and Hud.tutorial_text().is_empty():
-				_tut_show()
-		"inventory":
-			if Hud.is_inventory_open():
-				_tut_done("inventory")
+	if not bool(GameState.get_flag("walk_intro_seen", false)):
+		GameState.set_flag("walk_intro_seen", true)
+		_thought.show_text(str(_d["tutorial"]["enter"]), ENTER_THOUGHT_TIME)
 
 
 func _exit_tree() -> void:
@@ -134,7 +114,7 @@ func _add_spot(s: Dictionary) -> void:
 	m.size = Vector2(float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
 	_spots_root.add_child(m)
 	m.custom_minimum_size = m.size
-	m.mouse_enabled = false  # no cursor while walking: E only
+	m.mouse_enabled = true  # click works on spots Alexei is near (E too)
 	m.activated.connect(func(id: String) -> void: _interact(id))
 	_spots[m.marker_id] = {"marker": m, "rect": r, "name": str(s["name"]), "thought": str(s.get("thought", "")), "data": s}
 
@@ -142,12 +122,28 @@ func _add_spot(s: Dictionary) -> void:
 func _process(delta: float) -> void:
 	_update_camera()
 	_update_near()
-	_update_tutorial(delta)
 
 
 func _update_camera() -> void:
 	var cx: float = clampf(_player.position.x, HALF_SCREEN, _room_w - HALF_SCREEN)
 	_camera.position = Vector2(roundf(cx / 4.0) * 4.0, 180.0)
+	if _window_mat:  # the far city drifts a little: it is a window, not a painting
+		var off: float = clampf((_camera.position.x - WINDOW_CENTER_X) * WINDOW_PARALLAX, -WINDOW_MARGIN, WINDOW_MARGIN)
+		_window_mat.set_shader_parameter("offset_px", WINDOW_MARGIN + roundf(off / 4.0) * 4.0)
+
+
+func _setup_windows() -> void:
+	if not (ResourceLoader.exists(WINDOW_MASK) and ResourceLoader.exists(WINDOW_CITY)):
+		return
+	var city: Texture2D = load(WINDOW_CITY)
+	_window_mat = ShaderMaterial.new()
+	_window_mat.shader = load(WINDOW_SHADER)
+	_window_mat.set_shader_parameter("mask_tex", load(WINDOW_MASK))
+	_window_mat.set_shader_parameter("city_tex", city)
+	_window_mat.set_shader_parameter("bg_size", Vector2(_room_w, 360.0))
+	_window_mat.set_shader_parameter("city_origin", Vector2(476.0, 96.0))
+	_window_mat.set_shader_parameter("city_size", Vector2(city.get_width(), city.get_height()))
+	($World/Background as Sprite2D).material = _window_mat
 
 
 ## Hints only on spots Alexei can reach; the nearest gets a prompt.
@@ -181,6 +177,8 @@ func _label_for(id: String) -> String:
 		return str(_d["coffee"]["desk_pack"])
 	if id == "coffee" and _state in ["coffee1", "coffee2"] and GameState.has_item("cup_empty"):
 		return str(_d["coffee"]["pour_label"])
+	if id == "exit" and _state == "leave":
+		return str(_d["leave"]["exit_label"])
 	if id == "radio":
 		var r: Dictionary = _d["radio"]
 		if not _radio.is_on():
@@ -200,7 +198,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _interact(id: String) -> void:
 	if _busy or not _spots.has(id):
 		return
-	_tut_done("interact")
 	if not Hud.held_item.is_empty() and id != "coffee" and str(_spots[id]["data"].get("kind", "")) != "door":
 		Hud.set_held("")  # the thing goes back to the bag; Alexei just looks / opens as usual
 	match id:
@@ -208,6 +205,13 @@ func _interact(id: String) -> void:
 			_coffee()
 		"radio":
 			_use_radio()
+		"exit" when _state == "leave":
+			if not _has_home_things():
+				_thought.show_text(str(_d["leave"]["no_things"]), THOUGHT_TIME)
+			elif not bool(GameState.get_flag("coat_on", false)):
+				_thought.show_text(str(_d["leave"]["no_coat"]), THOUGHT_TIME)
+			else:
+				_leave_precinct()
 		"desk":
 			if _state == "phone":
 				_answer_phone()
@@ -296,6 +300,9 @@ func _update_locker_lock() -> void:
 
 ## All the things from the locker are on him: now back to the desk.
 func _check_locker() -> void:
+	if _state == "leave":
+		Hud.set_objective(_objective())
+		return
 	if _state != "home":
 		return
 	for t: String in HOME_THINGS:
@@ -308,6 +315,13 @@ func _check_locker() -> void:
 
 ## Drinking happens in the inventory; the scene only moves the story on.
 func _on_item_used(id: String, action: String) -> void:
+	if id == "coat" and action == "wear":  # Alexei's thought comes from the inventory (item_thoughts)
+		GameState.set_flag("coat_on", true)
+		GameState.item_thoughts.erase("coat:wear")
+		_player.set_coat(true)
+		if _state == "leave":
+			Hud.set_objective(_objective())
+		return
 	if id != "cup_full" or action != "drink":
 		return
 	GameState.item_thoughts.erase("cup_full:drink")
@@ -318,7 +332,7 @@ func _on_item_used(id: String, action: String) -> void:
 			_state = "home"  # free to explore; he goes to the desk when the player decides
 		_:
 			return
-	Hud.set_objective(str(_d["objectives"][_state]))
+	Hud.set_objective(_objective())
 	_update_locker_lock()
 
 
@@ -355,3 +369,41 @@ func _answer_phone() -> void:
 	Audio.stop_loop()
 	Audio.sfx(PICKUP, -4.0)
 	SceneRouter.go_to(CALL_SCENE, 1.2)
+
+
+func _objective() -> String:
+	if _state == "leave":
+		if not _has_home_things():
+			return str(_d["objectives"]["leave_things"])
+		if not bool(GameState.get_flag("coat_on", false)):
+			return str(_d["objectives"]["leave"])
+		return str(_d["objectives"]["leave_go"])
+	return str(_d["objectives"][_state])
+
+
+## Keys, notebook, umbrella with him and the coat taken (or already on).
+func _has_home_things() -> bool:
+	for t: String in HOME_THINGS:
+		if not GameState.has_item(t):
+			return false
+	return GameState.has_item("coat") or bool(GameState.get_flag("coat_on", false))
+
+
+## Out through the precinct door into the rain → the drive.
+func _leave_precinct() -> void:
+	_busy = true
+	_player.frozen = true
+	if _radio.is_on():
+		_radio.turn_off()
+	GameState.set_flag("walk_state", null)
+	GameState.set_flag("walk_return_x", null)
+	Audio.sfx(DOOR, -6.0)
+	SceneRouter.go_to(DRIVE_SCENE, 1.0)
+
+
+## For a save: where Alexei stands and the story step (SaveGame merges these flags).
+func save_state() -> Dictionary:
+	var st: String = _state
+	if st == "phone":
+		st = "back_to_desk"  # the ringing is not saved: he packs up again and the phone rings again
+	return {"walk_state": st, "walk_return_x": _player.position.x, "radio_station": _radio.station()}

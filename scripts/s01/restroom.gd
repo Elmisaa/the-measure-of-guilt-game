@@ -21,6 +21,10 @@ var _near: String = ""
 
 
 func _ready() -> void:
+	GameState.item_used.connect(func(id: String, action: String) -> void:
+		if id == "coat" and action == "wear":
+			GameState.set_flag("coat_on", true)
+			_player.set_coat(true))
 	_d = DialogueData.load_file("s01_restroom")
 	var b: Array = _d.get("bounds", [40, 600])
 	_player.min_x = b[0]
@@ -47,7 +51,7 @@ func _add_spot(s: Dictionary) -> void:
 	m.size = Vector2(float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
 	_spots_root.add_child(m)
 	m.custom_minimum_size = m.size
-	m.mouse_enabled = false  # no cursor while walking: E only
+	m.mouse_enabled = true  # click works on spots Alexei is near (E too)
 	m.activated.connect(func(id: String) -> void: _interact(id))
 	_spots[m.marker_id] = {"marker": m, "rect": r, "data": s}
 
@@ -124,7 +128,7 @@ func _sink() -> void:
 	Hud.set_held("")
 	_busy = true
 	_player.frozen = true
-	Audio.sfx(WATER, -6.0)
+	Audio.sfx(WATER, -16.0)
 	await get_tree().create_timer(2.0).timeout
 	GameState.replace_item("cup_old", "cup_empty")
 	if GameState.get_flag("walk_state") == "wash":

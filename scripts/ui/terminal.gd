@@ -24,6 +24,7 @@ var _root: Control
 var _body: VBoxContainer
 var _footer: Label
 var _hotkeys: Dictionary = {}
+var _searched: Dictionary = {}  ## record keys already found: the hints suggest others
 var _back: Callable = Callable()
 var _choices: Dictionary = {}
 var _open: bool = false
@@ -256,10 +257,24 @@ func _show_search() -> void:
 	le.text_changed.connect(func(_t: String) -> void: _audio("sfx", "res://assets/audio/sfx/key_tick.wav", -16.0))
 	_body.add_child(le)
 	le.grab_focus.call_deferred()
+	# what to look for: a few names not searched yet (click = search)
+	_body.add_child(_gap())
+	var help: Label = _text(str(_d.get("search_help", "")))
+	help.add_theme_color_override("font_color", GREEN_DIM)
+	_body.add_child(help)
+	var shown: int = 0
+	for h: Variant in _d.get("search_hints", []):
+		var name: String = str(h)
+		if _searched.has(_lookup(name)) or shown >= 4:
+			continue
+		shown += 1
+		_item("  › " + name, _show_result.bind(name), "")
 
 
 func _show_result(query: String) -> void:
 	var key: String = _lookup(query)
+	if key != "":
+		_searched[key] = true
 	_screen(_show_search)
 	_body.add_child(_label("> " + query.to_upper(), GREEN_DIM))
 	var text: String = str(_d["records"].get(key, _d.get("not_found", ""))) if key != "" else str(_d.get("not_found", ""))

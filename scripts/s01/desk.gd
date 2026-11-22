@@ -15,6 +15,10 @@ const DESK_NO_MUG: String = "res://assets/backgrounds/s01/desk_nomug.png"
 ## sleeps, steady green while it is on.
 const LED_POS: Vector2 = Vector2(524, 120)
 const LED_PERIOD: float = 1.4
+## Desk lamp off: the whole desk sinks into the night blue (only the monitor/LED keep a glow).
+const DARK: Color = Color(0.3, 0.33, 0.46)
+const DARK_PAPER: Color = Color(0.42, 0.45, 0.58)
+const SWITCH_SFX: String = "res://assets/audio/sfx/radio_click.wav"
 
 @onready var _thought: ThoughtBox = $UI/Root/ThoughtBox
 @onready var _docs: Node2D = $Documents
@@ -36,11 +40,18 @@ var _data: Dictionary = {}
 var _led: ColorRect
 var _led_glow: ColorRect
 var _led_t: float = 0.0
+var _lamp_on: bool = true
+var _lamp_lines: Dictionary = {}  # "off"/"on"/"dark_read" -> next index
+var _dark: CanvasModulate
+@onready var _lamp_light: PointLight2D = $Lights/LampLight
 
 
 func _ready() -> void:
 	_data = DialogueData.load_file("s01_precinct").get("desk", {})
 	_build_led()
+	_dark = CanvasModulate.new()
+	_dark.color = Color.WHITE
+	add_child(_dark)
 	_answer.visible = false
 	_answer.text = str(_data.get("answer_button", ""))
 	_answer.pressed.connect(_on_answer)
@@ -59,8 +70,55 @@ func _ready() -> void:
 	for m: Node in _markers.get_children():
 		if m is HintMarker:
 			(m as HintMarker).activated.connect(_on_marker)
+	_restore()
+	if bool(GameState.get_flag("desk_lamp_off", false)):
+		_set_lamp(false, 0.0)
+	if bool(GameState.get_flag("desk_report_done", false)):
+		_terminal.report_done = true
+		_phone_ringing = true
+		_computer.set_enabled(false)
+		_set_docs_interactive(false)
+		_coffee_break()  # loaded after the report: straight to the coffee
+		return
 	await get_tree().create_timer(THOUGHT_DELAY).timeout
 	_thought.show_text(str(_data.get("intro_thought", "")))
+
+
+## A save keeps what was read at the desk, whether the report is filed, and the lamp.
+func save_state() -> Dictionary:
+	return {"desk_viewed": _viewed.keys(), "desk_report_unlocked": _terminal.report_unlocked,
+		"desk_terminal_seen": _terminal_seen, "desk_report_done": _terminal.report_done, "desk_lamp_off": not _lamp_on}
+
+
+## The desk lamp: click switches it; the room goes dark blue, the warm light goes out.
+func _set_lamp(on: bool, time: float) -> void:
+	_lamp_on = on
+	GameState.set_flag("desk_lamp_off", not on)
+	if time > 0.0:
+		Audio.sfx(SWITCH_SFX, -8.0, 1.3 if on else 1.1)
+	var t: Tween = create_tween()
+	t.tween_property(_dark, "color", Color.WHITE if on else DARK, maxf(time, 0.01))
+	_lamp_light.set("base_energy", 0.16 if on else 0.0)
+	_lamp_light.energy = 0.16 if on else 0.0
+	_lamp_light.visible = on
+
+
+func _lamp_line(kind: String) -> String:
+	var lines: Array = _data.get("lamp", {}).get(kind, [])
+	if lines.is_empty():
+		return ""
+	var i: int = int(_lamp_lines.get(kind, 0))
+	_lamp_lines[kind] = (i + 1) % lines.size()
+	return str(lines[i])
+
+
+func _restore() -> void:
+	for k: Variant in GameState.get_flag("desk_viewed", []):
+		_viewed[str(k)] = true
+	_terminal_seen = bool(GameState.get_flag("desk_terminal_seen", false))
+	if bool(GameState.get_flag("desk_report_unlocked", false)):
+		_terminal.report_unlocked = true
+		Hud.set_objective(str(_data.get("report_objective", "")))
 
 
 func _on_doc_clicked(doc_id: String) -> void:
@@ -71,6 +129,10 @@ func _on_doc_clicked(doc_id: String) -> void:
 	_current_doc = doc_id
 	_thought.hide_box()
 	_set_docs_interactive(false)
+	_view.shade = Color.WHITE if _lamp_on else DARK_PAPER
+	if not _lamp_on:  # reading in the dark: Alexei says so first
+		doc = doc.duplicate()
+		doc["reaction"] = _lamp_line("dark_read") + "\n" + str(doc.get("reaction", ""))
 	_view.open(doc)
 
 
@@ -78,7 +140,12 @@ func _on_marker(marker_id: String) -> void:
 	if marker_id == "family" and not _view.is_open():  # the photo close-up, with everyone's names
 		_thought.hide_box()
 		_current_doc = ""
+		_view.shade = Color.WHITE if _lamp_on else DARK_PAPER
 		_view.open(_data["family"])
+		return
+	if marker_id == "lamp":
+		_set_lamp(not _lamp_on, 0.35)
+		_thought.show_text(_lamp_line("on" if _lamp_on else "off"), MARKER_THOUGHT_TIME)
 		return
 	var markers: Dictionary = _data.get("markers", {})
 	if markers.has(marker_id):

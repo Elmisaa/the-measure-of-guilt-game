@@ -3,12 +3,19 @@ extends CanvasLayer
 ## Top-right icons: current task (hover/click shows it), dialogue history (click opens log)
 ## and Alexei's things (inventory: click or I). Bottom-left: stamina bar (in walking scenes).
 
-const TASK_ICON: String = "res://assets/ui/icon_task.png"
-const HISTORY_ICON: String = "res://assets/ui/icon_history.png"
-const BAG_ICON: String = "res://assets/ui/icon_bag.png"
+const CURSOR: String = "res://assets/ui/cursor.png"
+const CURSOR_HOVER: String = "res://assets/ui/cursor_hover.png"
+## What each key does, for the pause menu ("Управление") and the hint at the start of a walking scene.
+const CONTROLS: Array = [
+	["Ходьба", [["A / D,  ← →", "идти"], ["W / S,  ↑ ↓", "шаг к стене / от стены"], ["Shift", "бег (тратит силы)"],
+		["E  или  клик", "взаимодействовать"], ["I", "вещи"], ["Q / ПКМ", "убрать вещь из рук"]]],
+	["Сцены и диалоги", [["Клик", "осмотреть, выбрать"], ["Пробел / клик", "дальше по тексту"]]],
+	["Меню", [["Esc", "пауза: задания, история, сохранение"], ["↑ ↓ / W S,  Enter", "выбор в меню"]]],
+]
+const WALK_CONTROLS: Array = [["A / D", "идти"], ["W / S", "шаг вглубь"], ["Shift", "бег"], ["E / клик", "действие"],
+	["I", "вещи"], ["Esc", "меню"]]
 const STAMINA_POS: Vector2 = Vector2(8, 346)
 const STAMINA_SIZE: Vector2 = Vector2(64, 4)
-const ICON_SIZE: Vector2 = Vector2(24, 24)
 const MARGIN: float = 8.0
 const PANEL_BG: Color = Color(0.03, 0.03, 0.05, 0.94)
 const THOUGHT_COLOR: String = "#9fb0b8"
@@ -16,8 +23,6 @@ const TASK_SHOW_TIME: float = 3.5
 const TASK_ANNOUNCE_TIME: float = 5.0
 
 var _root: Control
-var _task_btn: TextureButton
-var _history_btn: TextureButton
 var _task_panel: PanelContainer
 var _task_label: Label
 var _task_hide_left: float = -1.0
@@ -27,7 +32,15 @@ var _scroll: ScrollContainer
 var _objective: String = ""
 var _last_entry: String = ""
 var _history_open: bool = false
-var _bag_btn: TextureButton
+var _done_objectives: Array[String] = []
+var _log_entries: Array[String] = []
+var _info: Control  ## tasks / controls window from the pause menu
+var _info_box: VBoxContainer
+var _info_panel: PanelContainer
+var _saves: SaveSlotsPanel
+var _controls_hint: PanelContainer
+var _controls_tween: Tween
+var _cursor_scale: int = 0
 var _inventory: InventoryPanel
 var _container: InventoryPanel
 var _item_thought: ThoughtBox
@@ -59,14 +72,6 @@ func _ready() -> void:
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
-	_task_btn = _make_icon(TASK_ICON, Vector2(640.0 - MARGIN - ICON_SIZE.x, MARGIN), "!")
-	_history_btn = _make_icon(HISTORY_ICON, Vector2(640.0 - MARGIN * 1.5 - ICON_SIZE.x * 2.0, MARGIN), "≡")
-	_task_btn.mouse_entered.connect(func() -> void: _show_task(-1.0))
-	_task_btn.mouse_exited.connect(func() -> void: _task_hide_left = 0.6)
-	_task_btn.pressed.connect(func() -> void: _show_task(TASK_SHOW_TIME))
-	_history_btn.pressed.connect(toggle_history)
-	_bag_btn = _make_icon(BAG_ICON, Vector2(640.0 - MARGIN * 2.0 - ICON_SIZE.x * 3.0, MARGIN), "▤")
-	_bag_btn.pressed.connect(toggle_inventory)
 	_build_task_panel()
 	_build_history()
 	_build_stamina()
@@ -92,39 +97,15 @@ func _ready() -> void:
 	_build_held()
 	_build_tutorial()
 	_build_pause()
+	_build_controls_hint()
 	_toasts = VBoxContainer.new()
 	_toasts.position = Vector2(MARGIN, MARGIN)
 	_toasts.add_theme_constant_override("separation", 4)
 	_toasts.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_toasts)
 	set_hud_visible(false)
-
-
-func _make_icon(path: String, pos: Vector2, fallback: String) -> TextureButton:
-	var b: TextureButton = TextureButton.new()
-	b.position = pos
-	b.size = ICON_SIZE
-	b.custom_minimum_size = ICON_SIZE
-	b.ignore_texture_size = true
-	b.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
-	b.focus_mode = Control.FOCUS_NONE
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.modulate = Color(1, 1, 1, 0.8)
-	if ResourceLoader.exists(path):
-		b.texture_normal = load(path)
-	else:  # placeholder until the icon art exists
-		var l: Label = Label.new()
-		l.text = fallback
-		l.size = ICON_SIZE
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(l)
-	b.mouse_entered.connect(func() -> void: b.modulate = Color.WHITE)
-	b.mouse_exited.connect(func() -> void: b.modulate = Color(1, 1, 1, 0.8))
-	Audio.bind_icon(b)
-	_root.add_child(b)
-	return b
+	_setup_cursor()
+	get_tree().root.size_changed.connect(_setup_cursor)
 
 
 func _panel_style(margin: float) -> StyleBoxFlat:
@@ -186,10 +167,7 @@ func _build_history() -> void:
 func _process(delta: float) -> void:
 	_update_cursor()
 	if _held_icon.visible:
-		if walk_mode:  # no cursor while walking: the thing sits in the "hand" corner, above the stamina bar
-			_held_icon.position = Vector2(MARGIN, 346.0 - 38.0)
-		else:
-			_held_icon.position = (_root.get_global_mouse_position() + Vector2(6, 4)).floor()
+		_held_icon.position = (_root.get_global_mouse_position() + Vector2(6, 4)).floor()
 		if not GameState.has_item(held_item):
 			set_held("")
 	if _task_hide_left > 0.0:
@@ -199,6 +177,15 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _info.visible:
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept") or event.is_action_pressed("inventory"):
+			get_viewport().set_input_as_handled()
+			_close_info()
+		return
+	if _history_open and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept")):
+		get_viewport().set_input_as_handled()
+		close_history()
+		return
 	if _pause.visible:
 		return
 	if not held_item.is_empty() and not is_blocking():
@@ -213,21 +200,16 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		toggle_inventory()
 		return
-	if not _history_open:
-		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept"):
-		get_viewport().set_input_as_handled()
-		close_history()
 
 
 # --- API ---------------------------------------------------------------
 
 func set_hud_visible(v: bool) -> void:
 	_hud_on = v
-	_task_btn.visible = v
-	_history_btn.visible = v
-	_bag_btn.visible = v
 	if not v:
+		hide_controls_hint()
+		for c: Node in _toasts.get_children():  # "Взято: ..." does not follow into a cutscene
+			c.queue_free()
 		_task_panel.visible = false
 		close_history()
 		_inventory.close()
@@ -241,6 +223,8 @@ func set_hud_visible(v: bool) -> void:
 ## Changes are silent; announce = on entering a scene: the task plate shows under the icon for a while,
 ## then hides (the player can hover/click the icon to see it again).
 func set_objective(text: String, announce: bool = false) -> void:
+	if not _objective.is_empty() and _objective != text and not _done_objectives.has(_objective):
+		_done_objectives.append(_objective)  # for "Задания" in the pause menu
 	_objective = text
 	_task_label.text = text
 	if announce:
@@ -334,15 +318,45 @@ func open_history() -> void:
 
 
 func close_history() -> void:
+	var was: bool = _history_open
 	_history_open = false
 	if _overlay:
 		_overlay.visible = false
+	if was and _pause and _pause.visible:
+		_pause_first.grab_focus()
 
 
 func clear_log() -> void:
 	for c: Node in _log_box.get_children():
 		c.queue_free()
 	_last_entry = ""
+	_log_entries.clear()
+
+
+func get_objective() -> String:
+	return _objective
+
+
+## New game: no tasks, no history.
+func reset_journal() -> void:
+	clear_log()
+	_objective = ""
+	_task_label.text = ""
+	_done_objectives.clear()
+
+
+func journal_to_dict() -> Dictionary:
+	return {"objective": _objective, "done": Array(_done_objectives), "log": Array(_log_entries)}
+
+
+func journal_from_dict(d: Dictionary) -> void:
+	reset_journal()
+	for t: Variant in d.get("done", []):
+		_done_objectives.append(str(t))
+	for e: Variant in d.get("log", []):
+		_add_entry(str(e))
+	_objective = str(d.get("objective", ""))
+	_task_label.text = _objective
 
 
 # --- internals ---------------------------------------------------------
@@ -353,7 +367,7 @@ func _show_task(duration: float) -> void:
 	_task_panel.visible = true
 	_task_panel.reset_size()
 	var s: Vector2 = _task_panel.get_combined_minimum_size()
-	_task_panel.position = Vector2(640.0 - MARGIN - s.x, MARGIN + ICON_SIZE.y + 4.0)
+	_task_panel.position = Vector2(640.0 - MARGIN - s.x, MARGIN)
 	_task_hide_left = duration
 
 
@@ -361,6 +375,7 @@ func _add_entry(bbcode: String) -> void:
 	if bbcode == _last_entry:
 		return
 	_last_entry = bbcode
+	_log_entries.append(bbcode)
 	var r: RichTextLabel = RichTextLabel.new()
 	r.bbcode_enabled = true
 	r.fit_content = true
@@ -415,7 +430,8 @@ func _build_held() -> void:
 	_root.add_child(_held_label)
 
 
-## Esc in a game scene (nothing else open): pause — Продолжить / Настройки / В главное меню.
+## Esc in a game scene (nothing else open): pause — Продолжить / Задания / История диалогов / Вещи /
+## Управление / Сохранить / Загрузить / Настройки / В главное меню.
 func _build_pause() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_pause = Control.new()
@@ -437,9 +453,22 @@ func _build_pause() -> void:
 	t.add_theme_color_override("font_color", Color(0.7, 0.78, 0.82))
 	col.add_child(t)
 	var bs: Array[Button] = []
-	for it: Array in [["Продолжить", close_pause], ["Настройки", func() -> void: _pause_settings.open()], ["В главное меню", _to_title]]:
+	var items: Array = [
+		["Продолжить", close_pause],
+		["Задания", _open_tasks],
+		["История диалогов", open_history],
+		["Вещи", func() -> void:
+			close_pause()
+			toggle_inventory()],
+		["Управление", _open_controls],
+		["Сохранить", func() -> void: _saves.open("save")],
+		["Загрузить", func() -> void: _saves.open("load")],
+		["Настройки", func() -> void: _pause_settings.open()],
+		["В главное меню", _to_title],
+	]
+	for it: Array in items:
 		var b: Button = MenuUI.button(str(it[0]))
-		b.custom_minimum_size = Vector2(150, 0)
+		b.custom_minimum_size = Vector2(170, 0)
 		b.pressed.connect(it[1])
 		col.add_child(b)
 		bs.append(b)
@@ -449,7 +478,163 @@ func _build_pause() -> void:
 	_pause_first = bs[0]
 	_pause_settings = SettingsPanel.new()
 	_root.add_child(_pause_settings)
-	_pause_settings.closed.connect(func() -> void: bs[1].grab_focus())
+	_pause_settings.closed.connect(func() -> void: bs[7].grab_focus())
+	_saves = SaveSlotsPanel.new()
+	_root.add_child(_saves)
+	_saves.closed.connect(func() -> void: bs[5].grab_focus())
+	_build_info()
+
+
+## A plain reading window over the pause menu: tasks or controls. Esc / Enter / click closes.
+func _build_info() -> void:
+	_info = Control.new()
+	_info.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_info.visible = false
+	_info.process_mode = Node.PROCESS_MODE_ALWAYS
+	_root.add_child(_info)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e: InputEvent) -> void:
+		var mb: InputEventMouseButton = e as InputEventMouseButton
+		if mb and mb.pressed:
+			_close_info())
+	_info.add_child(dim)
+	_info_panel = PanelContainer.new()
+	_info_panel.add_theme_stylebox_override("panel", MenuUI.panel_style())
+	_info.add_child(_info_panel)
+	_info_box = VBoxContainer.new()
+	_info_box.add_theme_constant_override("separation", 4)
+	_info_panel.add_child(_info_box)
+
+
+func _info_open(title: String) -> void:
+	for c: Node in _info_box.get_children():
+		c.queue_free()
+	var t: Label = Label.new()
+	t.text = title
+	t.add_theme_color_override("font_color", Color(0.7, 0.78, 0.82))
+	_info_box.add_child(t)
+
+
+func _info_line(text: String, color: Color, width: float = 380.0) -> Label:
+	var l: Label = Label.new()
+	l.text = text
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(width, 0)
+	l.add_theme_color_override("font_color", color)
+	_info_box.add_child(l)
+	return l
+
+
+func _info_show() -> void:
+	var hint: Label = _info_line("Esc — назад", Color(0.45, 0.5, 0.55))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_root.move_child(_info, -1)
+	_info.visible = true
+	await get_tree().process_frame
+	_info_panel.reset_size()
+	var s: Vector2 = _info_panel.get_combined_minimum_size()
+	_info_panel.size = s
+	_info_panel.position = ((Vector2(640, 360) - s) / 2.0).floor()
+
+
+func _close_info() -> void:
+	_info.visible = false
+	if _pause.visible:
+		_pause_first.grab_focus()
+
+
+func _open_tasks() -> void:
+	_info_open("Задания")
+	_info_line("Сейчас:", Color(0.62, 0.86, 0.72))
+	_info_line("• " + (_objective if not _objective.is_empty() else "—"), Color(0.95, 0.88, 0.66))
+	if not _done_objectives.is_empty():
+		_info_line("Выполнено:", Color(0.45, 0.5, 0.55))
+		var from: int = maxi(0, _done_objectives.size() - 8)  # the last few
+		for i: int in range(_done_objectives.size() - 1, from - 1, -1):
+			_info_line("✓ " + _done_objectives[i], Color(0.5, 0.54, 0.58))
+	_info_show()
+
+
+func _open_controls() -> void:
+	_info_open("Управление")
+	for sec: Array in CONTROLS:
+		_info_line(str(sec[0]), Color(0.62, 0.86, 0.72))
+		for kv: Array in sec[1]:
+			_key_row(_info_box, str(kv[0]), str(kv[1]))
+	_info_show()
+
+
+func _key_row(parent: Control, key: String, what: String) -> void:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var k: Label = Label.new()
+	k.text = key
+	k.custom_minimum_size = Vector2(130, 0)
+	k.add_theme_color_override("font_color", Color(0.95, 0.88, 0.66))
+	row.add_child(k)
+	var w: Label = Label.new()
+	w.text = what
+	w.add_theme_color_override("font_color", Color(0.72, 0.76, 0.8))
+	row.add_child(w)
+
+
+## Left side, at the start of a walking scene: what the keys do here. Fades out by itself.
+func _build_controls_hint() -> void:
+	_controls_hint = PanelContainer.new()
+	_controls_hint.add_theme_stylebox_override("panel", _panel_style(6.0))
+	_controls_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_controls_hint.visible = false
+	_root.add_child(_controls_hint)
+
+
+func show_controls_hint(sec: float = 9.0) -> void:
+	for c: Node in _controls_hint.get_children():
+		c.queue_free()
+	var col: VBoxContainer = VBoxContainer.new()
+	col.add_theme_constant_override("separation", 1)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_controls_hint.add_child(col)
+	var t: Label = Label.new()
+	t.text = "Управление"
+	t.add_theme_color_override("font_color", Color(0.62, 0.86, 0.72))
+	col.add_child(t)
+	for kv: Array in WALK_CONTROLS:
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		col.add_child(row)
+		var k: Label = Label.new()
+		k.text = str(kv[0])
+		k.custom_minimum_size = Vector2(62, 0)
+		k.add_theme_color_override("font_color", Color(0.95, 0.88, 0.66))
+		row.add_child(k)
+		var w: Label = Label.new()
+		w.text = str(kv[1])
+		w.add_theme_color_override("font_color", Color(0.72, 0.76, 0.8))
+		row.add_child(w)
+	_controls_hint.position = Vector2(MARGIN, 96)
+	_controls_hint.modulate.a = 0.0
+	_controls_hint.visible = true
+	if _controls_tween:
+		_controls_tween.kill()
+	_controls_tween = create_tween()
+	_controls_tween.tween_property(_controls_hint, "modulate:a", 1.0, 0.5)
+	_controls_tween.tween_interval(sec)
+	_controls_tween.tween_property(_controls_hint, "modulate:a", 0.0, 1.0)
+	_controls_tween.tween_callback(func() -> void: _controls_hint.visible = false)
+
+
+func hide_controls_hint() -> void:
+	if _controls_tween:
+		_controls_tween.kill()
+	if _controls_hint:
+		_controls_hint.visible = false
+
+
+func controls_hint_visible() -> bool:
+	return _controls_hint.visible
 
 
 func open_pause() -> void:
@@ -457,8 +642,11 @@ func open_pause() -> void:
 		return
 	_root.move_child(_pause, -1)
 	_root.move_child(_pause_settings, -1)
+	_root.move_child(_saves, -1)
+	_root.move_child(_overlay, -1)
 	_pause.visible = true
 	_task_panel.visible = false
+	hide_controls_hint()
 	get_tree().paused = true
 	await get_tree().process_frame
 	var s: Vector2 = _pause_panel.get_combined_minimum_size()
@@ -469,6 +657,9 @@ func open_pause() -> void:
 
 func close_pause() -> void:
 	_pause_settings.close()
+	_saves.close()
+	_info.visible = false
+	close_history()
 	_pause.visible = false
 	get_tree().paused = false
 
@@ -486,7 +677,7 @@ func _to_title() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _pause_settings.is_open():
+	if _pause_settings.is_open() or _saves.is_open() or _info.visible or _history_open:
 		return
 	if _pause.visible:
 		if event.is_action_pressed("ui_cancel"):
@@ -531,25 +722,39 @@ func tutorial_text() -> String:
 func _held_text(id: String) -> String:
 	var n: String = str(GameState.item_def(id).get("name", id))
 	if walk_mode:
-		return "В руке: %s   (E у нужного места — применить, Q/Esc — убрать)" % n
+		return "В руке: %s   (E / клик у нужного места — применить, Q/ПКМ — убрать)" % n
 	return "В руке: %s   (клик — применить, ПКМ/Esc — убрать)" % n
 
 
-## Walking scenes: no mouse cursor (immersion); it comes back while a window is open
-## (inventory, drawer, close-up, history, pause). Interaction is E; a held thing shows in the corner.
+## Walking scenes: the held thing's hint speaks about E; the cursor stays visible everywhere.
 func set_walk_mode(v: bool) -> void:
 	walk_mode = v
 	if not held_item.is_empty():
 		_held_label.text = _held_text(held_item)
-	_update_cursor()
 
 
 func _update_cursor() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
-	var want: Input.MouseMode = Input.MOUSE_MODE_HIDDEN if walk_mode and not is_blocking() else Input.MOUSE_MODE_VISIBLE
-	if Input.mouse_mode != want:
-		Input.mouse_mode = want
+	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## The game's own pixel cursor (pen nib): plain, and warm amber over anything clickable
+## (Controls with the pointing-hand shape). Scaled with the window so the pixels stay whole.
+func _setup_cursor() -> void:
+	if DisplayServer.get_name() == "headless" or not ResourceLoader.exists(CURSOR):
+		return
+	var f: int = clampi(roundi(float(get_tree().root.size.y) / 360.0), 1, 4)
+	if f == _cursor_scale:
+		return
+	_cursor_scale = f
+	for pair: Array in [[CURSOR, Input.CURSOR_ARROW], [CURSOR_HOVER, Input.CURSOR_POINTING_HAND]]:
+		var img: Image = (load(str(pair[0])) as Texture2D).get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(img.get_width() * f, img.get_height() * f, Image.INTERPOLATE_NEAREST)
+		Input.set_custom_mouse_cursor(ImageTexture.create_from_image(img), pair[1], Vector2.ZERO)
 
 
 ## Put an item in Alexei's hand ("" = empty hands). Its icon follows the mouse (or sits in the corner).

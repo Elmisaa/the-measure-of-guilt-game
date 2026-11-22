@@ -35,7 +35,13 @@ var min_x: float = 0.0
 var max_x: float = 2000.0
 var frozen: bool = false
 
+## Alexei in his coat (after he puts it on): same frame grid as the plain sheets.
+const COAT_WALK: String = "res://assets/characters/alexei/walk_side_depth_coat.png"
+const COAT_RUN: String = "res://assets/characters/alexei/run_side_depth_coat.png"
+
 var _sprite: Sprite2D
+var _plain_sheet: Texture2D
+var _plain_run: Texture2D
 var _t: float = 0.0
 var _walking: bool = false
 var _row: int = 0
@@ -57,6 +63,21 @@ func _ready() -> void:
 	_sprite.centered = true
 	_sprite.offset = Vector2(0, -sheet.get_height() / float(depth_rows) / 2.0)
 	add_child(_sprite)
+	_plain_sheet = sheet
+	_plain_run = run_sheet
+	if _gs != null and bool(_gs.get_flag("coat_on", false)):
+		set_coat(true)
+
+
+## Swap to the coat sheets (or back). Without the coat art it stays as is.
+func set_coat(on: bool) -> void:
+	if on and not (ResourceLoader.exists(COAT_WALK) and ResourceLoader.exists(COAT_RUN)):
+		return
+	var was_run: bool = _sprite.texture == run_sheet and run_sheet != null
+	sheet = load(COAT_WALK) if on else _plain_sheet
+	run_sheet = load(COAT_RUN) if on else _plain_run
+	_sprite.texture = null
+	_set_sheet(was_run)
 
 
 func _ensure_actions() -> void:

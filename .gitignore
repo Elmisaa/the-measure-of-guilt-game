@@ -6,3 +6,5 @@ __pycache__/
 art/refs/**/_sheet.jpg
 *.crdownload
 art/sources/audio/
+another_projects/
+art/refs/**/*.mp3

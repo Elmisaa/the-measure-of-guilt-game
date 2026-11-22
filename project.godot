@@ -22,6 +22,7 @@ Letterbox="*res://scripts/autoload/letterbox.gd"
 Audio="*res://scripts/autoload/audio.gd"
 Hud="*res://scripts/autoload/hud.gd"
 GameState="*res://scripts/autoload/game_state.gd"
+SaveGame="*res://scripts/autoload/save_game.gd"
 
 [display]
 

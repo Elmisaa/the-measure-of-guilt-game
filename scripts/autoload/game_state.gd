@@ -51,6 +51,30 @@ func get_flag(key: String, default: Variant = null) -> Variant:
 	return flags.get(key, default)
 
 
+# --- saves -------------------------------------------------------------------
+
+func to_dict() -> Dictionary:
+	return {"flags": flags.duplicate(true), "items": Array(items), "containers": containers.duplicate(true),
+		"stamina": stamina, "item_thoughts": item_thoughts.duplicate(true)}
+
+
+func from_dict(d: Dictionary) -> void:
+	new_game()
+	flags = (d.get("flags", {}) as Dictionary).duplicate(true)
+	items.clear()
+	for it: Variant in d.get("items", []):
+		items.append(str(it))
+	var cs: Dictionary = d.get("containers", {})
+	for cid: String in cs:
+		var arr: Array[String] = []
+		for it: Variant in cs[cid]:
+			arr.append(str(it))
+		containers[cid] = arr
+	item_thoughts = (d.get("item_thoughts", {}) as Dictionary).duplicate(true)
+	stamina = float(d.get("stamina", 1.0))
+	inventory_changed.emit()
+
+
 # --- inventory -----------------------------------------------------------
 
 func reset_inventory() -> void:
@@ -151,5 +175,8 @@ func use_item(id: String, action: String) -> void:
 			audio.sfx(str(fx["sfx"]), -6.0)
 	var becomes: Dictionary = d.get("becomes", {})
 	if becomes.has(action):
-		replace_item(id, str(becomes[action]))
+		if str(becomes[action]).is_empty():
+			remove_item(id)  # used up / put on (the coat)
+		else:
+			replace_item(id, str(becomes[action]))
 	item_used.emit(id, action)

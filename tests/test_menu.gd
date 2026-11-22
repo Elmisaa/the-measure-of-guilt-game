@@ -41,6 +41,7 @@ func _run() -> void:
 	var ok: bool = true
 	var st: Node = root.get_node("Settings")
 	var music0: float = st.music
+	root.get_node("SaveGame").wipe_test_saves()  # no saves: the menu starts with "Новая игра"
 	change_scene_to_file("res://scenes/menu/title.tscn")
 	await _wait(1.0)
 	var t: Node = current_scene
