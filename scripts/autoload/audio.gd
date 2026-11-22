@@ -37,10 +37,6 @@ var _next_sfx: int = 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_music = AudioStreamPlayer.new()
-	var start: AudioStream = load(_find_start_ambience())
-	if "loop" in start:
-		start.set("loop", true)
-	_music.stream = start
 	_music.volume_db = -60.0
 	_music.finished.connect(_music.play)  # loop
 	add_child(_music)
@@ -66,7 +62,6 @@ func _ready() -> void:
 		if c is AudioStreamPlayer:
 			(c as AudioStreamPlayer).bus = "SFX"
 	_music.bus = "Music"
-	play_music()
 
 
 func _make_player(path: String, db: float) -> AudioStreamPlayer:
@@ -130,6 +125,22 @@ func _find_start_ambience() -> String:
 			if name.begins_with(START_AMBIENCE_ID) and (name.ends_with(".wav") or name.ends_with(".ogg") or name.ends_with(".mp3")):
 				return dir_path + name
 	return MUSIC
+
+
+## Start the initial rain/thunder ambience (id 877124) if not already playing.
+## Safe to call multiple times — only starts once.
+func play_start_ambience(fade: float = 2.5) -> void:
+	if _music.playing and _music.stream != null:
+		var current_path: String = _music.stream.get_path()
+		if current_path != "" and START_AMBIENCE_ID in current_path:
+			return  # already playing the start ambience
+	var start: AudioStream = load(_find_start_ambience())
+	if "loop" in start:
+		start.set("loop", true)
+	_music.stream = start
+	_music.volume_db = -60.0
+	_music.play()
+	create_tween().tween_property(_music, "volume_db", MUSIC_DB, fade)
 
 
 func play_music(fade: float = 2.5) -> void:

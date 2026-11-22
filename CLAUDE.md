@@ -35,8 +35,9 @@ Codex (ChatGPT Plus, плагин `codex@openai-codex`) — исполнител
 - Рутину делай на Sonnet; на Opus переключаться предлагай пользователю только для архитектуры и тяжёлой отладки.
 - Задача для Codex — короткая и точная (шаблон в `docs/DELEGATION.md`), не пересылай ему весь контекст.
 
-## 4. Godot без MCP
-Godot MCP не используется. Работай с файлами напрямую:
+## 4. Godot без MCP (у Claude)
+Claude Godot MCP не использует — работает с файлами напрямую. Но в проекте есть аддоны GoPeak MCP (`addons/godot_mcp_*`, `addons/auto_reload`, автозагрузка `MCPRuntime`) — ими пользуется коллега (Windows, opencode, своя модель; правила для неё — `AGENTS.md`, `scripts/gameplay/AGENTS.md`, `opencode.jsonc`). Не удаляй и не ломай их. Её зона: `scripts/gameplay/`, `scenes/gameplay/` (3D-бой, «Весы») — правки там только по согласованию.
+Путь к Godot: переменная `GODOT_PATH` (Windows) или `/Applications/Godot.app/Contents/MacOS/Godot` (macOS).
 - Сцены `.tscn`, ресурсы `.tres` и скрипты `.gd` редактируй как текст; сохраняй формат Godot 4 (не ломай `[ext_resource]`, `uid://`, `id`).
 - Проверка без редактора:
   - импорт и парсинг проекта: `godot --headless --path . --import` (Godot 4.2+), затем `godot --headless --path . --quit`;

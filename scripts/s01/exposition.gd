@@ -39,6 +39,7 @@ func _ready() -> void:
 	Hud.set_objective(str(_data.get("objective", "")), true)
 	_button.pressed.connect(_on_study_pressed)
 	Audio.bind_button(_button)
+	Audio.play_start_ambience()
 	for m: Node in _markers.get_children():
 		if m is HintMarker:
 			(m as HintMarker).activated.connect(_on_marker)

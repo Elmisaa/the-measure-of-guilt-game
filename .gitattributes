@@ -1,0 +1,13 @@
+# One line ending for everyone (macOS + Windows): text in LF, binaries untouched.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary
+*.glb binary
+*.res binary
+*.scn binary

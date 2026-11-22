@@ -23,6 +23,7 @@ Audio="*res://scripts/autoload/audio.gd"
 Hud="*res://scripts/autoload/hud.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
+MCPRuntime="*res://addons/godot_mcp_runtime/mcp_runtime_autoload.gd"
 
 [display]
 
@@ -32,6 +33,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="viewport"
 window/stretch/scale_mode="fractional"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/auto_reload/plugin.cfg", "res://addons/godot_mcp_editor/plugin.cfg", "res://addons/godot_mcp_runtime/plugin.cfg")
 
 [gui]
 
