@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://t3stf1n4lar3na"]
+[gd_scene format=3 uid="uid://cbt0et6q0lsr7"]
 
 [ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_player.tscn" id="1_boss_player"]
 [ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_hud.tscn" id="2_boss_hud"]
@@ -24,51 +24,51 @@ size = Vector3(24, 6, 0.3)
 [sub_resource type="BoxShape3D" id="shape_wall"]
 size = Vector3(24, 6, 0.3)
 
-[node name="TestFinalArena" type="Node3D"]
+[node name="TestFinalArena" type="Node3D" unique_id=2031852512]
 
-[node name="Floor" type="StaticBody3D" parent="."]
+[node name="Floor" type="StaticBody3D" parent="." unique_id=561548276]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 
-[node name="FloorMesh" type="MeshInstance3D" parent="Floor"]
-mesh = SubResource("mesh_floor")
+[node name="FloorMesh" type="MeshInstance3D" parent="Floor" unique_id=715787138]
 material_override = SubResource("mat_floor")
+mesh = SubResource("mesh_floor")
 
-[node name="FloorCollision" type="CollisionShape3D" parent="Floor"]
+[node name="FloorCollision" type="CollisionShape3D" parent="Floor" unique_id=1172037490]
 shape = SubResource("shape_floor")
 
-[node name="BackWall" type="StaticBody3D" parent="."]
+[node name="BackWall" type="StaticBody3D" parent="." unique_id=1426376549]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -4)
 
-[node name="WallMesh" type="MeshInstance3D" parent="BackWall"]
-mesh = SubResource("mesh_wall")
+[node name="WallMesh" type="MeshInstance3D" parent="BackWall" unique_id=312466757]
 material_override = SubResource("mat_wall")
+mesh = SubResource("mesh_wall")
 
-[node name="WallCollision" type="CollisionShape3D" parent="BackWall"]
+[node name="WallCollision" type="CollisionShape3D" parent="BackWall" unique_id=850886883]
 shape = SubResource("shape_wall")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1969281934]
 transform = Transform3D(0.85, 0.32, -0.34, 0, 0.64, 0.68, 0.49, -0.55, 0.59, 0, 10, 5)
 light_color = Color(1, 0.95, 0.9, 1)
 light_energy = 2.0
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1125090663]
 transform = Transform3D(1, 0, 0, 0, 0.93, 0.37, 0, -0.37, 0.93, 0, 5.2, 10.5)
 current = true
 fov = 60.0
 near = 0.1
 far = 100.0
 
-[node name="BossPlayer" parent="." instance=ExtResource("1_boss_player")]
+[node name="BossPlayer" parent="." unique_id=1301041657 instance=ExtResource("1_boss_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0)
 
-[node name="OverheadConveyor" parent="." instance=ExtResource("3_overhead_conveyor")]
+[node name="OverheadConveyor" parent="." unique_id=121967384 instance=ExtResource("3_overhead_conveyor")]
 
-[node name="ExplosiveBarrel1" parent="." instance=ExtResource("4_explosive_barrel")]
+[node name="ExplosiveBarrel1" parent="." unique_id=494767815 instance=ExtResource("4_explosive_barrel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.45, 2)
 
-[node name="ExplosiveBarrel2" parent="." instance=ExtResource("4_explosive_barrel")]
+[node name="ExplosiveBarrel2" parent="." unique_id=1771595661 instance=ExtResource("4_explosive_barrel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.45, -2)
 
-[node name="BossScales" parent="." instance=ExtResource("5_boss_scales")]
+[node name="BossScales" parent="." unique_id=1640288103 instance=ExtResource("5_boss_scales")]
 
-[node name="BossHud" parent="." instance=ExtResource("2_boss_hud")]
+[node name="BossHud" parent="." unique_id=507537563 instance=ExtResource("2_boss_hud")]
