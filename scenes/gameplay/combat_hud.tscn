@@ -1,7 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bltv6ngmdklic"]
 
-[ext_resource type="Script" path="res://scripts/gameplay/combat_hud.gd" id="1_hud"]
+[ext_resource type="Script" uid="uid://bcs24m2hy8s4s" path="res://scripts/gameplay/combat_hud.gd" id="1_hud"]
 
-[node name="CombatHud" type="CanvasLayer"]
+[node name="CombatHud" type="CanvasLayer" unique_id=23652525]
 layer = 50
 script = ExtResource("1_hud")
+
+[node name="TaserText" type="Label" parent="." unique_id=368561936]
+offset_left = 8.0
+offset_top = 38.0
+offset_right = 8.0
+offset_bottom = 38.0
+text = "TASER: 3 / 3"

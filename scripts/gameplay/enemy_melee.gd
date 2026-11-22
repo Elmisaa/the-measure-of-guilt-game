@@ -19,7 +19,7 @@ const STATE_NAMES: Array[String] = ["IDLE", "CHASE", "WINDUP", "ATTACK", "COOLDO
 const LAYER_ENEMY: int = 4
 const MASK_ENEMY: int = 1 | 16
 const GRAVITY: float = 18.0
-## Трение горизонтальной скорости в STUNNED (отбрасывание).
+## Трение горизонтальной скорости в STUNNED (отбрасывание дубинкой).
 const KNOCKBACK_FRICTION: float = 20.0
 ## Длительность белой вспышки от попадания, сек.
 const FLASH_TIME: float = 0.08
@@ -39,9 +39,13 @@ const WHITE: Color = Color(1, 1, 1, 1)
 @export var lane_z: float = 0.0
 ## Дополнительная пауза перед первым броском (чтобы враги не бежали синхронно).
 @export var start_cooldown: float = 0.0
+## Пауза перед первой атакой после обнаружения игрока.
+@export var initial_hesitation: float = 0.0
 
 var state: State = State.IDLE
 var health: int = 0
+## Враг успел перейти к атаке (WINDUP/ATTACK).
+var has_attacked: bool = false
 
 var _state_time: float = 0.0
 var _player: Player = null
@@ -53,6 +57,8 @@ var _material: StandardMaterial3D
 var _base_color: Color = WHITE
 var _flash_left: float = 0.0
 var _facing: float = -1.0
+var _detected: bool = false
+var _hesitation_left: float = 0.0
 
 
 func _ready() -> void:
@@ -91,7 +97,14 @@ func _update_state(delta: float) -> void:
 	match state:
 		State.IDLE:
 			velocity.x = 0.0
-			if _player_in_detection():
+			if not _player_in_detection():
+				_detected = false
+			elif not _detected:
+				_detected = true
+				_hesitation_left = maxf(initial_hesitation, 0.0)
+			elif _hesitation_left > 0.0:
+				_hesitation_left -= delta
+			else:
 				_set_state(State.CHASE)
 		State.CHASE:
 			_tick_chase()
@@ -244,6 +257,12 @@ func apply_stun(duration: float) -> void:
 	_state_time = duration
 
 
+func _paint(color: Color) -> void:
+	if _material != null:
+		_material.albedo_color = color
+	_base_color = color
+
+
 ## Отбрасывание дубинкой/пинком: прерывает замах, станит и толкает по X с трением.
 func apply_knockback(dir_x: float, force: float, stun_duration: float = 0.6) -> void:
 	if state == State.DEAD or force <= 0.0:
@@ -302,6 +321,8 @@ func _set_state(next: State) -> void:
 		return
 	var old_state: State = state
 	state = next
+	if next == State.WINDUP or next == State.ATTACK:
+		has_attacked = true
 	_update_label()
 	state_changed.emit(old_state, next)
 

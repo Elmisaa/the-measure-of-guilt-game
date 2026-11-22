@@ -149,7 +149,7 @@ func _run() -> void:
 	_check(player.collision_mask == MASK_PLAYER, "player mask is not 1|6: %d" % player.collision_mask)
 
 	# Экшены боя зарегистрированы в рантайме
-	for action: String in ["move_left", "move_right", "interact", "combat_shoot", "combat_melee", "combat_reload", "combat_cover", "combat_taser", "combat_flashlight"]:
+	for action: String in ["move_left", "move_right", "combat_shoot", "combat_melee", "combat_reload", "combat_cover", "combat_taser", "combat_flashlight"]:
 		_check(InputMap.has_action(action), "action not registered: " + action)
 
 	var visual: Node3D = player.get_node("Visual") as Node3D

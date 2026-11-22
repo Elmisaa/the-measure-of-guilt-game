@@ -14,6 +14,7 @@ var _starting: bool = false
 func _ready() -> void:
 	Hud.set_hud_visible(false)
 	Letterbox.hide_bars()  # the menu fills the whole screen (no cinema bars)
+	Audio.play_start_ambience()
 	var bg: Sprite2D = Sprite2D.new()
 	bg.texture = load(BACKGROUND)
 	bg.centered = false

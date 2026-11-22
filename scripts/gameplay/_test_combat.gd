@@ -1,5 +1,6 @@
 extends Node3D
-## Тестовая арена первой перестрелки: камера следит за игроком по X, два стрелка справа.
+## Тестовая арена первой перестрелки: камера следит за игроком по X,
+## ножевик впереди и два стрелка справа (победа — по всем врагам группы "enemies").
 ## Смерть игрока / зачистка арены показывают текст и ждут Enter для перезапуска сцены.
 
 const RESULT_DIED: String = "YOU DIED — Enter to restart"
@@ -43,12 +44,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _collect_enemies() -> void:
 	_enemies.clear()
-	for child: Node in get_children():
-		if child is CharacterBody3D and child.has_method("apply_stun"):
-			var enemy: Node3D = child as Node3D
-			_enemies.append(enemy)
-			if not enemy.is_connected("died", _on_enemy_died):
-				enemy.connect("died", _on_enemy_died)
+	for node: Node in get_tree().get_nodes_in_group("enemies"):
+		if node is not CharacterBody3D or not node.has_method("apply_stun"):
+			continue
+		var enemy: Node3D = node as Node3D
+		_enemies.append(enemy)
+		if not enemy.is_connected("died", _on_enemy_died):
+			enemy.connect("died", _on_enemy_died)
 	if _player != null and not _player.died.is_connected(_on_player_died):
 		_player.died.connect(_on_player_died)
 
@@ -58,9 +60,13 @@ func _on_player_died() -> void:
 
 
 func _on_enemy_died(_enemy: Node3D) -> void:
+	if _enemies.is_empty():
+		return
 	for enemy: Node3D in _enemies:
 		if not is_instance_valid(enemy):
 			continue
+		if enemy.has_method("is_dead") and not bool(enemy.call("is_dead")):
+			return
 		if int(enemy.get("state")) != ENEMY_DEAD_STATE:
 			return
 	_show_result(RESULT_CLEAR)

@@ -40,9 +40,13 @@ const WHITE: Color = Color(1, 1, 1, 1)
 @export var bullet_speed: float = 16.0
 ## Дополнительная пауза перед первым циклом (чтобы враги не стреляли синхронно).
 @export var start_cooldown: float = 0.0
+## Пауза перед первой атакой после обнаружения игрока.
+@export var initial_hesitation: float = 0.0
 
 var state: State = State.IDLE
 var health: int = 0
+## Враг успел перейти к атаке (TELEGRAPH/SHOOTING).
+var has_attacked: bool = false
 
 var _state_time: float = 0.0
 var _shots_left: int = 0
@@ -56,6 +60,8 @@ var _material: StandardMaterial3D
 var _base_color: Color = WHITE
 var _flash_left: float = 0.0
 var _facing: float = -1.0
+var _detected: bool = false
+var _hesitation_left: float = 0.0
 
 
 func _ready() -> void:
@@ -82,15 +88,14 @@ func _physics_process(delta: float) -> void:
 	_tick_flash(delta)
 	if state == State.DEAD:
 		return
-	_refresh_player()
 	if state == State.STUNNED:
 		_tick_stunned(delta)
 		_state_time -= delta
 		if _state_time <= 0.0:
-			velocity.x = 0.0
 			_set_state(State.IDLE)
 		return
 	_tick_gravity(delta)
+	_refresh_player()
 	_face_player()
 
 	# Игрок умер/исчез — прерываем телеграф и очередь, возвращаемся в IDLE.
@@ -100,7 +105,14 @@ func _physics_process(delta: float) -> void:
 
 	match state:
 		State.IDLE:
-			if _can_see_player():
+			if not _can_see_player():
+				_detected = false
+			elif not _detected:
+				_detected = true
+				_hesitation_left = maxf(initial_hesitation, 0.0)
+			elif _hesitation_left > 0.0:
+				_hesitation_left -= delta
+			else:
 				_begin_telegraph()
 		State.TELEGRAPH:
 			_state_time -= delta
@@ -265,16 +277,21 @@ func take_damage(amount: int) -> void:
 		_die()
 
 
-## Заготовка под тазер: прерывает телеграф/очередь и держит врага в STUNNED duration сек.
+## Тазер/дубинка: прерывает телеграф/очередь и держит врага в STUNNED duration сек.
 func apply_stun(duration: float) -> void:
 	if state == State.DEAD or duration <= 0.0:
 		return
 	if _telegraph != null:
 		_telegraph.visible = false
 	_shots_left = 0
-	velocity.x = 0.0
 	_set_state(State.STUNNED)
 	_state_time = duration
+
+
+func _paint(color: Color) -> void:
+	if _material != null:
+		_material.albedo_color = color
+	_base_color = color
 
 
 ## Отбрасывание дубинкой/пинком: прерывает атаку, станит и толкает по X с трением.
@@ -334,6 +351,8 @@ func _set_state(next: State) -> void:
 		return
 	var old_state: State = state
 	state = next
+	if next == State.TELEGRAPH or next == State.SHOOTING:
+		has_attacked = true
 	_update_label()
 	state_changed.emit(old_state, next)
 

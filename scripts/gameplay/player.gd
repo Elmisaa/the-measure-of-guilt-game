@@ -19,9 +19,10 @@ signal reload_started
 signal reload_finished
 ## Перезарядка прервана (смерть, оглушение).
 signal reload_cancelled
-## Заготовки под будущий ближний бой и тазер: игрок только сообщает о действии.
+## Ближний бой и тазер.
 signal melee_swung(direction: Vector3)
-signal taser_fired(direction: Vector3)
+## Тазер попал в цель.
+signal taser_fired(target: Node3D)
 signal cover_changed(in_cover: bool)
 signal flashlight_toggled(on: bool)
 signal shoot_fired(direction: Vector3)
@@ -50,6 +51,8 @@ const TARGET_CHEST_HEIGHT: float = 1.15
 const CLOSE_MELEE_RANGE: float = 0.9
 ## Сколько секунд видна вспышка взмаха.
 const MELEE_VISUAL_TIME: float = 0.14
+## Сколько секунд виден разряд тазера.
+const TASER_BEAM_TIME: float = 0.18
 
 @export var speed: float = 3.5
 @export var lane_z: float = 0.0
@@ -64,6 +67,14 @@ const MELEE_VISUAL_TIME: float = 0.14
 @export var melee_knockback: float = 9.5
 @export var melee_stun: float = 0.65
 @export var melee_cooldown: float = 0.55
+## Тазер: число зарядов, радиус, длительность стана и кулдаун.
+@export var taser_charges_max: int = 3
+@export var taser_range: float = 4.2
+@export var taser_stun_duration: float = 3.0
+@export var taser_cooldown: float = 1.2
+signal taser_charges_changed(current: int, max_charges: int)
+
+@export var flashlight_enabled: bool = false
 
 var state: State = State.IDLE
 var health: int = 0
@@ -78,18 +89,24 @@ var flashlight_on: bool = false
 var aim_override: Variant = null
 ## Живой враг у точки прицела (пуля летит мимо остальных врагов именно в него).
 var selected_target: Node3D = null
+## Оставшиеся заряды тазера (пополняются только при рестарте сцены).
+var taser_charges: int = 0
 
 var _visual: Node3D
 var _aim_marker: Node3D
 var _target_marker: Node3D
 var _melee_visual: Node3D
+var _taser_beam: MeshInstance3D
+var _flashlight: SpotLight3D
 var _reload_timer: Timer
 var _melee_timer: Timer
+var _taser_timer: Timer
 var _hud: Node
 var _facing: float = 1.0
 ## Кулдаун ближнего боя: пока false, ПКМ игнорируется.
 var _melee_ready: bool = true
 var _melee_visual_left: float = 0.0
+var _taser_beam_left: float = 0.0
 ## Укрытия, чьи CoverZone сейчас накрывают игрока.
 var _covers: Array[Cover] = []
 var _active_cover: Cover = null
@@ -105,6 +122,8 @@ func _ready() -> void:
 	if _aim_marker != null:
 		_aim_marker.visible = true
 	_ensure_melee_nodes()
+	_ensure_taser_nodes()
+	_flashlight = get_node_or_null("Flashlight") as SpotLight3D
 	var barrel: Node3D = get_node_or_null("Visual/Barrel") as Node3D
 	if barrel != null:
 		barrel.visible = true
@@ -113,15 +132,22 @@ func _ready() -> void:
 	health_changed.emit(health, max_health)
 	ammo_current = ammo_max
 	ammo_changed.emit(ammo_current, ammo_max)
+	taser_charges = maxi(taser_charges_max, 0)
+	taser_charges_changed.emit(taser_charges, taser_charges_max)
+	if flashlight_enabled:
+		flashlight_on = true
+		if _flashlight != null:
+			_flashlight.set("enabled", true)
+			_flashlight.visible = true
+		flashlight_toggled.emit(true)
 
 
 ## Экшены боя по образцу walk_player.gd: недостающие добавляем в InputMap в рантайме.
-## move_left / move_right / interact переиспользуем (их создаёт и ходьба по участку).
+## move_left / move_right переиспользуем (их создаёт и ходьба по участку).
 func _ensure_combat_input() -> void:
 	for pair: Array in [
 		["move_left", [KEY_A, KEY_LEFT]],
 		["move_right", [KEY_D, KEY_RIGHT]],
-		["interact", [KEY_E]],
 		["combat_reload", [KEY_R]],
 		["combat_cover", [KEY_S, KEY_SPACE]],
 		["combat_taser", [KEY_Q]],
@@ -222,8 +248,49 @@ func _on_melee_timeout() -> void:
 	_melee_ready = true
 
 
+## Тазер: узел-таймер кулдауна и тонкий светящийся луч в мировых координатах.
+func _ensure_taser_nodes() -> void:
+	_taser_timer = get_node_or_null("TaserCooldownTimer") as Timer
+	if _taser_timer == null:
+		_taser_timer = Timer.new()
+		_taser_timer.name = "TaserCooldownTimer"
+		add_child(_taser_timer)
+	_taser_timer.one_shot = true
+	_taser_timer.wait_time = taser_cooldown
+	_taser_beam = get_node_or_null("TaserBeam") as MeshInstance3D
+	if _taser_beam == null:
+		_taser_beam = MeshInstance3D.new()
+		_taser_beam.name = "TaserBeam"
+		var beam_box: BoxMesh = BoxMesh.new()
+		beam_box.size = Vector3(1.0, 0.035, 0.035)
+		_taser_beam.mesh = beam_box
+		add_child(_taser_beam)
+	_taser_beam.material_override = _make_taser_material()
+	_taser_beam.top_level = true
+	_taser_beam.visible = false
+
+
+func _make_taser_material() -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.55, 0.95, 1.0, 1)
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.emission_enabled = true
+	material.emission = Color(0.35, 0.85, 1.0, 1)
+	material.emission_energy_multiplier = 5.0
+	material.no_depth_test = true
+	return material
+
+
+func _tick_taser_visual(delta: float) -> void:
+	if _taser_beam_left > 0.0:
+		_taser_beam_left -= delta
+		if _taser_beam_left <= 0.0 and _taser_beam != null:
+			_taser_beam.visible = false
+
+
 func _physics_process(delta: float) -> void:
 	_tick_melee_visual(delta)
+	_tick_taser_visual(delta)
 	var blocked: bool = _ui_blocked() or stunned
 	var dead: bool = state == State.DEAD
 	var move_axis: float = 0.0
@@ -395,6 +462,7 @@ func _update_aim() -> void:
 	_face_point(point)
 	if _aim_marker != null:
 		_aim_marker.global_position = Vector3(point.x, point.y, lane_z)
+	_aim_flashlight(point)
 	_update_target_selection(point)
 
 
@@ -579,19 +647,86 @@ func _apply_melee_hits() -> void:
 			enemy.call("apply_knockback", dir_x, melee_knockback, melee_stun)
 
 
-## Заготовка тазера (Q).
+## Тазер (Q): бьёт выбранную цель или ближайшего активного врага со стороны взгляда.
 func taser() -> void:
-	if not is_alive() or stunned:
+	if not is_alive() or stunned or in_cover:
 		return
-	var direction: Vector3 = aim_direction()
-	_face_direction(direction.x)
-	taser_fired.emit(direction)
+	if _taser_timer == null or not _taser_timer.is_stopped():
+		return
+	if taser_charges <= 0:
+		return
+	var target: Node3D = null
+	if _taser_target_valid(selected_target, true) and absf(selected_target.global_position.x - global_position.x) <= taser_range:
+		target = selected_target
+	else:
+		target = _find_taser_target()
+	if target == null:  # нет цели — заряд не тратим
+		return
+	taser_charges -= 1
+	_taser_timer.start(maxf(taser_cooldown, 0.01))
+	_face_direction(target.global_position.x - global_position.x)
+	_show_taser_beam(target)
+	if target.has_method("apply_stun"):
+		target.call("apply_stun", taser_stun_duration)
+	taser_fired.emit(target)
+	taser_charges_changed.emit(taser_charges, taser_charges_max)
+
+
+## Пригоден ли враг как цель тазера.
+func _taser_target_valid(enemy: Node3D, allow_surrendered: bool) -> bool:
+	if not _is_enemy_alive(enemy):
+		return false
+	if enemy.has_method("is_arrested") and bool(enemy.call("is_arrested")):
+		return false
+	if not allow_surrendered and enemy.has_method("is_surrendered") and bool(enemy.call("is_surrendered")):
+		return false
+	return true
+
+
+func _find_taser_target() -> Node3D:
+	var best: Node3D = null
+	var best_distance: float = taser_range
+	if not is_inside_tree():
+		return null
+	for node: Node in get_tree().get_nodes_in_group("enemies"):
+		if node is not Node3D:
+			continue
+		var enemy: Node3D = node as Node3D
+		if not _taser_target_valid(enemy, false):
+			continue
+		var dx: float = enemy.global_position.x - global_position.x
+		var distance: float = absf(dx)
+		if distance > best_distance or dx * _facing < -0.001:
+			continue
+		best_distance = distance
+		best = enemy
+	return best
+
+
+## Тонкий яркий луч от груди игрока до груди цели (виден даже поверх стен).
+func _show_taser_beam(target: Node3D) -> void:
+	if _taser_beam == null:
+		return
+	var from: Vector2 = Vector2(global_position.x, global_position.y + CHEST_HEIGHT)
+	var to: Vector2 = Vector2(target.global_position.x, target.global_position.y + TARGET_CHEST_HEIGHT)
+	var span: Vector2 = to - from
+	var beam_length: float = span.length()
+	if beam_length < 0.001:
+		return
+	_taser_beam.global_position = Vector3((from.x + to.x) * 0.5, (from.y + to.y) * 0.5, lane_z)
+	_taser_beam.rotation.z = atan2(span.y, span.x)
+	_taser_beam.scale = Vector3(beam_length, 1.0, 1.0)
+	_taser_beam.visible = true
+	_taser_beam_left = TASER_BEAM_TIME
 
 
 func toggle_flashlight() -> void:
 	if not is_alive():
 		return
 	flashlight_on = not flashlight_on
+	if _flashlight != null:
+		_flashlight.set("enabled", flashlight_on)
+		_flashlight.visible = flashlight_on
 	flashlight_toggled.emit(flashlight_on)
 
 
@@ -635,17 +770,18 @@ func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 		world = get_parent()
 	if world == null:
 		return
-	var bullet: Node3D = BulletScene.instantiate() as Node3D
 	var at: Vector3 = Vector3(global_position.x, global_position.y + CHEST_HEIGHT, lane_z) + direction * MUZZLE_OFFSET
-	bullet.set("direction", direction)
+	var bullet: Node3D = BulletScene.instantiate() as Node3D
 	var parent_3d: Node3D = world as Node3D
 	if parent_3d != null:
 		bullet.position = parent_3d.to_local(at)
-	world.add_child(bullet)
-	if parent_3d == null:
+	else:
 		bullet.global_position = at
 	if bullet.has_method("configure"):
 		bullet.call("configure", direction, false, int(bullet.get("damage")), float(bullet.get("speed")), target)
+	else:
+		bullet.set("direction", direction)
+	world.add_child(bullet)
 
 
 # --- поворот и стейт ------------------------------------------------------
@@ -657,10 +793,29 @@ func _face_direction(direction_x: float) -> void:
 	_facing = -1.0 if direction_x < 0.0 else 1.0
 	if _visual != null:
 		_visual.scale.x = _facing
+	# Flashlight is no longer under Visual, so it doesn't inherit the scale flip.
+	# Its rotation is handled by _aim_flashlight().
 
 
 func _face_point(point: Vector3) -> void:
 	_face_direction(point.x - global_position.x)
+
+
+## Направляет фонарик на точку прицела (aim_point) с лёгким наклоном вниз.
+## SpotLight3D в Godot светит вдоль локальной -Z, поэтому используем look_at().
+## Фонарик позиционируется чуть ВПЕРЕДИ героя (x = facing * 0.45), чтобы луч не утыкался в модель.
+func _aim_flashlight(target_point: Vector3) -> void:
+	if _flashlight == null or not _flashlight.visible:
+		return
+	# Позиционируем фонарик чуть вперёд от центра игрока по направлению взгляда
+	var flashlight_local_x: float = _facing * 0.45
+	_flashlight.position = Vector3(flashlight_local_x, 1.25, 0.05)
+	# Направляем луч на точку минимум в 3.0 м вперёд (с лёгким наклоном вниз -0.25)
+	var from_pos: Vector3 = _flashlight.global_position
+	var to_pos: Vector3 = Vector3(target_point.x, target_point.y - 0.25, target_point.z)
+	var dir: Vector3 = (to_pos - from_pos).normalized()
+	var look_at_pos: Vector3 = from_pos + dir * 3.0
+	_flashlight.look_at(look_at_pos, Vector3.UP)
 
 
 func _set_state(next: State) -> void:
@@ -672,6 +827,11 @@ func _set_state(next: State) -> void:
 
 func is_alive() -> bool:
 	return health > 0
+
+
+## Возвращает направление взгляда игрока: -1.0 (влево) или 1.0 (вправо).
+func get_facing_direction() -> float:
+	return _facing
 
 
 func take_damage(amount: int) -> void:
@@ -688,6 +848,9 @@ func _die() -> void:
 	stunned = false
 	exit_cover()
 	_hide_target_marker()
+	_taser_beam_left = 0.0
+	if _taser_beam != null:
+		_taser_beam.visible = false
 	velocity = Vector3.ZERO
 	_set_state(State.DEAD)
 	died.emit()

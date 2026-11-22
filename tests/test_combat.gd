@@ -7,6 +7,7 @@ extends SceneTree
 
 const PlayerScript: Script = preload("res://scripts/gameplay/player.gd")
 const EnemyScript: Script = preload("res://scripts/gameplay/enemy_shooter.gd")
+const MeleeScript: Script = preload("res://scripts/gameplay/enemy_melee.gd")
 const SAFETY_TIMEOUT: float = 90.0
 
 ## 1 = World, 2 = Player, 3 = Enemy, 4 = Cover, 5 = PlayerBullet, 6 = EnemyBullet.
@@ -78,10 +79,32 @@ func _make_enemy(world: Node3D, at: Vector3, cfg: Dictionary) -> Node3D:
 	return enemy
 
 
+func _make_melee(world: Node3D, at: Vector3, cfg: Dictionary) -> Node3D:
+	var scene: PackedScene = load("res://scenes/gameplay/enemy_melee.tscn") as PackedScene
+	var enemy: Node3D = scene.instantiate() as Node3D
+	for key: Variant in cfg:
+		enemy.set(String(key), cfg[key])
+	enemy.position = at
+	world.add_child(enemy)
+	return enemy
+
+
+func _clear_enemies() -> void:
+	for node: Node in get_nodes_in_group("enemies"):
+		node.queue_free()
+
+
 func _clear_bullets(world: Node3D) -> void:
 	for child: Node in world.get_children():
 		if child is Area3D:
 			child.queue_free()
+
+
+func _first_bullet(world: Node) -> Node3D:
+	for child: Node in world.get_children():
+		if child is Area3D:
+			return child as Node3D
+	return null
 
 
 func _wait_for_state(enemy: Node3D, wanted: int, max_frames: int) -> bool:
@@ -243,12 +266,129 @@ func _run() -> void:
 	await create_timer(0.8).timeout
 	_check(int(stunned_enemy.get("state")) != EnemyScript.State.STUNNED, "stun did not end")
 
+	# --- выбор цели: пуля летит мимо ножевика в выбранного стрелка --------
+	_clear_enemies()
+	_clear_bullets(world)
+	await _frames(2)
+	player.global_position = Vector3(0, 0, 0)
+	player.health = player.max_health
+	player.health_changed.emit(player.health, player.max_health)
+	player.exit_cover()
+	player.aim_override = Vector3(-4.0, 1.25, 0.0)
+	await _frames(4)
+	_check(player.selected_target == null, "selected target is not null without enemies")
+	var target_signals: Array[Node3D] = []
+	player.target_changed.connect(func(target: Node3D) -> void: target_signals.append(target))
+	var blocker: Node3D = _make_melee(world, Vector3(2.0, 0, 0), {"detection_range": 0.0})
+	var far: Node3D = _make_enemy(world, Vector3(4.5, 0, 0), {"detection_range": 0.0})
+	await _frames(2)
+	player.aim_override = Vector3(4.5, 1.25, 0.0)
+	await _frames(6)
+	_check(player.selected_target == far, "selected target is not the far shooter")
+	_check(target_signals.size() > 0 and target_signals.back() == far, "target_changed did not report the far shooter")
+	var marker: Node3D = player.get_node_or_null("TargetMarker") as Node3D
+	_check(marker != null, "player has no TargetMarker")
+	if marker != null:
+		_check(marker.visible, "TargetMarker is hidden with a selected target")
+		_check(is_equal_approx(marker.global_position.x, 4.5), "TargetMarker is not on the enemy: %.2f" % marker.global_position.x)
+	var far_hp: int = int(far.get("health"))
+	var blocker_hp: int = int(blocker.get("health"))
+	player.shoot()
+	var aimed_bullet: Node3D = _first_bullet(world)
+	_check(aimed_bullet != null, "no bullet spawned with a selected target")
+	if aimed_bullet != null:
+		_check(aimed_bullet.get("intended_target") == far, "bullet did not receive intended_target")
+	await create_timer(0.6).timeout
+	_check(int(far.get("health")) < far_hp, "selected shooter took no damage: %d" % int(far.get("health")))
+	_check(int(blocker.get("health")) == blocker_hp, "melee blocker took damage instead of the selected shooter")
+
+	# --- выбор цели работает в COVER -------------------------------------
+	var cover_target: Cover = _make_cover(world, Vector3(0, 0, 0.35), Vector3(1.4, 1.05, 1.0), false)
+	await _frames(2)
+	Input.action_press("combat_cover")
+	await _frames(2)
+	_check(player.enter_cover(cover_target), "player did not enter cover for target selection")
+	await _frames(6)
+	_check(player.state == PlayerScript.State.COVER, "player is not in COVER")
+	_check(player.selected_target == far, "target selection broke in COVER")
+	Input.action_release("combat_cover")
+	player.exit_cover()
+	cover_target.queue_free()
+	await _frames(2)
+
+	# --- EnemyMelee: CHASE → WINDUP → ATTACK, выбивает игрока из укрытия --
+	_clear_enemies()
+	_clear_bullets(world)
+	await _frames(2)
+	player.global_position = Vector3(0, 0, 0)
+	player.health = player.max_health
+	player.aim_override = Vector3(3.0, 1.25, 0.0)
+	var cover_ai: Cover = _make_cover(world, Vector3(0, 0, 0.35), Vector3(1.4, 1.05, 1.0), false)
+	await _frames(2)
+	var melee_ai: Node3D = _make_melee(world, Vector3(3.0, 0, 0), {})
+	await _frames(2)
+	_check(melee_ai.is_in_group("enemies"), "EnemyMelee did not join the 'enemies' group")
+	_check(melee_ai.collision_layer == LAYER_ENEMY, "melee layer is not 4: %d" % melee_ai.collision_layer)
+	_check(melee_ai.collision_mask == MASK_ENEMY, "melee mask is not 1|16: %d" % melee_ai.collision_mask)
+	_check(int(melee_ai.get("health")) == 60, "melee health is not 60")
+	var melee_label: Label3D = melee_ai.get_node_or_null("DebugLabel") as Label3D
+	_check(melee_label != null and melee_label.text.begins_with("MELEE"), "melee debug label is wrong")
+	Input.action_press("combat_cover")
+	_check(player.enter_cover(cover_ai), "player did not enter cover for the melee attack")
+	var telegraphs: Array[int] = [0]
+	var attacks: Array[int] = [0]
+	melee_ai.connect("melee_telegraphed", func() -> void: telegraphs[0] += 1)
+	melee_ai.connect("attacked", func(_target: Node3D) -> void:
+		attacks[0] += 1
+		Input.action_release("combat_cover"))
+	var hp_before_ai: int = player.health
+	var guard: int = 0
+	while attacks[0] == 0 and guard < 360:
+		await _frames(1)
+		guard += 1
+	_check(telegraphs[0] >= 1, "EnemyMelee never telegraphed")
+	_check(attacks[0] >= 1, "EnemyMelee never attacked")
+	_check(player.health < hp_before_ai, "melee attack did not damage the player: %d" % player.health)
+	_check(not player.is_in_cover(), "melee attack did not knock the player out of cover")
+	var ai_state: int = int(melee_ai.get("state"))
+	_check(ai_state == MeleeScript.State.ATTACK or ai_state == MeleeScript.State.COOLDOWN, "melee state after attack: %d" % ai_state)
+	player.exit_cover()
+	cover_ai.queue_free()
+	await _frames(2)
+
+	# --- ПКМ: 15 урона, прерывание WINDUP, стан и отбрасывание > 1 м ------
+	_clear_enemies()
+	_clear_bullets(world)
+	await _frames(2)
+	player.global_position = Vector3(0, 0, 0)
+	player.aim_override = Vector3(3.0, 1.25, 0.0)
+	var melee_target: Node3D = _make_melee(world, Vector3(1.5, 0, 0), {})
+	await _frames(4)
+	_check(await _wait_for_state(melee_target, MeleeScript.State.WINDUP, 240), "EnemyMelee did not enter WINDUP")
+	var windup_flash: Node3D = melee_target.get_node_or_null("Visual/WindupFlash") as Node3D
+	_check(windup_flash != null and windup_flash.visible, "WindupFlash is not visible in WINDUP")
+	var swings: Array[int] = [0]
+	player.melee_swung.connect(func(_direction: Vector3) -> void: swings[0] += 1)
+	var x_before: float = melee_target.global_position.x
+	player.perform_melee()
+	_check(swings[0] == 1, "perform_melee did not emit melee_swung")
+	_check(int(melee_target.get("health")) == 45, "melee damaged for %d HP instead of 15" % (60 - int(melee_target.get("health"))))
+	_check(int(melee_target.get("state")) == MeleeScript.State.STUNNED, "WINDUP was not interrupted by the baton")
+	_check(windup_flash == null or not windup_flash.visible, "WindupFlash stayed visible after the counter")
+	await create_timer(0.4).timeout
+	var delta_x: float = melee_target.global_position.x - x_before
+	_check(delta_x > 1.0, "knockback moved the enemy only %.2f m" % delta_x)
+	_clear_enemies()
+	_clear_bullets(world)
+	await _frames(2)
+
 	# --- тестовая арена собирается ----------------------------------------
 	var combat_scene: PackedScene = load("res://scenes/gameplay/_test_combat.tscn") as PackedScene
 	_check(combat_scene != null, "_test_combat.tscn did not load")
 	if combat_scene != null:
 		var arena: Node = combat_scene.instantiate()
 		_check(arena.get_node_or_null("Player") != null, "arena has no Player")
+		_check(arena.get_node_or_null("Melee") != null, "arena has no Melee")
 		_check(arena.get_node_or_null("Enemy1") != null, "arena has no Enemy1")
 		_check(arena.get_node_or_null("Enemy2") != null, "arena has no Enemy2")
 		_check(arena.get_node_or_null("CombatHud") != null, "arena has no CombatHud")

@@ -60,6 +60,16 @@ script = ExtResource("1_player")
 
 [node name="Visual" type="Node3D" parent="."]
 
+[node name="Flashlight" type="SpotLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.25, 0.25)
+spot_range = 14.0
+spot_angle = 36.0
+light_energy = 8.0
+light_color = Color(1.0, 0.96, 0.85, 1)
+spot_attenuation = 0.8
+shadow_enabled = false
+enabled = false
+
 [node name="Body" type="MeshInstance3D" parent="Visual"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 mesh = SubResource("mesh_body")
