@@ -3,11 +3,11 @@ extends CharacterBody3D
 ## Босс-арена: игрок с WASD, рывок (Space/Shift) и стрельба по 3D-мишеням.
 ## Капсула 1.7 м (ноги Y=0), Visual — BoxMesh 0.5×1.7×0.2 + ствол.
 ## Ввод: move_left/right/up/down (WASD), boss_dash (Space/Shift), combat_shoot (ЛКМ), combat_reload (R).
-## Ходьба по X и Z (speed = 4.8), границы arena_min = (-10, -3.2), arena_max = (10, 3.2), гравитация по Y.
+## Ходьба по X и Z (speed = 4.8), диагональ нормализована, границы arena_min = (-10, -3.2), arena_max = (10, 3.2), гравитация по Y.
 ## Рывок: dash_speed = 13.5 на 0.22с, неуязвимость 0.3с (Visual мигает), КД 0.85с.
 ## Пистолет: max_health = 100, ammo_max = 6, перезарядка 1.5с (ReloadTimer).
 ## Прицел: PhysicsRay по слою 128 (BossTarget) — пуля летит в центр мишени; иначе — в Plane(Vector3.UP, 1.15).
-## Пуля: scenes/gameplay/bullet.tscn, mask = 1|4|128. При попадании вызываем take_bullet_hit() у цели.
+## Пуля: scenes/gameplay/boss/boss_bullet.tscn, mask = 128 (BossTarget). Луч проверяет весь путь.
 ## Сигналы: died, health_changed, ammo_changed, reload_started, reload_finished, dash_started.
 
 signal died
@@ -17,7 +17,7 @@ signal reload_started
 signal reload_finished
 signal dash_started
 
-const BulletScene: PackedScene = preload("res://scenes/gameplay/bullet.tscn")
+const BossBulletScene: PackedScene = preload("res://scenes/gameplay/boss/boss_bullet.tscn")
 
 ## Слои: 1 = World, 2 = Player, 4 = Cover, 128 = BossTarget
 const STICK_TO_FLOOR: float = -0.1
@@ -53,7 +53,7 @@ var _blink_timer: Timer
 var _dash_direction: Vector3 = Vector3.ZERO
 
 var _hovered_target: Node3D = null
-const TARGET_LOCK_PIXELS: float = 60.0
+const TARGET_LOCK_PIXELS: float = 90.0
 var _aim_marker_original_color: Color
 
 func _ready() -> void:
@@ -187,6 +187,9 @@ func _physics_process(delta: float) -> void:
 		velocity.x = _dash_direction.x * dash_speed
 		velocity.z = _dash_direction.z * dash_speed
 	else:
+		# W+D без нормализации давал speed × √2 — выравниваем по осевой скорости.
+		if move_input.length_squared() > 1.0:
+			move_input = move_input.normalized()
 		velocity.x = move_input.x * speed
 		velocity.z = move_input.y * speed
 	
@@ -281,6 +284,9 @@ func _get_aim_point() -> Vector3:
 		
 		for target in get_tree().get_nodes_in_group("boss_targets"):
 			if not is_instance_valid(target) or target.is_queued_for_deletion():
+				continue
+			var target_3d_check: Node3D = target as Node3D
+			if target_3d_check != null and not target_3d_check.visible:
 				continue
 			var target_3d: Node3D = target as Node3D
 			var screen_pos: Vector2 = cam.unproject_position(target_3d.global_position)
@@ -414,18 +420,16 @@ func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 		return
 	
 	var at: Vector3 = Vector3(global_position.x, CHEST_HEIGHT, global_position.z) + direction * MUZZLE_OFFSET
-	var bullet: Node3D = BulletScene.instantiate() as Node3D
+	var bullet: BossBullet = BossBulletScene.instantiate() as BossBullet
 	var parent_3d: Node3D = world as Node3D
 	if parent_3d != null:
 		bullet.position = parent_3d.to_local(at)
 	else:
 		bullet.global_position = at
 	
-	# Настраиваем пулю: маска 1|4|128 = 133, передаём цель как intended_target
-	if bullet.has_method("configure"):
-		bullet.call("configure", direction, false, 25, 40.0, target)
-	# Явно ставим маску для босс-арены (World|Cover|BossTarget)
-	bullet.collision_mask = 1 | 4 | 128
+	# Снаряд арены сам ориентирует длинную ось и проверяет путь лучом.
+	bullet.configure(direction, false, 25, 40.0, target)
+	bullet.collision_mask = 128  # только BossTarget
 	
 	world.add_child(bullet)
 

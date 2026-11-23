@@ -9,7 +9,7 @@ signal exploded(near_boss: bool, boss_damage: int, world_pos: Vector3)
 @export var boss_damage: int = 25
 @export var player_damage: int = 20
 @export var blast_radius: float = 2.2
-@export var near_boss: bool = true
+@export var near_boss: bool = false
 
 var _body: MeshInstance3D
 var _target_ring: MeshInstance3D
