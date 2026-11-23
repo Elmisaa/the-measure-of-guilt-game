@@ -1,7 +1,5 @@
 class_name WritingHand
 extends Sprite2D
-## Drives write_wobble.gdshader: short pen strokes moving right, then a hop back
-## (next word), with small pauses. Offsets are in texture pixels.
 
 @export var stroke_step: float = 2.0
 @export var strokes_per_word: int = 3

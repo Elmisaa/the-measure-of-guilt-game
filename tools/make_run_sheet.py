@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Alexei's extra animation sheets (Codex drafts on magenta) -> game sheets with the same grading as the
-walk sprite (tools/harmonize_walk.py), 4x pixels, 3 depth rows (1.0/0.97/0.94), feet on the bottom
-of each 200px row. Run from the repo root:
-  python3 tools/make_run_sheet.py                      # run: art/drafts/run/run_v1_a.png -> run_side_depth.png
-  python3 tools/make_run_sheet.py SRC OUT              # any other sheet (e.g. the jump)"""
 import sys; sys.path.insert(0, 'tools')
 from PIL import Image
 import numpy as np

@@ -1,18 +1,12 @@
 extends Node
-## Saves (autoload SaveGame): 3 manual slots + an autosave, JSON in user://saves/<slot>.json.
-## A save = the current scene (it restarts on load) + GameState (flags, things, drawers, stamina) + the
-## HUD journal (task, done tasks, dialogue history). A scene may add its own progress with
-## save_state() -> Dictionary of flags (the hall: Alexei's x, the story step; the desk: papers read).
-## Autosave: every time a game scene opens (SceneRouter calls autosave()).
 
 signal saved(slot: String)
 
 const DIR_GAME: String = "user://saves/"
-const DIR_TESTS: String = "user://saves_test/"  ## tests never touch the player's saves
+const DIR_TESTS: String = "user://saves_test/"
 const VERSION: int = 1
 const AUTO: String = "auto"
 const SLOTS: Array[String] = ["auto", "1", "2", "3"]
-## Scenes a save can return to, with a name for the slot list.
 const SCENES: Dictionary = {
 	"res://scenes/s00/intro.tscn": "Пролог",
 	"res://scenes/s01/exposition.tscn": "Участок. Ночная смена",
@@ -21,6 +15,11 @@ const SCENES: Dictionary = {
 	"res://scenes/s01/restroom.tscn": "Участок. Туалет",
 	"res://scenes/s01/call.tscn": "Звонок отца",
 	"res://scenes/s02/drive.tscn": "Дорога к отцу",
+	"res://scenes/s03/penthouse.tscn": "Пентхаус отца",
+	"res://scenes/s03/viktor_talk.tscn": "Пентхаус. Виктор",
+	"res://scenes/s03/ivan_call.tscn": "Звонок Ивана",
+	"res://scenes/s04/ivan_flat.tscn": "Квартира Ивана",
+	"res://scenes/s04/ivan_talk.tscn": "Квартира Ивана. Разговор",
 }
 
 var _loading: bool = false
@@ -34,7 +33,6 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)
 
 
-## Tests: start from no saves.
 func wipe_test_saves() -> void:
 	if DIR != DIR_TESTS:
 		return
@@ -83,7 +81,6 @@ func autosave() -> void:
 	save(AUTO)
 
 
-## {} when the slot is empty or unreadable.
 func info(slot: String) -> Dictionary:
 	if not FileAccess.file_exists(DIR + slot + ".json"):
 		return {}
@@ -98,7 +95,6 @@ func has_any() -> bool:
 	return not latest().is_empty()
 
 
-## The most recent slot ("" if there are no saves).
 func latest() -> String:
 	var best: String = ""
 	var best_t: float = -1.0
@@ -127,12 +123,11 @@ func load_slot(slot: String) -> bool:
 	return true
 
 
-## "Участок. Зал — 22.11 21:40" for menus.
 func describe(slot: String) -> String:
 	var d: Dictionary = info(slot)
 	if d.is_empty():
 		return "— пусто —"
-	var date: String = str(d.get("date", ""))  # "2026-11-22 21:40:05"
+	var date: String = str(d.get("date", ""))
 	var nice: String = date
 	if date.length() >= 16:
 		nice = "%s.%s %s" % [date.substr(8, 2), date.substr(5, 2), date.substr(11, 5)]

@@ -1,17 +1,12 @@
 extends SceneTree
-## Smoke test for the 3D (2.5D) combat player: structure, input actions, states, mouse aim,
-## shooting in the Z = lane_z plane, reload on a Timer node, combat HUD, covers in depth,
-## collision layers and UI blocking.
-## godot --headless --path . -s res://tests/test_player.gd
 
 const PlayerScript: Script = preload("res://scripts/gameplay/player.gd")
 const SAFETY_TIMEOUT: float = 60.0
 
-## 1 = World, 2 = Player, 3 = Enemy, 4 = Cover, 5 = PlayerBullet, 6 = EnemyBullet, 7 = CoverZone.
 const LAYER_PLAYER: int = 2
-const MASK_PLAYER: int = 1 | 32  # World + EnemyBullet
+const MASK_PLAYER: int = 1 | 32
 const LAYER_PLAYER_BULLET: int = 16
-const MASK_PLAYER_BULLET: int = 1 | 4 | 8  # World + Enemy + Cover
+const MASK_PLAYER_BULLET: int = 1 | 4 | 8
 const COVER_LAYER: int = 8
 const COVER_ZONE_LAYER: int = 64
 const COVER_ZONE_MASK: int = 2
@@ -33,7 +28,6 @@ func _fail(message: String) -> void:
 	_ok = false
 
 
-## Process frames: input state is flushed by the main loop, not by physics_frame.
 func _frames(count: int) -> void:
 	for i in count:
 		await process_frame
@@ -83,7 +77,6 @@ func _label(root_node: Node, label_name: String) -> Label:
 	return root_node.find_child(label_name, true, false) as Label
 
 
-## Пол: верхняя грань на Y = 0, слой 1 (World).
 func _make_floor(world: Node3D) -> StaticBody3D:
 	var floor_body: StaticBody3D = StaticBody3D.new()
 	floor_body.name = "Floor"
@@ -121,7 +114,6 @@ func _run() -> void:
 	world.add_child(player)
 	player.global_position = Vector3(0, 0, 0)
 
-	# Структура сцены
 	_check(player is CharacterBody3D, "player is not a CharacterBody3D")
 	_check(player.is_in_group("player"), "player did not join the 'player' group")
 	_check(player.get_node_or_null("Visual/Body") is MeshInstance3D, "no Visual/Body MeshInstance3D")
@@ -140,7 +132,6 @@ func _run() -> void:
 		var box: BoxMesh = body_mesh.mesh as BoxMesh
 		_check((box.size - Vector3(0.5, 1.7, 0.15)).length() < 0.001, "body box is not 0.5 x 1.7 x 0.15: %s" % str(box.size))
 
-	# Параметры и слои
 	_check(is_equal_approx(player.speed, 3.5), "speed default is not 3.5: %.2f" % player.speed)
 	_check(is_equal_approx(player.lane_z, 0.0), "lane_z default is not 0")
 	_check(player.max_health == 100, "max_health default is not 100")
@@ -148,7 +139,6 @@ func _run() -> void:
 	_check(player.collision_layer == LAYER_PLAYER, "player layer is not 2: %d" % player.collision_layer)
 	_check(player.collision_mask == MASK_PLAYER, "player mask is not 1|6: %d" % player.collision_mask)
 
-	# Экшены боя зарегистрированы в рантайме
 	for action: String in ["move_left", "move_right", "combat_shoot", "combat_melee", "combat_reload", "combat_cover", "combat_taser", "combat_flashlight"]:
 		_check(InputMap.has_action(action), "action not registered: " + action)
 
@@ -157,7 +147,6 @@ func _run() -> void:
 	var reload_timer: Timer = player.get_node("ReloadTimer") as Timer
 	player.died.connect(func() -> void: _died_count += 1)
 
-	# Боевой HUD сам находит игрока и сразу показывает его значения
 	var hud: CombatHud = (load("res://scenes/gameplay/combat_hud.tscn") as PackedScene).instantiate() as CombatHud
 	root.add_child(hud)
 	await _frames(4)
@@ -178,13 +167,11 @@ func _run() -> void:
 	if hp_bar != null:
 		_check(hp_bar.max_value == 100.0 and hp_bar.value == 100.0, "HUD HP bar is not at 100")
 
-	# Стоит на полу, ноги на Y = 0
 	await create_timer(0.4).timeout
 	_check(player.is_on_floor(), "player did not land on the floor")
 	_check(absf(player.global_position.y) < 0.06, "feet are not at Y = 0: %.3f" % player.global_position.y)
 	_check(player.state == PlayerScript.State.IDLE, "expected IDLE, got %d" % player.state)
 
-	# RUN влево: A
 	_key(KEY_A, true)
 	await _frames(6)
 	_check(player.state == PlayerScript.State.RUN, "A did not switch to RUN")
@@ -193,7 +180,6 @@ func _run() -> void:
 	await _frames(6)
 	_check(player.state == PlayerScript.State.IDLE, "release A did not return to IDLE")
 
-	# RUN вправо: D, глубина Z не уезжает
 	var start_x: float = player.global_position.x
 	_key(KEY_D, true)
 	await _frames(12)
@@ -203,8 +189,6 @@ func _run() -> void:
 	_key(KEY_D, false)
 	await _frames(6)
 
-	# Прицел: точка задаётся через aim_override (в игре её даёт луч Camera3D по курсору;
-	# в headless курсор мыши не совпадает с координатами viewport).
 	player.aim_override = Vector3(4.0, 0.9, 0.0)
 	await _frames(4)
 	_check(is_equal_approx(visual.scale.x, 1.0), "visual did not face the aim point on the right: %.1f" % visual.scale.x)
@@ -213,13 +197,11 @@ func _run() -> void:
 	player.aim_override = Vector3(-4.0, 0.9, 0.0)
 	await _frames(4)
 	_check(is_equal_approx(visual.scale.x, -1.0), "visual did not face the aim point on the left: %.1f" % visual.scale.x)
-	# Без камеры и без override фоллбэк отдаёт точку в плоскости lane_z
 	player.aim_override = null
 	await _frames(2)
 	var fallback: Vector3 = player.aim_point()
 	_check(is_equal_approx(fallback.z, player.lane_z), "fallback aim point is not in the lane: z = %.3f" % fallback.z)
 	_check(is_finite(fallback.x) and is_finite(fallback.y), "fallback aim point is not finite")
-	# С камерой точка прицела считается лучом до плоскости Z = lane_z (не падает)
 	var camera: Camera3D = Camera3D.new()
 	world.add_child(camera)
 	camera.look_at_from_position(Vector3(0, 1.8, 7.5), Vector3(0, 0.9, 0))
@@ -232,7 +214,6 @@ func _run() -> void:
 	player.aim_override = Vector3(4.0, 1.25, 0.0)
 	await _frames(2)
 
-	# Стрелки работают так же, как A/D
 	_key(KEY_RIGHT, true)
 	await _frames(4)
 	_check(player.state == PlayerScript.State.RUN, "RIGHT arrow did not switch to RUN")
@@ -244,7 +225,6 @@ func _run() -> void:
 	await _frames(6)
 	_check(player.state == PlayerScript.State.IDLE, "release LEFT arrow did not return to IDLE")
 
-	# ПКМ больше не включает прицел: это заготовка ближнего боя
 	var melee_dirs: Array[Vector3] = []
 	player.melee_swung.connect(func(direction: Vector3) -> void: melee_dirs.append(direction))
 	_mouse(MOUSE_BUTTON_RIGHT, true)
@@ -256,7 +236,6 @@ func _run() -> void:
 	_check(player.ammo_current == 17, "RMB spent ammo")
 	_check(not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT), "RMB stuck in Input")
 
-	# Фонарь (F)
 	_key(KEY_F, true)
 	await _frames(2)
 	_key(KEY_F, false)
@@ -264,7 +243,6 @@ func _run() -> void:
 	_check(player.flashlight_on, "F did not toggle the flashlight")
 	player.toggle_flashlight()
 
-	# Стрельба: ЛКМ тратит патрон, спавнит 3D-пулю на высоте груди и испускает shoot_fired
 	_check(player.ammo_current == 17, "ammo_current default is not 17")
 	var directions: Array[Vector3] = []
 	player.shoot_fired.connect(func(direction: Vector3) -> void: directions.append(direction))
@@ -291,7 +269,6 @@ func _run() -> void:
 		_check(is_equal_approx(directions[0].length(), 1.0), "shoot direction is not normalized")
 		_check(is_zero_approx(directions[0].z), "shoot direction has a Z component")
 
-	# Пустой магазин: выстрела и пули нет
 	player.ammo_current = 0
 	player.ammo_changed.emit(player.ammo_current, player.ammo_max)
 	_click()
@@ -302,7 +279,6 @@ func _run() -> void:
 		_check(ammo_text.text.contains("0 / 17"), "HUD ammo (empty) did not update: " + ammo_text.text)
 		_check(ammo_text.get_theme_color("font_color").r > 0.9, "HUD ammo is not red at zero")
 
-	# Перезарядка на узле Timer: 1.5 с нельзя стрелять, потом полный магазин
 	_check(reload_timer.one_shot, "ReloadTimer is not one_shot")
 	_key(KEY_R, true)
 	_key(KEY_R, false)
@@ -322,11 +298,9 @@ func _run() -> void:
 	if ammo_text != null:
 		_check(ammo_text.text.contains("17 / 17"), "HUD ammo after reload is wrong: " + ammo_text.text)
 
-	# Пуля удаляется сама (lifetime 1.5 с)
 	await create_timer(1.7).timeout
 	_check(_bullet_count(world) == 0, "bullet did not free itself")
 
-	# Блокировка от UI: при открытой истории игрок не ходит и не стреляет
 	var hud_autoload: Node = root.get_node("Hud")
 	hud_autoload.toggle_history()
 	await _frames(4)
@@ -344,7 +318,6 @@ func _run() -> void:
 	await _frames(4)
 	_check(not hud_autoload.is_blocking(), "Hud.is_blocking() stayed true after closing the history")
 
-	# --- укрытия ---------------------------------------------------------
 	var crate: Cover = _make_cover(world, "Crate", Vector3(-2.5, 0, 0.35), Vector3(1.4, 1.05, 1.0), true)
 	var column: Cover = _make_cover(world, "Column", Vector3(2.5, 0, 0.35), Vector3(0.9, 2.2, 0.9), false)
 	await _frames(2)
@@ -356,7 +329,6 @@ func _run() -> void:
 	_check(crate.hp == 4, "cover hp was not set from max_hp")
 	column.hit_blocked.connect(func() -> void: _blocked_hits += 1)
 
-	# 4 попадания разрушают деревянный ящик (сначала целимся сверху вниз по ящику)
 	player.global_position = Vector3(-1.0, 0, 0)
 	player.aim_override = Vector3(-2.5, 0.55, 0.0)
 	await create_timer(0.1).timeout
@@ -367,7 +339,6 @@ func _run() -> void:
 			_check(crate.hp == 3 - i, "crate hp after hit %d is %d, expected %d" % [i + 1, crate.hp, 3 - i])
 	_check(not is_instance_valid(crate), "crate is not destroyed after 4 hits")
 
-	# Вход в COVER: зажимаем S рядом с укрытием — шаг вглубь и присед
 	var crate2: Cover = _make_cover(world, "Crate2", Vector3(-2.5, 0, 0.35), Vector3(1.4, 1.05, 1.0), true)
 	await _frames(2)
 	player.global_position = Vector3(-1.55, 0, 0)
@@ -382,7 +353,6 @@ func _run() -> void:
 	if state_text != null:
 		_check(state_text.text.contains("COVER"), "HUD state is not COVER: " + state_text.text)
 
-	# В COVER: нельзя ходить по X и стрелять, но прицел двигается
 	var cover_ammo: int = player.ammo_current
 	var cover_x: float = player.global_position.x
 	var cover_bullets: int = _bullet_count(world)
@@ -398,20 +368,17 @@ func _run() -> void:
 	_check(is_equal_approx(marker.global_position.x, 3.0), "aim marker froze in COVER: %.2f" % marker.global_position.x)
 	_key(KEY_D, false)
 
-	# Укрытие разрушено, пока игрок за ним: COVER сразу прерывается
 	crate2.take_hit(4)
 	await _frames(4)
 	_check(not is_instance_valid(crate2), "crate2 survived 4 hits")
 	_check(not player.is_in_cover(), "player stayed in cover after it was destroyed")
 	_check(player.state == PlayerScript.State.IDLE, "state is not IDLE after the cover broke (%d)" % player.state)
 
-	# Отпустили S: возврат на lane_z и полный рост
 	_key(KEY_S, false)
 	await create_timer(0.4).timeout
 	_check(absf(player.global_position.z - player.lane_z) < 0.05, "player did not return to the lane: z = %.2f" % player.global_position.z)
 	_check(visual.scale.y > 0.95, "player did not stand up: scale.y = %.2f" % visual.scale.y)
 
-	# Неразрушаемое укрытие не ломается и блокирует пулю
 	player.global_position = Vector3(1.2, 0, 0)
 	player.aim_override = Vector3(2.5, 1.2, 0.0)
 	await create_timer(0.1).timeout
@@ -422,7 +389,6 @@ func _run() -> void:
 	_check(column.hp == 4, "indestructible cover lost hp: %d" % column.hp)
 	_check(_bullet_count(world) == 0, "bullet did not die on the cover")
 
-	# Оглушение прерывает перезарядку
 	player.ammo_current = 5
 	player.reload()
 	await _frames(2)
@@ -432,14 +398,12 @@ func _run() -> void:
 	_check(reload_timer.time_left == 0.0, "ReloadTimer was not stopped on stun")
 	player.set_stunned(false)
 
-	# Урон и смерть
 	player.take_damage(40)
 	_check(player.health == 60, "take_damage: expected 60, got %d" % player.health)
 	_check(_died_count == 0, "died fired too early")
 	if hp_text != null:
 		_check(hp_text.text.contains("60 / 100"), "HUD HP text did not update: " + hp_text.text)
 
-	# Смерть во время перезарядки: таймер останавливаем, патроны не выдаём
 	player.reload()
 	await _frames(2)
 	_check(player.is_reloading, "reload (death case) did not start")
@@ -454,7 +418,6 @@ func _run() -> void:
 	if hp_bar != null:
 		_check(hp_bar.value == 0.0, "HUD HP bar is not empty after death")
 
-	# Мёртвый не стреляет и не ходит
 	var dead_x: float = player.global_position.x
 	_click()
 	_key(KEY_D, true)

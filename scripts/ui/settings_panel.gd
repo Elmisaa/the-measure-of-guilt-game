@@ -1,8 +1,5 @@
 class_name SettingsPanel
 extends Control
-## Settings window (from the title screen and the pause menu): volumes and fullscreen.
-## Keyboard: up/down (W/S) — row, left/right (A/D) — change, Enter — toggle/back, Esc — back.
-## Saved at once (Settings.save_settings).
 
 signal closed
 
@@ -55,7 +52,7 @@ func _ready() -> void:
 	back.pressed.connect(close)
 	col.add_child(back)
 	_rows.append(back)
-	for i: int in _rows.size():  # wrap focus top <-> bottom
+	for i: int in _rows.size():
 		_rows[i].focus_neighbor_top = _rows[i].get_path_to(_rows[(i - 1 + _rows.size()) % _rows.size()])
 		_rows[i].focus_neighbor_bottom = _rows[i].get_path_to(_rows[(i + 1) % _rows.size()])
 

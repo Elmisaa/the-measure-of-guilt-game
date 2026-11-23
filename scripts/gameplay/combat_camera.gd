@@ -1,6 +1,5 @@
 class_name CombatCamera
 extends Camera3D
-## Переиспользуемая камера для 2.5D боя: плавно следует за игроком по X с look-ahead.
 
 @export var follow_speed: float = 6.0
 @export var look_ahead_x: float = 1.2
@@ -23,11 +22,9 @@ func _process(delta: float) -> void:
 	if _player.has_method("get_facing_direction"):
 		facing_dir = _player.get_facing_direction()
 	else:
-		# Fallback: используем velocity.x или _facing (если доступен)
 		if _player.velocity.x != 0.0:
 			facing_dir = signf(_player.velocity.x)
 		else:
-			# Последний раз пытаемся получить _facing
 			facing_dir = _get_player_facing()
 
 	var target_x: float = _player.global_position.x + facing_dir * look_ahead_x
@@ -47,7 +44,6 @@ func _rebind_player() -> void:
 func _get_player_facing() -> float:
 	if _player == null:
 		return 0.0
-	# Безопасный доступ к _facing через get()
 	var facing_val: Variant = _player.get("_facing")
 	if facing_val != null:
 		return float(facing_val)

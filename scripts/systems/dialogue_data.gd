@@ -1,6 +1,5 @@
 class_name DialogueData
 extends RefCounted
-## Loads dialogue/text JSON from data/dialogues/<id>.json.
 
 const DIR: String = "res://data/dialogues/"
 

@@ -1,8 +1,5 @@
 extends Node
 
-## MCP Runtime Autoload
-## This singleton runs in the game and provides runtime inspection capabilities.
-## It starts a TCP server that the MCP server can connect to.
 
 const DEFAULT_PORT = 7777
 const DEFAULT_BIND_ADDRESS = "127.0.0.1"
@@ -13,7 +10,7 @@ var _server: TCPServer
 var _clients: Array[StreamPeerTCP] = []
 var _port: int = DEFAULT_PORT
 var _enabled: bool = true
-var _watched_signals: Dictionary = {}  # { "node_path:signal_name": callable }
+var _watched_signals: Dictionary = {}
 
 signal client_connected
 signal client_disconnected
@@ -22,14 +19,7 @@ signal command_received(command: String, params: Dictionary)
 
 func _ready() -> void:
 	name = "MCPRuntime"
-	# The TCP control loop runs in _process (accept connections, poll clients, handle
-	# messages). With the default PROCESS_MODE_INHERIT that loop STOPS while the game tree
-	# is paused (get_tree().paused = true) — the runtime silently goes unreachable and the
-	# game can't even be un-paused over the socket. An introspection/debug server must stay
-	# responsive while the game is frozen, so it can inspect / capture / inject / resume a
-	# paused game; PROCESS_MODE_ALWAYS keeps _process running regardless of pause.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# Debug tool only: never open a socket in an exported release build, nor in automated test runs.
 	var in_tests: bool = false
 	for arg: String in OS.get_cmdline_args():
 		if arg.contains("res://tests/"):
@@ -45,7 +35,6 @@ func _process(_delta: float) -> void:
 	if not _enabled or _server == null:
 		return
 	
-	# Accept new connections
 	if _server.is_connection_available():
 		var client = _server.take_connection()
 		if client:
@@ -54,7 +43,6 @@ func _process(_delta: float) -> void:
 			client_connected.emit()
 			_send_welcome(client)
 	
-	# Process client messages
 	var clients_to_remove: Array[StreamPeerTCP] = []
 	for client in _clients:
 		if client.get_status() != StreamPeerTCP.STATUS_CONNECTED:
@@ -70,7 +58,6 @@ func _process(_delta: float) -> void:
 			var data = client.get_utf8_string(available)
 			_handle_message(client, data)
 	
-	# Remove disconnected clients
 	for client in clients_to_remove:
 		_clients.erase(client)
 		print("[MCP Runtime] Client disconnected")
@@ -78,22 +65,14 @@ func _process(_delta: float) -> void:
 
 
 func _start_server() -> void:
-	# The command set includes call_method, set_property and input injection, none of it
-	# authenticated, so a release export must not serve it.
 	if not OS.is_debug_build():
 		_enabled = false
 		return
 
 	_server = TCPServer.new()
-	# listen() defaults bind_address to "*", which exposes the game to the whole network.
 	var bind_address = str(ProjectSettings.get_setting(BIND_ADDRESS_SETTING, DEFAULT_BIND_ADDRESS))
 	var error = _server.listen(_port, bind_address)
 	if error != OK:
-		# A warning, not an error. The usual cause is that another instance of this project
-		# already owns the port, which happens every time a tool runs a headless operation
-		# while the game is open. This instance carries on without a runtime server, which
-		# is what it wants anyway, and callers treat any ERROR line on stderr as a failed
-		# operation, so reporting a handled condition as one breaks working tools.
 		push_warning("[MCP Runtime] Port %d is unavailable (%s), running without a server" % [_port, error])
 		_enabled = false
 	else:
@@ -273,22 +252,18 @@ func _cmd_get_metrics(params: Dictionary) -> Dictionary:
 		"data": {}
 	}
 	
-	# Always include basic metrics
 	result["data"]["fps"] = Engine.get_frames_per_second()
 	result["data"]["frame_time"] = Performance.get_monitor(Performance.TIME_PROCESS)
 	result["data"]["physics_time"] = Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)
 	
-	# Memory metrics
 	result["data"]["memory_static"] = Performance.get_monitor(Performance.MEMORY_STATIC)
 	result["data"]["memory_static_max"] = Performance.get_monitor(Performance.MEMORY_STATIC_MAX)
 	
-	# Object counts
 	result["data"]["object_count"] = Performance.get_monitor(Performance.OBJECT_COUNT)
 	result["data"]["object_resource_count"] = Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)
 	result["data"]["object_node_count"] = Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
 	result["data"]["object_orphan_node_count"] = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
 	
-	# Render metrics
 	result["data"]["render_total_objects"] = Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)
 	result["data"]["render_total_primitives"] = Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
 	result["data"]["render_total_draw_calls"] = Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
@@ -408,11 +383,6 @@ func _cmd_inject_key(params: Dictionary) -> Dictionary:
 	else:
 		return {"type": "error", "message": "keycode or key_label required"}
 
-	# A key event from a real keyboard carries all three, and InputMap consults whichever one
-	# the bound event declares: keycode first, then physical_keycode, then key_label. An
-	# injected event with only keycode set can therefore never match an action bound by
-	# physical key, which is how a rebinding UI normally stores one, so inject_key silently
-	# did nothing for those actions.
 	event.physical_keycode = event.keycode
 	event.key_label = event.keycode
 

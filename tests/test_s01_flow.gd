@@ -1,12 +1,9 @@
 extends SceneTree
-## Smoke test for s01: speech lines -> button -> desk scene.
-## godot --headless --path . -s res://tests/test_s01_flow.gd
-## Optional: pass "--shots" after "--" (non-headless) to save screenshots to art/previews/.
 
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
 
 
-const SAFETY_TIMEOUT: float = 90.0  ## never leave a window hanging
+const SAFETY_TIMEOUT: float = 90.0
 
 
 func _init() -> void:
@@ -84,13 +81,13 @@ func _run() -> void:
 	esc.keycode = KEY_ESCAPE
 	esc.physical_keycode = KEY_ESCAPE
 	esc.pressed = true
-	Input.parse_input_event(esc)  # Esc must not close before the thoughts are read
+	Input.parse_input_event(esc)
 	await _wait(0.3)
 	if not view.is_open():
 		push_error("FAIL document closed before reading the thoughts"); ok = false
 	if view._page != 0:
 		push_error("FAIL Esc turned a dialogue page"); ok = false
-	view._step()  # player presses Space -> next page
+	view._step()
 	await _wait(0.3)
 	if view._pages.size() < 2:
 		push_error("FAIL long reaction not paged: %d" % view._pages.size()); ok = false
@@ -99,7 +96,6 @@ func _run() -> void:
 	await _wait(0.5)
 	if view.is_open() or not casefile.interactive:
 		push_error("FAIL close-up did not close"); ok = false
-	# remaining documents -> phone rings -> answer
 	for id: String in ["papers", "note"]:
 		desk.get_node("Documents/" + id.capitalize()).clicked.emit(id)
 		await _wait(1.6)
@@ -112,12 +108,11 @@ func _run() -> void:
 	var audio: Node = root.get_node("Audio")
 	if answer.visible or audio._loop.playing:
 		push_error("FAIL phone rang before the report"); ok = false
-	# computer: database, cases, report with a choice
 	var term: Terminal = desk.get_node("Terminal")
 	if not term.report_unlocked:
 		push_error("FAIL report not unlocked after reading all documents"); ok = false
 	desk._open_terminal()
-	await _wait(10.5)  # first boot is long (memory check, modem...)
+	await _wait(10.5)
 	if not term._booted:
 		push_error("FAIL terminal did not finish booting"); ok = false
 	await _shot("11_terminal_menu")
@@ -138,7 +133,6 @@ func _run() -> void:
 	if root.get_node("GameState").get_flag("report_cole_closed", true) != false:
 		push_error("FAIL report choice not stored"); ok = false
 	await _wait(4.4)
-	# coffee break: "Взять кружку" -> item taken (HUD toast) -> "Встать" -> the hall
 	var btns: Array = desk.get_node("UI/Root").find_children("*", "Button", false, false).filter(func(b: Node) -> bool: return b != desk._answer and (b as Button).text == "Взять кружку")
 	if btns.is_empty():
 		push_error("FAIL no 'Взять кружку' button"); ok = false

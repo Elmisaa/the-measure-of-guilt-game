@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""Build a x4 preview sheet of all assets referenced in art/briefs/<scene>.md.
-
-  python3 tools/make_preview.py <scene> [--scale 4]
-
-Collects every `assets/...png` path mentioned in the brief, upscales with
-nearest-neighbour, lays them out in rows with captions on a checkerboard,
-and saves art/previews/<scene>.png.
-"""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +9,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import ROOT  # noqa: E402
+from _common import ROOT
 
 PAD = 12
 CAPTION_H = 14
@@ -58,7 +50,6 @@ def main() -> int:
         print("no existing assets referenced in brief; missing:", *missing, sep="\n  ")
         return 1
 
-    # Simple row packing.
     rows: list[list[tuple[str, Image.Image]]] = [[]]
     row_w = PAD
     for name, img in items:

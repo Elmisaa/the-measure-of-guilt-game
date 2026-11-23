@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Car sounds for the s02 drive cutscene (synthesized drafts).
-
-  car_door.wav      heavy sedan door shut (thud + latch click + body rattle)
-  engine_start.wav  starter cranks ~0.9 s, catches, revs once, settles to idle
-  engine_idle.wav   ~4 s seamless idle loop (V8 burble, low)
-  engine_off.wav    key off: idle winds down, a tick of cooling metal
-  wipers.wav        one wiper sweep (rubber squeak + motor whirr)
-
-python3 tools/make_car_sfx.py  ->  assets/audio/sfx/
-"""
 import wave
 from pathlib import Path
 
@@ -45,12 +35,11 @@ def env(n, a, r):
 
 
 def engine(f_rpm, dur, rough=0.35):
-    """V8-ish burble: firing pulses at rpm/60*4 Hz, uneven, through a low body resonance."""
     t = t_(dur)
     f = np.interp(t, np.linspace(0, dur, len(f_rpm)), f_rpm) / 60 * 4
     ph = np.cumsum(f / SR)
     pulse = np.maximum(0, np.sin(2 * np.pi * ph)) ** 6
-    pulse *= 1 + rough * np.sin(2 * np.pi * ph / 4 + 1.3)  # uneven cylinders
+    pulse *= 1 + rough * np.sin(2 * np.pi * ph / 4 + 1.3)
     x = pulse + 0.15 * rng.standard_normal(len(t)) * pulse
     x = lp(x, 420) + 0.25 * bp(x, 600, 1600)
     return x
@@ -81,7 +70,7 @@ def car_door():
 def engine_start():
     crank_d = 0.95
     t = t_(crank_d)
-    crank_f = 9 + 2 * np.sin(2 * np.pi * 1.3 * t)  # starter: ~9-11 compressions/s
+    crank_f = 9 + 2 * np.sin(2 * np.pi * 1.3 * t)
     ph = np.cumsum(crank_f / SR)
     crank = (np.maximum(0, np.sin(2 * np.pi * ph)) ** 3)
     whine = np.sin(2 * np.pi * np.cumsum((380 + 40 * np.sin(2 * np.pi * 9 * t)) / SR)) * 0.12
@@ -95,7 +84,7 @@ def engine_start():
 def engine_idle():
     dur = 4.0
     x = engine([720] * 8, dur + 0.5, rough=0.3)[int(0.25 * SR):int(0.25 * SR) + int(dur * SR)]
-    k = int(0.15 * SR)  # crossfade the ends for a seamless loop
+    k = int(0.15 * SR)
     x[:k] = x[:k] * np.linspace(0, 1, k) + x[-k:] * np.linspace(1, 0, k)
     return x[:-k]
 

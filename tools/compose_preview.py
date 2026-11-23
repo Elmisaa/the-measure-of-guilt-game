@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""Place sprites onto a background to preview how a scene will look.
-
-  python3 tools/compose_preview.py <bg.png> <sprite.png>@X,Y [...] --out out.png [--scale 3] [--shadow]
-
-X,Y — top-left corner in base pixels (640x360 grid). --shadow adds a soft
-offset drop shadow under each sprite (what Godot can do in-engine).
-The output is upscaled with nearest-neighbour so pixels stay crisp.
-"""
 from __future__ import annotations
 
 import argparse

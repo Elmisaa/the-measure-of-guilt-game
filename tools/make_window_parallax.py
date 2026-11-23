@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Hall windows with depth: split the walk hall's city view from the window frames.
-
-Out:
-  assets/backgrounds/s01/walk_windows_mask.png  white = glass (city shows through), same size as the hall
-  assets/backgrounds/s01/walk_windows_city.png  the city strip behind both windows, without mullions and
-                                                 the column, with MARGIN px extra on each side for parallax
-The shader (scripts/fx/window_parallax.gdshader) draws the strip shifted by the camera; frames stay put.
-
-python3 tools/make_window_parallax.py
-"""
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +7,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 BG = ROOT / "assets/backgrounds/s01/walk_hall.png"
 OUT = ROOT / "assets/backgrounds/s01"
-WINDOWS = [(476, 604), (656, 808)]  # glass x ranges (art is on a 4 px grid)
+WINDOWS = [(476, 604), (656, 808)]
 Y0, Y1 = 96, 204
 MARGIN = 48
 GRID = 4
@@ -34,7 +24,7 @@ def main() -> None:
     good_row = np.ones(Y1 - Y0, bool)
     for x0, x1 in WINDOWS:
         sub = lum[Y0:Y1, x0:x1]
-        frame_cols = sub.mean(0) < 57.0  # mullions: dark whole columns (rows: below)
+        frame_cols = sub.mean(0) < 57.0
         frame_rows = sub.mean(1) < 46.0
         glass = np.ones_like(sub)
         glass[:, frame_cols] = False
@@ -42,11 +32,9 @@ def main() -> None:
         mask[Y0:Y1, x0:x1] = glass
         good_col[x0 - x_lo:x1 - x_lo] = ~frame_cols
         good_row &= ~frame_rows
-    # the column between the windows: continue the city with a piece of the left window
     gap0, gap1 = WINDOWS[0][1] - x_lo, WINDOWS[1][0] - x_lo
     strip[:, gap0:gap1] = strip[:, 0:gap1 - gap0]
     good_col[gap0:gap1] = good_col[0:gap1 - gap0]
-    # mullions and transoms -> the nearest glass column (left) / row (above)
     for x in range(strip.shape[1]):
         if not good_col[x]:
             src = x - 1
@@ -63,11 +51,9 @@ def main() -> None:
                 while src < strip.shape[0] - 1 and not good_row[src]:
                     src += 1
             strip[y] = strip[src]
-    # margins: mirror the ends
     left = strip[:, :MARGIN][:, ::-1]
     right = strip[:, -MARGIN:][:, ::-1]
     full = np.concatenate([left, strip, right], axis=1)
-    # keep the 4 px grid
     full = full.reshape(full.shape[0] // GRID, GRID, full.shape[1] // GRID, GRID, 3)[:, 0, :, 0, :]
     full = np.repeat(np.repeat(full, GRID, 0), GRID, 1)
     Image.fromarray(full.clip(0, 255).astype("uint8")).save(OUT / "walk_windows_city.png")

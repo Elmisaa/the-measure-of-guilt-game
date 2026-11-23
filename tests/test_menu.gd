@@ -1,6 +1,4 @@
 extends SceneTree
-## Title screen -> settings (slider, back) -> new game (intro); pause in the hall: Esc pauses, Esc resumes.
-## godot --path . -s res://tests/test_menu.gd [-- --shots]
 
 const SAFETY_TIMEOUT: float = 60.0
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
@@ -41,7 +39,7 @@ func _run() -> void:
 	var ok: bool = true
 	var st: Node = root.get_node("Settings")
 	var music0: float = st.music
-	root.get_node("SaveGame").wipe_test_saves()  # no saves: the menu starts with "Новая игра"
+	root.get_node("SaveGame").wipe_test_saves()
 	change_scene_to_file("res://scenes/menu/title.tscn")
 	await _wait(1.0)
 	var t: Node = current_scene
@@ -58,7 +56,7 @@ func _run() -> void:
 	await _wait(0.3)
 	if not t._settings.is_open():
 		push_error("FAIL settings did not open"); ok = false
-	await _key(KEY_DOWN)  # -> music
+	await _key(KEY_DOWN)
 	await _key(KEY_LEFT)
 	await _wait(0.1)
 	if st.music >= music0 and music0 > 0.0:
@@ -75,7 +73,6 @@ func _run() -> void:
 	await _wait(1.0)
 	if current_scene == null or current_scene.name != "Intro":
 		push_error("FAIL new game did not start the intro: %s" % [current_scene]); ok = false
-	# pause in the hall
 	change_scene_to_file("res://scenes/s01/walk.tscn")
 	await _wait(1.2)
 	var hud: Node = root.get_node("Hud")

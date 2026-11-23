@@ -1,7 +1,5 @@
 class_name DocumentView
 extends CanvasLayer
-## Close-up of a document: dimmed scene, enlarged paper with text drawn by Godot,
-## then the hero's reaction at the bottom. Click/Space: show reaction -> close. Esc: close.
 
 signal closed
 
@@ -13,15 +11,13 @@ var _root: Control
 var _dim: ColorRect
 var _paper: TextureRect
 var _text: Label
-var _extra: Array[Label] = []  ## "texts": several small labels (stickers, poster header)
-## "photos": loose photos around the paper; drag them with the mouse (they come to the top).
+var _extra: Array[Label] = []
 var _photos: Array[TextureRect] = []
 var _drag: TextureRect
 var _drag_off: Vector2
 var _thought: ThoughtBox
-var _stage: int = 0  # 0 closed, 1 reading, 2 reaction shown
+var _stage: int = 0
 var _reaction: String = ""
-## The desk lamp is off: the paper and its text are dim (set before open()).
 var shade: Color = Color.WHITE
 var _pages: PackedStringArray = PackedStringArray()
 var _page: int = 0
@@ -57,7 +53,6 @@ func _ready() -> void:
 	visible = false
 
 
-## doc: {"closeup": res path, "text_rect": [x, y, w, h] in close-up pixels, "text": "...", "reaction": "..."}
 func open(doc: Dictionary) -> void:
 	var audio: Node = get_node_or_null("/root/Audio")
 	if audio:
@@ -71,7 +66,7 @@ func open(doc: Dictionary) -> void:
 		_paper.expand_mode = TextureRect.EXPAND_KEEP_SIZE
 		var s: Vector2 = tex.get_size()
 		_paper.size = s
-		_paper.position = Vector2(floorf((640.0 - s.x) / 4.0) * 2.0, floorf((330.0 - s.y) / 4.0) * 2.0)  # keep on the 2px grid
+		_paper.position = Vector2(floorf((640.0 - s.x) / 4.0) * 2.0, floorf((330.0 - s.y) / 4.0) * 2.0)
 		var r: Array = doc.get("text_rect", [0, 0, s.x, s.y])
 		_text.position = _paper.position + Vector2(r[0], r[1])
 		_text.size = Vector2(r[2], r[3])
@@ -103,7 +98,6 @@ func open(doc: Dictionary) -> void:
 	_timer.timeout.connect(_show_reaction)
 
 
-## No close-up art yet: the desk sprite at 2x on the left, text on a dark panel on the right.
 func _open_placeholder(doc: Dictionary) -> void:
 	var tex: Texture2D = load(str(doc.get("sprite", "")))
 	var s: Vector2 = tex.get_size() * 2.0
@@ -117,7 +111,6 @@ func _open_placeholder(doc: Dictionary) -> void:
 	_set_text_style(true)
 
 
-## {text, rect: [x, y, w, h] in close-up pixels, size (font px, optional), center (bool)}.
 func _add_extra(t: Dictionary) -> void:
 	var r: Array = t.get("rect", [0, 0, 100, 20])
 	var l: Label = Label.new()
@@ -127,7 +120,7 @@ func _add_extra(t: Dictionary) -> void:
 	l.add_theme_constant_override("line_spacing", 0)
 	if t.has("size"):
 		l.add_theme_font_size_override("font_size", int(t["size"]))
-	if bool(t.get("light", false)):  # a caption outside the paper (on the dark backdrop)
+	if bool(t.get("light", false)):
 		l.add_theme_color_override("font_color", Color(0.85, 0.82, 0.74))
 	if bool(t.get("center", false)):
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -140,7 +133,6 @@ func _add_extra(t: Dictionary) -> void:
 	_extra.append(l)
 
 
-## {tex, pos: [x, y] on screen}: a photo lying next to the paper.
 func _add_photo(d: Dictionary) -> void:
 	var tr: TextureRect = TextureRect.new()
 	tr.texture = load(str(d["tex"]))
@@ -161,7 +153,7 @@ func _photo_input(tr: TextureRect, e: InputEvent) -> void:
 		if mb.pressed:
 			_drag = tr
 			_drag_off = tr.get_global_mouse_position() - tr.position
-			_root.move_child(tr, _thought.get_index() - 1)  # on top of the other photos
+			_root.move_child(tr, _thought.get_index() - 1)
 			var audio: Node = get_node_or_null("/root/Audio")
 			if audio:
 				audio.sfx("res://assets/audio/sfx/paper_rustle.wav", -14.0, randf_range(1.05, 1.2))
@@ -172,7 +164,7 @@ func _photo_input(tr: TextureRect, e: InputEvent) -> void:
 	if mm and _drag == tr:
 		var p: Vector2 = tr.get_global_mouse_position() - _drag_off
 		p = p.clamp(Vector2(-tr.size.x / 2.0, -tr.size.y / 2.0), Vector2(640.0 - tr.size.x / 2.0, 360.0 - tr.size.y / 2.0))
-		tr.position = (p / 2.0).floor() * 2.0  # stay on the 2px grid
+		tr.position = (p / 2.0).floor() * 2.0
 		tr.accept_event()
 
 
@@ -188,7 +180,6 @@ func _set_text_style(on_panel: bool) -> void:
 		_text.add_theme_color_override("font_color", INK)
 
 
-## True once the reaction has been shown up to its last page.
 func is_fully_read() -> bool:
 	return _stage == 2 and _page >= _pages.size() - 1
 
@@ -211,7 +202,7 @@ func _step() -> void:
 	if _stage == 1:
 		_show_reaction()
 	elif _stage == 2:
-		if _page < _pages.size() - 1:  # long reaction: one sentence group per click
+		if _page < _pages.size() - 1:
 			_page += 1
 			_thought.show_text(_pages[_page], 0.0, _page < _pages.size() - 1)
 		else:
@@ -242,7 +233,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		if is_fully_read():
-			close()  # Esc never turns dialogue pages; it only closes a fully read document
+			close()
 	elif event.is_action_pressed("ui_accept"):
 		get_viewport().set_input_as_handled()
 		_step()

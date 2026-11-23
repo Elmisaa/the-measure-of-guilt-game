@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""Make a spin animation sheet from a top-down rotor (fan) image on magenta.
-
-Rotates the hi-res source, squashes it vertically for perspective, box-downscales
-to the target width and hardens alpha. Rotational symmetry of N blades means one
-loop only needs 360/N degrees.
-
-  python3 tools/rotor_frames.py art/drafts/fan/rotor_v1_a.png --blades 4 --frames 8 \
-      --width 64 --squash 0.28 --out assets/fx/s01/fan_spin.png
-"""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pixelize import harden_alpha, remove_background  # noqa: E402
+from pixelize import harden_alpha, remove_background
 
 
 def main() -> int:

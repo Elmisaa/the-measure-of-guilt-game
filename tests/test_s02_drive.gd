@@ -1,8 +1,4 @@
 extends SceneTree
-## After the call: "Подняться" leads to the hall in state "leave" -> the exit refuses without the coat ->
-## coat from the locker, worn from the inventory -> exit -> the drive cutscene plays all its shots in order
-## (run at 2x speed) -> ends on the title screen.
-## godot --path . -s res://tests/test_s02_drive.gd [-- --shots]   (offscreen: --position 20000,20000)
 
 const SAFETY_TIMEOUT: float = 120.0
 const SPEED: float = 2.0
@@ -49,7 +45,6 @@ func _run() -> void:
 	var x: float = (w.get_node("World/Player") as Node2D).position.x
 	if absf(x - 420.0) > 1.0:
 		push_error("FAIL spawn x after the call: %s" % x); ok = false
-	# the exit refuses without the coat
 	w.call("_interact", "exit")
 	await _wait(0.3)
 	if current_scene != w:
@@ -77,7 +72,6 @@ func _run() -> void:
 	var d: Node = current_scene
 	if d == null or d.name != "Drive":
 		push_error("FAIL exit did not start the drive: %s" % [d]); quit(1); return
-	# play it through fast, recording the order of shots
 	Engine.time_scale = SPEED
 	var seen: Array[String] = []
 	var shot_keys: Array = SHOT_AT.keys()
@@ -105,7 +99,7 @@ func _run() -> void:
 	if not music_started:
 		push_error("FAIL the track never played"); ok = false
 	await _wait(1.0)
-	if current_scene == null or current_scene.name != "Title":
-		push_error("FAIL drive did not end on the title: %s" % [current_scene]); ok = false
+	if current_scene == null or current_scene.name != "Penthouse":
+		push_error("FAIL drive did not lead to the penthouse: %s" % [current_scene]); ok = false
 	print("PASS" if ok else "FAILED")
 	quit(0 if ok else 1)

@@ -1,32 +1,23 @@
 class_name WalkPlayer
 extends Node2D
-## Alexei walking left/right in a side-view room. Sheet: 10 frames in a row
-## (0–1 idle, 2–9 walk), facing right; flipped for walking left. The origin is at
-## his feet. Drawn on the 4px grid of the room art.
-## Running (Shift) uses its own sheet (run_frames in a row, same depth rows) and spends stamina
-## (GameState.stamina); at zero he drops to a walk, catches his breath and can run again from RUN_AGAIN.
 
 signal moved(x: float)
 
 @export var sheet: Texture2D
 @export var frames: int = 10
-## Rows in the sheet = the same animation pre-rendered at smaller sizes (depth).
 @export var depth_rows: int = 1
 @export var speed: float = 130.0
-## Hold Shift to run.
-@export var run_speed: float = 315.0  # 175 * 1.8
+@export var run_speed: float = 315.0
 @export var grid: float = 4.0
 @export var run_sheet: Texture2D
 @export var run_frames: int = 8
 @export var run_fps: float = 18.0
-## Seconds of running from full to empty / from empty back to full.
 @export var run_seconds: float = 14.0
 @export var recover_seconds: float = 7.0
 const RUN_AGAIN: float = 0.35
 const RECOVER_DELAY: float = 0.7
 const BREATH: String = "res://assets/audio/sfx/breath.wav"
 
-## Depth: W/S step toward the wall (y_far) or back (y_near); smaller when farther.
 var y_far: float = 346.0
 var y_near: float = 346.0
 var scale_far: float = 1.0
@@ -35,7 +26,6 @@ var min_x: float = 0.0
 var max_x: float = 2000.0
 var frozen: bool = false
 
-## Alexei in his coat (after he puts it on): same frame grid as the plain sheets.
 const COAT_WALK: String = "res://assets/characters/alexei/walk_side_depth_coat.png"
 const COAT_RUN: String = "res://assets/characters/alexei/run_side_depth_coat.png"
 
@@ -54,7 +44,7 @@ var _hud: Node
 
 func _ready() -> void:
 	_ensure_actions()
-	_gs = get_node_or_null("/root/GameState")  # not the global names: class_name scripts compile early
+	_gs = get_node_or_null("/root/GameState")
 	_hud = get_node_or_null("/root/Hud")
 	_sprite = Sprite2D.new()
 	_sprite.texture = sheet
@@ -69,7 +59,6 @@ func _ready() -> void:
 		set_coat(true)
 
 
-## Swap to the coat sheets (or back). Without the coat art it stays as is.
 func set_coat(on: bool) -> void:
 	if on and not (ResourceLoader.exists(COAT_WALK) and ResourceLoader.exists(COAT_RUN)):
 		return
@@ -114,7 +103,6 @@ func _process(delta: float) -> void:
 		_set_sheet(false)
 		var col: int = 2 + int(_t * (18.0 if _running else 13.0)) % (frames - 2) if _walking else int(_t * 1.5) % 2
 		_sprite.frame = _row * frames + col
-	# keep the art on the room's pixel grid
 	_sprite.position.x = roundf(position.x / grid) * grid - position.x
 
 
@@ -154,11 +142,10 @@ func is_winded() -> bool:
 	return _winded
 
 
-## Farther from the camera = smaller: pick a pre-rendered row (clean pixels, no scaling).
 func _apply_depth() -> void:
 	if y_far == y_near or depth_rows <= 1:
 		return
-	var k: float = clampf((position.y - y_far) / (y_near - y_far), 0.0, 1.0)  # 0 far .. 1 near
+	var k: float = clampf((position.y - y_far) / (y_near - y_far), 0.0, 1.0)
 	_row = clampi(int(roundf((1.0 - k) * float(depth_rows - 1))), 0, depth_rows - 1)
 	z_index = int(position.y)
 

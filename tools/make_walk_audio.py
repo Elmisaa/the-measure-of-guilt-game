@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Walk-scene sounds (all synthesized, no third-party audio). Radio:
-  strange_station.wav — only noise (breathing hiss, faint unstable carrier, crackles); 48 s, loops.
-  tune_static.wav — 0.7 s of dial-sweep static between stations.
-Other: radio_click.wav (knob), breath.wav (out of breath), pour.wav (coffee into a mug), gulp.wav.
-Output: radio WAVs -> art/sources/audio/ (encode with tools/to_ogg.py); the short ones -> assets/audio/sfx/.
-"""
 import math, random, struct, wave
 from pathlib import Path
 
@@ -41,7 +35,7 @@ def note(freq: float, sec: float, vol: float, kind: str = "box") -> list[float]:
         env = min(1.0, t / 0.005) * math.exp(-t * (3.0 if kind == "box" else 0.0))
         if kind == "beep":
             env = min(1.0, t / 0.004, (sec - t) / 0.004)
-        f = freq * (1 + 0.004 * math.sin(2 * math.pi * 5.5 * t))  # tape wobble
+        f = freq * (1 + 0.004 * math.sin(2 * math.pi * 5.5 * t))
         v = math.sin(2 * math.pi * f * t)
         if kind == "box":
             v += 0.35 * math.sin(2 * math.pi * f * 2.01 * t) + 0.15 * math.sin(2 * math.pi * f * 3.98 * t)
@@ -50,13 +44,11 @@ def note(freq: float, sec: float, vol: float, kind: str = "box") -> list[float]:
 
 
 def strange() -> list[float]:
-    """Strange station: only noise — hiss that slowly breathes, a faint unstable carrier, rare crackles.
-    The code itself is shown as text over the radio (scripts/props/radio.gd)."""
     L = int(48 * SR)
     s = hiss(L, 0.22)
     for i in range(L):
         t = i / SR
-        swell = 0.75 + 0.25 * math.sin(2 * math.pi * t / 12.0) * math.sin(2 * math.pi * t / 4.0)  # loops at 48 s
+        swell = 0.75 + 0.25 * math.sin(2 * math.pi * t / 12.0) * math.sin(2 * math.pi * t / 4.0)
         s[i] = s[i] * swell + 0.035 * math.sin(2 * math.pi * (1210 + 6 * math.sin(2 * math.pi * t / 8.0)) * t)
     for _ in range(40):
         at = rnd.randrange(L - 400)
@@ -82,7 +74,7 @@ def click() -> list[float]:
 
 def breath() -> list[float]:
     out = []
-    for k, (dur, vol) in enumerate(((0.45, 0.7), (0.6, 1.0))):  # in, then a long out
+    for k, (dur, vol) in enumerate(((0.45, 0.7), (0.6, 1.0))):
         n = int(dur * SR); lp = 0.0; bp = 0.0
         for i in range(n):
             t = i / n
@@ -122,7 +114,6 @@ def water() -> list[float]:
 
 
 def door() -> list[float]:
-    """Old door: latch click, creak, soft thud."""
     out = [rnd.uniform(-1, 1) * math.exp(-i / (0.003 * SR)) for i in range(int(0.04 * SR))]
     n = int(0.45 * SR)
     for i in range(n):

@@ -1,8 +1,5 @@
 class_name Terminal
 extends CanvasLayer
-## Alexei's CRT computer: an in-world 1998 police records terminal.
-## Search the database, read the «Весы» cases and memos, file the report (a choice).
-## Content: data/dialogues/s01_terminal.json. Keys: digits pick, Esc goes back.
 
 signal closed
 signal report_filed(choices: Dictionary)
@@ -15,7 +12,6 @@ const TEXT_W: float = 488.0
 
 var report_unlocked: bool = false
 var report_done: bool = false
-## Shown once, the first time the computer boots (set by the scene).
 var first_thought: String = ""
 var _first_thought_done: bool = false
 
@@ -24,7 +20,7 @@ var _root: Control
 var _body: VBoxContainer
 var _footer: Label
 var _hotkeys: Dictionary = {}
-var _searched: Dictionary = {}  ## record keys already found: the hints suggest others
+var _searched: Dictionary = {}
 var _back: Callable = Callable()
 var _choices: Dictionary = {}
 var _open: bool = false
@@ -38,7 +34,6 @@ var _btn_normal: StyleBoxEmpty = StyleBoxEmpty.new()
 var _btn_hover: StyleBoxFlat
 var _thought: ThoughtBox
 var _clock: Label
-## In-game time on the computer: starts at 01:47:00 and keeps running (real seconds).
 var _clock_secs: float = 1.0 * 3600.0 + 47.0 * 60.0
 const CLOCK_DATE: String = "18.11.98"
 
@@ -102,7 +97,6 @@ func _build() -> void:
 	scroll.add_child(_body)
 	_footer = _label("ESC — НАЗАД", GREEN_DIM)
 	col.add_child(_footer)
-	# scanlines over the screen
 	var scan: ColorRect = ColorRect.new()
 	scan.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scan.position = bezel.position + Vector2(8, 8)
@@ -113,19 +107,16 @@ func _build() -> void:
 	sm.shader = sh
 	scan.material = sm
 	_crt.add_child(scan)
-	# white glow for switching off (the picture collapses into a line, then a dot)
 	_flash = ColorRect.new()
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_flash.position = scan.position
 	_flash.size = scan.size
 	_flash.color = Color(0.85, 1.0, 0.88, 0.0)
 	_crt.add_child(_flash)
-	# Alexei's thoughts while he works at the computer (below the monitor)
 	_thought = ThoughtBox.new()
 	_root.add_child(_thought)
 
 
-# --- public --------------------------------------------------------------
 
 func open() -> void:
 	if _closing:
@@ -139,7 +130,7 @@ func open() -> void:
 	_footer.visible = false
 	var lines: Array = _d.get("boot", []) if not _booted else _d.get("resume", [])
 	_boot_gen += 1
-	var gen: int = _boot_gen  # closing and reopening during the boot starts it again
+	var gen: int = _boot_gen
 	for l: Variant in lines:
 		if not _open or gen != _boot_gen:
 			return
@@ -160,7 +151,6 @@ func open() -> void:
 			_thought.show_text(first_thought, 5.0)
 
 
-## One animated boot line: memory counter, or dots appearing then a result.
 func _boot_step(l: Dictionary) -> void:
 	var lab: Label = _label(str(l.get("text", "")), GREEN)
 	_body.add_child(lab)
@@ -196,7 +186,6 @@ func is_open() -> bool:
 	return _open
 
 
-## Switching off like an old CRT: a flash, the picture collapses to a line, then to a dot.
 func close() -> void:
 	if _closing:
 		return
@@ -219,7 +208,6 @@ func close() -> void:
 	closed.emit()
 
 
-# --- screens -------------------------------------------------------------
 
 func _show_menu() -> void:
 	_screen(Callable(self, "close"))
@@ -257,7 +245,6 @@ func _show_search() -> void:
 	le.text_changed.connect(func(_t: String) -> void: _audio("sfx", "res://assets/audio/sfx/key_tick.wav", -16.0))
 	_body.add_child(le)
 	le.grab_focus.call_deferred()
-	# what to look for: a few names not searched yet (click = search)
 	_body.add_child(_gap())
 	var help: Label = _text(str(_d.get("search_help", "")))
 	help.add_theme_color_override("font_color", GREEN_DIM)
@@ -328,7 +315,6 @@ func _show_question(i: int) -> void:
 		_item("%s. %s" % [n, str(q[opt])], func() -> void: _choose(i, q, opt), n)
 
 
-## A choice: one short thought from Alexei, and the next question right away (no waiting).
 func _choose(i: int, q: Dictionary, opt: String) -> void:
 	_choices[str(q["id"])] = opt
 	var think: String = str(q.get("think_" + opt, ""))
@@ -356,9 +342,7 @@ func _file_report() -> void:
 	report_filed.emit(_choices.duplicate())
 
 
-# --- helpers -------------------------------------------------------------
 
-## Cards = records by key, shown as a list.
 func _cards() -> Array:
 	var out: Array = []
 	for c: Dictionary in _d.get("cards", []):
@@ -370,11 +354,10 @@ func _lookup(query: String) -> String:
 	var q: String = " ".join(query.strip_edges().to_upper().split(" ", false)).replace(",", "")
 	var aliases: Dictionary = _d.get("aliases", {})
 	var keys: Array = aliases.keys()
-	keys.sort_custom(func(a: String, b: String) -> bool: return a.length() > b.length())  # "КАРАМАЗОВ ИВАН" before "КАРАМАЗОВ"
+	keys.sort_custom(func(a: String, b: String) -> bool: return a.length() > b.length())
 	for a: String in keys:
 		if q.begins_with(a):
 			return str(aliases[a])
-	# "ИВАН КАРАМАЗОВ": the first name first
 	var parts: PackedStringArray = q.split(" ")
 	if parts.size() == 2 and aliases.has(parts[1] + " " + parts[0]):
 		return str(aliases[parts[1] + " " + parts[0]])
@@ -447,7 +430,7 @@ func _audio(method: String, path: String = "", db: float = 0.0) -> void:
 
 
 func _process(delta: float) -> void:
-	_clock_secs += delta  # time passes even while the computer is off
+	_clock_secs += delta
 	if _open:
 		_clock.text = _clock_text()
 

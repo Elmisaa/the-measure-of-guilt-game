@@ -1,13 +1,6 @@
 extends Node2D
-## s02: the night drive to the father — 18 s, cut to the user's track (assets/audio/music/drive_theme.wav,
-## the first 18 s of her clip; nothing of it is used after 18 s).
-## Beat grid (analysed): first downbeat 1.71 s, beat 0.5875 s (~102 BPM), bar 2.35 s.
-## Cuts sit on beats, every bar hits with a camera shake; lights breathe with the beat and flicker on
-## their own; headlights / street lamps sweep through frames; rain is real-looking screen-space rain
-## (two depths, gusts, splashes), drops run down the glass inside the car; fog drifts outside.
-## Frames: pixel art at 4x (assets/backgrounds/s02/), every pan snaps to the 4 px grid. No skipping.
 
-const NEXT_SCENE: String = "res://scenes/menu/title.tscn"  ## the penthouse is not in the game yet
+const NEXT_SCENE: String = "res://scenes/s03/penthouse.tscn"
 const BG: String = "res://assets/backgrounds/s02/"
 const SFX: String = "res://assets/audio/sfx/"
 const TRACK: String = "res://assets/audio/music/drive_theme.wav"
@@ -15,25 +8,24 @@ const RAIN: String = "res://assets/audio/music/877124__adamdavidsmith__ambience_
 const TRACK_DB: float = -4.0
 const TRACK_END: float = 18.0
 const GRID: float = 4.0
-const TOP: float = 35.0  ## frames are 290 tall, the letterbox shows 44..316
+const TOP: float = 35.0
 const BEAT0: float = 1.71
 const BEAT: float = 0.5875
 const BAR: float = 2.35
 const SHOT_EVENTS: Array = [
-	# [time (s), method]
 	[0.0, "_shot_precinct"],
-	[1.71, "_shot_key"],          # first downbeat
+	[1.71, "_shot_key"],
 	[2.88, "_shot_leave"],
-	[4.06, "_shot_skyline"],      # bar
+	[4.06, "_shot_skyline"],
 	[5.24, "_shot_nightlife"],
-	[6.41, "_shot_windshield"],   # bar
+	[6.41, "_shot_windshield"],
 	[7.59, "_shot_tunnel"],
-	[8.76, "_shot_neon"],         # bar: one cut per beat
+	[8.76, "_shot_neon"],
 	[9.35, "_shot_gauges"],
 	[9.94, "_shot_city"],
 	[10.52, "_shot_echo"],
-	[11.11, "_shot_face"],        # bar
-	[13.46, "_shot_ues"],         # bar: the final shot
+	[11.11, "_shot_face"],
+	[13.46, "_shot_ues"],
 	[18.0, "_engine_off"],
 	[20.4, "_finish"],
 ]
@@ -58,11 +50,11 @@ var _tex: Dictionary = {}
 var _current: Node2D
 var _pan: Tween
 var _fx_tweens: Array[Tween] = []
-var _lights: Array[Dictionary] = []  ## {node, base, beat, flicker, phase}
+var _lights: Array[Dictionary] = []
 var _shake: float = 0.0
 var _glow_tex: GradientTexture2D
 var _done: bool = false
-var shot_name: String = ""  ## for tests
+var shot_name: String = ""
 
 
 func _ready() -> void:
@@ -88,7 +80,7 @@ func _ready() -> void:
 	_flash = _screen_rect(Color(1, 1, 1, 0), false)
 	_black = _screen_rect(Color(0, 0, 0, 1), false)
 	_text_layer = CanvasLayer.new()
-	_text_layer.layer = 95  # over the letterbox (90)
+	_text_layer.layer = 95
 	add_child(_text_layer)
 	_music = _player(TRACK, TRACK_DB, "Music", false)
 	_rain_snd = _player(RAIN, -60.0, "SFX", true)
@@ -138,7 +130,6 @@ func _process(delta: float) -> void:
 	_update_fog(delta)
 
 
-## How strong the current beat is: 1 on the beat, falling to 0 before the next one.
 func _beat_k() -> float:
 	if _t < BEAT0 or _t > TRACK_END:
 		return 0.0
@@ -163,32 +154,30 @@ func _update_lights() -> void:
 			continue
 		var e: float = float(L["base"]) * (1.0 + float(L["beat"]) * bk)
 		var fl: float = float(L["flicker"])
-		if fl > 0.0 and randf() < fl * 0.08:  # a bad contact: a short dip
+		if fl > 0.0 and randf() < fl * 0.08:
 			e *= randf_range(0.2, 0.6)
 		e *= 1.0 + 0.08 * sin(_t * 3.0 + float(L["phase"]))
 		n.modulate.a = clampf(e, 0.0, 1.0)
 
 
-# --- shots ------------------------------------------------------------------------
 
 func _shot_precinct() -> void:
 	_show("a_precinct", "precinct", 1.0, Vector2(285, 316))
 	_pan_x(0.0, -220.0, 1.71, Tween.EASE_IN)
 	_fade_black(0.0, 0.9)
-	_light(Vector2(352, 107), Color(1.0, 0.7, 0.35), 3.0, 0.55, 0.0, 1.0)   # the doors, a flickering tube inside
-	_light(Vector2(672, 43), Color(1.0, 0.75, 0.4), 2.6, 0.6, 0.0, 0.3)     # street lamp
-	_light(Vector2(92, 120), Color(1.0, 0.7, 0.35), 1.6, 0.35, 0.0, 0.0)    # windows
-	_sweep(Color(0.9, 0.85, 0.7), Vector2(980, 230), Vector2(-120, 250), 1.5, Vector2(7, 2.2), 0.35)  # a passing car's headlights
+	_light(Vector2(352, 107), Color(1.0, 0.7, 0.35), 3.0, 0.55, 0.0, 1.0)
+	_light(Vector2(672, 43), Color(1.0, 0.75, 0.4), 2.6, 0.6, 0.0, 0.3)
+	_light(Vector2(92, 120), Color(1.0, 0.7, 0.35), 1.6, 0.35, 0.0, 0.0)
+	_sweep(Color(0.9, 0.85, 0.7), Vector2(980, 230), Vector2(-120, 250), 1.5, Vector2(7, 2.2), 0.35)
 
 
 func _shot_key() -> void:
 	_show("b_interior", "key", 0.0, Vector2.ZERO)
 	_current.position.x = -160.0
-	_glass_rain(Rect2(196, 16, 588, 150))
 	_fade_db(_rain_snd, -24.0, 0.2)
 	var dash: Sprite2D = _light(Vector2(483, 147), Color(0.3, 1.0, 0.7), 2.6, 0.0, 0.6, 0.0)
 	var radio: Sprite2D = _light(Vector2(603, 181), Color(1.0, 0.7, 0.3), 1.8, 0.0, 0.6, 0.0)
-	_after(0.58, func() -> void:  # ignition on the next beat: the dash lights come up
+	_after(0.58, func() -> void:
 		_set_base(dash, 0.7)
 		_set_base(radio, 0.6))
 	_pan_x(-160.0, -120.0, 1.17, Tween.EASE_OUT)
@@ -199,8 +188,8 @@ func _shot_leave() -> void:
 	_pan_x(0.0, -40.0, 1.18, Tween.EASE_OUT)
 	_fade_db(_rain_snd, -18.0, 0.2)
 	for p: Vector2 in [Vector2(339, 244), Vector2(399, 229)]:
-		_light(p, Color(1.0, 0.15, 0.1), 1.4, 0.9, 0.3, 0.0)  # tail lights
-	_light(Vector2(370, 278), Color(1.0, 0.2, 0.15), 1.0, 0.4, 0.3, 0.0, Vector2(1.2, 4.0))  # their streak in the wet road
+		_light(p, Color(1.0, 0.15, 0.1), 1.4, 0.9, 0.3, 0.0)
+	_light(Vector2(370, 278), Color(1.0, 0.2, 0.15), 1.0, 0.4, 0.3, 0.0, Vector2(1.2, 4.0))
 	_light(Vector2(171, 59), Color(1.0, 0.75, 0.4), 2.4, 0.5, 0.0, 0.2)
 
 
@@ -216,19 +205,18 @@ func _shot_skyline() -> void:
 func _shot_nightlife() -> void:
 	_show("f_nightlife", "nightlife", 1.0, Vector2(275, 316))
 	_pan_x(0.0, -228.0, 1.17, Tween.EASE_IN_OUT)
-	_light(Vector2(542, 87), Color(1.0, 0.8, 0.45), 4.0, 0.45, 0.8, 0.25)   # cinema marquee
-	_light(Vector2(737, 107), Color(0.25, 0.9, 1.0), 3.0, 0.5, 1.0, 0.6)    # club neon (buzzes)
-	_light(Vector2(398, 122), Color(1.0, 0.15, 0.35), 2.4, 0.5, 1.0, 0.5)   # bar neon
+	_light(Vector2(542, 87), Color(1.0, 0.8, 0.45), 4.0, 0.45, 0.8, 0.25)
+	_light(Vector2(737, 107), Color(0.25, 0.9, 1.0), 3.0, 0.5, 1.0, 0.6)
+	_light(Vector2(398, 122), Color(1.0, 0.15, 0.35), 2.4, 0.5, 1.0, 0.5)
 	_sweep(Color(1.0, 0.9, 0.7), Vector2(-60, 250), Vector2(900, 250), 1.1, Vector2(6, 1.6), 0.3)
 
 
 func _shot_windshield() -> void:
 	_show("b_interior", "windshield", 0.0, Vector2.ZERO)
-	_glass_rain(Rect2(196, 16, 588, 150))
 	_pan_x(-160.0, -40.0, 1.18, Tween.EASE_OUT)
 	_fade_db(_rain_snd, -24.0, 0.2)
 	_light(Vector2(483, 147), Color(0.3, 1.0, 0.7), 2.6, 0.7, 0.3, 0.0)
-	for i: int in 2:  # street lamps slide over the glass and the dashboard
+	for i: int in 2:
 		_after(i * BEAT, func() -> void:
 			_sweep(Color(1.0, 0.75, 0.4), Vector2(820, 60), Vector2(120, 120), 0.7, Vector2(5, 3), 0.4))
 
@@ -237,7 +225,7 @@ func _shot_tunnel() -> void:
 	_show("j_tunnel", "tunnel", 0.0, Vector2.ZERO)
 	_pan_x(0.0, -40.0, 1.17, Tween.EASE_IN)
 	_police_lights(1.2)
-	for i: int in 4:  # lamps rush past overhead: out from the vanishing point to the edges
+	for i: int in 4:
 		_after(i * 0.29, func() -> void:
 			_sweep(Color(1.0, 0.8, 0.5), Vector2(330, 100), Vector2(-40, -20), 0.45, Vector2(3, 1.5), 0.45)
 			_sweep(Color(1.0, 0.8, 0.5), Vector2(350, 100), Vector2(720, -20), 0.45, Vector2(3, 1.5), 0.45))
@@ -256,15 +244,14 @@ func _shot_gauges() -> void:
 
 func _shot_city() -> void:
 	_cut_zoom("d_skyline", Vector2(-1100, -60), Vector2(-1180, -60), "montage_city", BEAT)
-	_rain.intensity = 1.0
+	_rain.intensity = 0.0
 	_light(Vector2(796, 175), Color(1.0, 0.78, 0.45), 2.0, 0.5, 0.6, 0.2)
 
 
 func _shot_echo() -> void:
 	_show("b_interior", "echo", 0.0, Vector2.ZERO)
 	_current.position.x = -60.0
-	_glass_rain(Rect2(196, 16, 588, 150))
-	_tint.color = Color(0.4, 0.02, 0.02)  # red light floods the car
+	_tint.color = Color(0.4, 0.02, 0.02)
 	_fx().tween_property(_tint, "color", Color(0.18, 0.0, 0.0), 0.55)
 	var lines: Array = _d.get("echoes", [])
 	if not lines.is_empty():
@@ -275,10 +262,9 @@ func _shot_face() -> void:
 	_kill_fx()
 	_tint.color = Color(0, 0, 0, 0)
 	_show("h_face", "face", 0.0, Vector2.ZERO)
-	_glass_rain(Rect2(380, 10, 300, 250))
 	_pan_x(0.0, -40.0, BAR, Tween.EASE_OUT)
 	var colors: Array[Color] = [Color(1.0, 0.3, 0.7), Color(0.3, 0.9, 1.0), Color(1.0, 0.75, 0.35), Color(1.0, 0.3, 0.7)]
-	for i: int in colors.size():  # city lights slide across his face, on the beats
+	for i: int in colors.size():
 		var c: Color = colors[i]
 		_after(i * BEAT, func() -> void:
 			_sweep(c, Vector2(-80, 90), Vector2(720, 150), 0.7, Vector2(4, 6), 0.32))
@@ -288,13 +274,13 @@ func _shot_face() -> void:
 func _shot_ues() -> void:
 	_kill_fx()
 	_show("i_ues", "ues", 1.0, Vector2(268, 316))
-	_current.position.y = TOP - (1020.0 - 290.0)  # start at the street
+	_current.position.y = TOP - (1020.0 - 290.0)
 	_fade_db(_rain_snd, -14.0, 1.0)
-	_light(Vector2(344, 97), Color(1.0, 0.8, 0.5), 2.6, 0.7, 0.3, 0.0)    # the one lit penthouse window
-	_light(Vector2(207, 794), Color(1.0, 0.75, 0.4), 2.2, 0.6, 0.2, 0.2)  # entrance lamps
+	_light(Vector2(344, 97), Color(1.0, 0.8, 0.5), 2.6, 0.7, 0.3, 0.0)
+	_light(Vector2(207, 794), Color(1.0, 0.75, 0.4), 2.2, 0.6, 0.2, 0.2)
 	_light(Vector2(483, 795), Color(1.0, 0.75, 0.4), 2.2, 0.6, 0.2, 0.0)
-	_light(Vector2(335, 840), Color(1.0, 0.7, 0.35), 3.4, 0.45, 0.1, 0.0)  # the lobby
-	_sweep(Color(0.95, 0.9, 0.75), Vector2(-120, 940), Vector2(260, 960), 0.9, Vector2(6, 2.2), 0.35)  # our car's headlights pulling in
+	_light(Vector2(335, 840), Color(1.0, 0.7, 0.35), 3.4, 0.45, 0.1, 0.0)
+	_sweep(Color(0.95, 0.9, 0.75), Vector2(-120, 940), Vector2(260, 960), 0.9, Vector2(6, 2.2), 0.35)
 	var t: Tween = create_tween()
 	t.tween_interval(0.7)
 	t.tween_callback(func() -> void: _rain.ground = Vector2.ZERO)
@@ -304,7 +290,7 @@ func _shot_ues() -> void:
 
 
 func _engine_off() -> void:
-	_music.stop()  # nothing of the clip after 18 s
+	_music.stop()
 	Audio.sfx(SFX + "engine_off.wav", -12.0)
 	_after(0.9, func() -> void: Audio.sfx(SFX + "car_door.wav", -10.0))
 	_fade_db(_rain_snd, -10.0, 1.0)
@@ -318,28 +304,13 @@ func _finish() -> void:
 		t.parallel().tween_property(c, "modulate:a", 0.0, 1.0)
 	await t.finished
 	_rain.intensity = 0.0
-	_fade_db(_rain_snd, -40.0, 2.5)
-	var end: Label = Label.new()
-	end.text = str(_d.get("end_stub", ""))
-	end.add_theme_color_override("font_color", Color(0.7, 0.72, 0.76))
-	end.size = Vector2(640, 20)
-	end.position = Vector2(0, 170)
-	end.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	end.modulate.a = 0.0
-	_text_layer.add_child(end)
-	var e: Tween = create_tween()
-	e.tween_property(end, "modulate:a", 1.0, 1.0)
-	e.tween_interval(2.5)
-	e.tween_property(end, "modulate:a", 0.0, 1.0)
-	await e.finished
+	_fade_db(_rain_snd, -40.0, 1.0)
+	await get_tree().create_timer(0.6).timeout
 	if is_inside_tree():
-		Letterbox.hide_bars()
-		SceneRouter.go_to(NEXT_SCENE)
+		SceneRouter.go_to(NEXT_SCENE, 0.4)
 
 
-# --- building blocks -----------------------------------------------------------------
 
-## A new shot: the frame, outdoor rain (0 = inside the car) and where its splashes land on screen.
 func _show(tex: String, name: String, rain: float, ground: Vector2) -> void:
 	if _pan:
 		_pan.kill()
@@ -354,7 +325,7 @@ func _show(tex: String, name: String, rain: float, ground: Vector2) -> void:
 	_current.add_child(s)
 	_shots.add_child(_current)
 	shot_name = name
-	_rain.intensity = rain
+	_rain.intensity = 0.0
 	_rain.ground = ground
 	for f: Sprite2D in _fog:
 		f.visible = rain > 0.0
@@ -368,7 +339,6 @@ func _pan_x(from_x: float, to_x: float, time: float, ease: Tween.EaseType) -> vo
 			node.position.x = roundf(x / GRID) * GRID, from_x, to_x, time).set_trans(Tween.TRANS_SINE).set_ease(ease)
 
 
-## A close-up: the same frame at 2x (8 px pixels), panned.
 func _cut_zoom(tex: String, from: Vector2, to: Vector2, name: String, time: float) -> void:
 	_kill_fx()
 	_tint.color = Color(0, 0, 0)
@@ -396,8 +366,6 @@ func _make_glow_tex() -> GradientTexture2D:
 	return t
 
 
-## A soft additive light on the current frame. base: brightness, beat: how much it pumps with the beat,
-## flicker: how often it dips (bad contact / neon buzz).
 func _light(pos: Vector2, c: Color, size: float, base: float, beat: float, flicker: float, stretch: Vector2 = Vector2.ONE) -> Sprite2D:
 	var s: Sprite2D = Sprite2D.new()
 	s.texture = _glow_tex
@@ -419,7 +387,6 @@ func _set_base(s: Sprite2D, base: float) -> void:
 			L["base"] = base
 
 
-## A light that travels through the frame (headlights, a street lamp passing over the glass).
 func _sweep(c: Color, from: Vector2, to: Vector2, time: float, scl: Vector2, alpha: float) -> void:
 	if not is_instance_valid(_current):
 		return
@@ -440,22 +407,6 @@ func _sweep(c: Color, from: Vector2, to: Vector2, time: float, scl: Vector2, alp
 	t.tween_callback(s.queue_free)
 
 
-func _glass_rain(area: Rect2) -> void:
-	var r: WindowRain = WindowRain.new()
-	r.background = _current.get_child(0) as Sprite2D
-	r.areas = [area] as Array[Rect2]
-	r.drops = 90
-	r.cell = 2
-	r.speed_min = 40.0  # drops crawl down the glass, not fall
-	r.speed_max = 120.0
-	r.slant = -0.05
-	r.max_luma = 0.85
-	r.min_blue = -255
-	r.color = Color(0.85, 0.92, 1.0, 0.5)
-	_current.add_child(r)
-
-
-## Red/blue light bar on the car in the tunnel: glow on the bar, the walls and a faint screen wash.
 func _police_lights(time: float) -> void:
 	_kill_fx()
 	var red: Sprite2D = _light(Vector2(315, 145), Color(1.0, 0.1, 0.1), 1.6, 0.0, 0.0, 0.0)
@@ -480,7 +431,6 @@ func _police_lights(time: float) -> void:
 	t.tween_interval(0.15)
 
 
-## A lightning flash over the city: two quick white pulses (on the 7th downbeat).
 func _lightning() -> void:
 	var t: Tween = create_tween()
 	t.tween_property(_flash, "color:a", 0.45, 0.04)
@@ -489,7 +439,6 @@ func _lightning() -> void:
 	t.tween_property(_flash, "color:a", 0.0, 0.5)
 
 
-## Mist drifting between the camera and the street: two layers of soft noise, different speeds.
 func _build_fog() -> void:
 	for i: int in 2:
 		var n: FastNoiseLite = FastNoiseLite.new()
@@ -523,7 +472,6 @@ func _update_fog(delta: float) -> void:
 		_fog[i].region_rect = r
 
 
-## The father's words come back: caps, shaking, then gone.
 func _echo(text: String) -> void:
 	var l: RichTextLabel = RichTextLabel.new()
 	l.bbcode_enabled = true
@@ -540,7 +488,6 @@ func _echo(text: String) -> void:
 	t.tween_callback(l.queue_free)
 
 
-## Alexei's thought: a line above the lower bar.
 func _thought(text: String, time: float) -> void:
 	var l: Label = Label.new()
 	l.text = text
@@ -560,7 +507,6 @@ func _thought(text: String, time: float) -> void:
 	t.tween_callback(l.queue_free)
 
 
-## "Верхний Ист-Сайд / Пентхаус ..." typed at the lower left, like the place line in s00.
 func _type_place() -> void:
 	var box: VBoxContainer = VBoxContainer.new()
 	box.position = Vector2(28, 262)

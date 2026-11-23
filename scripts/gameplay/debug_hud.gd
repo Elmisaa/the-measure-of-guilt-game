@@ -1,6 +1,4 @@
 extends Label
-## Старый отладочный лейбл боевой сцены. Заменён на scenes/gameplay/combat_hud.tscn;
-## файл оставлен как простой резерв для быстрых проверок без HUD-сцены.
 
 @export var player_path: NodePath = ^"../Player"
 @export var hint_text: String = "A/D — ходьба, ЛКМ — выстрел, ПКМ — ближний бой, R — перезарядка, Q — тазер, S/Space — укрытие, F — фонарь"

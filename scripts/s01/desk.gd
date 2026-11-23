@@ -1,5 +1,4 @@
 extends Node2D
-## s01 format 2: Alexei's desk. Documents lift/twitch on hover; click -> close-up.
 
 const THOUGHT_DELAY: float = 0.8
 const NOT_READY_TIME: float = 3.0
@@ -11,11 +10,8 @@ const WALK_SCENE: String = "res://scenes/s01/walk.tscn"
 const PICKUP_SFX: String = "res://assets/audio/sfx/pickup.wav"
 const PICKUP_HOLD: float = 1.2
 const DESK_NO_MUG: String = "res://assets/backgrounds/s01/desk_nomug.png"
-## Power lamp on the monitor bezel (bottom right of the screen): blinks amber while the computer
-## sleeps, steady green while it is on.
 const LED_POS: Vector2 = Vector2(524, 120)
 const LED_PERIOD: float = 1.4
-## Desk lamp off: the whole desk sinks into the night blue (only the monitor/LED keep a glow).
 const DARK: Color = Color(0.3, 0.33, 0.46)
 const DARK_PAPER: Color = Color(0.42, 0.45, 0.58)
 const SWITCH_SFX: String = "res://assets/audio/sfx/radio_click.wav"
@@ -41,7 +37,7 @@ var _led: ColorRect
 var _led_glow: ColorRect
 var _led_t: float = 0.0
 var _lamp_on: bool = true
-var _lamp_lines: Dictionary = {}  # "off"/"on"/"dark_read" -> next index
+var _lamp_lines: Dictionary = {}
 var _dark: CanvasModulate
 @onready var _lamp_light: PointLight2D = $Lights/LampLight
 
@@ -78,19 +74,17 @@ func _ready() -> void:
 		_phone_ringing = true
 		_computer.set_enabled(false)
 		_set_docs_interactive(false)
-		_coffee_break()  # loaded after the report: straight to the coffee
+		_coffee_break()
 		return
 	await get_tree().create_timer(THOUGHT_DELAY).timeout
 	_thought.show_text(str(_data.get("intro_thought", "")))
 
 
-## A save keeps what was read at the desk, whether the report is filed, and the lamp.
 func save_state() -> Dictionary:
 	return {"desk_viewed": _viewed.keys(), "desk_report_unlocked": _terminal.report_unlocked,
 		"desk_terminal_seen": _terminal_seen, "desk_report_done": _terminal.report_done, "desk_lamp_off": not _lamp_on}
 
 
-## The desk lamp: click switches it; the room goes dark blue, the warm light goes out.
 func _set_lamp(on: bool, time: float) -> void:
 	_lamp_on = on
 	GameState.set_flag("desk_lamp_off", not on)
@@ -130,14 +124,14 @@ func _on_doc_clicked(doc_id: String) -> void:
 	_thought.hide_box()
 	_set_docs_interactive(false)
 	_view.shade = Color.WHITE if _lamp_on else DARK_PAPER
-	if not _lamp_on:  # reading in the dark: Alexei says so first
+	if not _lamp_on:
 		doc = doc.duplicate()
 		doc["reaction"] = _lamp_line("dark_read") + "\n" + str(doc.get("reaction", ""))
 	_view.open(doc)
 
 
 func _on_marker(marker_id: String) -> void:
-	if marker_id == "family" and not _view.is_open():  # the photo close-up, with everyone's names
+	if marker_id == "family" and not _view.is_open():
 		_thought.hide_box()
 		_current_doc = ""
 		_view.shade = Color.WHITE if _lamp_on else DARK_PAPER
@@ -154,11 +148,11 @@ func _on_marker(marker_id: String) -> void:
 
 func _on_view_closed() -> void:
 	_set_docs_interactive(true)
-	if _current_doc.is_empty():  # the family photo is not one of the case materials
+	if _current_doc.is_empty():
 		return
 	_viewed[_current_doc] = true
 	if _viewed.size() >= DOC_COUNT and not _terminal.report_unlocked:
-		_terminal.report_unlocked = true  # all materials read -> the report can be filed
+		_terminal.report_unlocked = true
 		Hud.set_objective(str(_data.get("report_objective", "")))
 
 
@@ -183,7 +177,7 @@ func _process(delta: float) -> void:
 		_led.color = Color(0.45, 1.0, 0.5)
 		_led_glow.color = Color(0.45, 1.0, 0.5, 0.25)
 	else:
-		var k: float = 0.5 + 0.5 * sin(_led_t * TAU / LED_PERIOD)  # soft "breathing" blink
+		var k: float = 0.5 + 0.5 * sin(_led_t * TAU / LED_PERIOD)
 		_led.color = Color(1.0, 0.62, 0.18).lerp(Color(0.3, 0.16, 0.06), 1.0 - k)
 		_led_glow.color = Color(1.0, 0.6, 0.2, 0.22 * k)
 
@@ -197,8 +191,6 @@ func _open_terminal() -> void:
 	_terminal.open()
 
 
-## Closing the computer: first time — a thought; after the report — Alexei weighs
-## his choice, then the phone rings.
 func _on_terminal_closed() -> void:
 	_computer.set_enabled(true)
 	_set_docs_interactive(true)
@@ -214,27 +206,25 @@ func _on_terminal_closed() -> void:
 	_terminal_seen = true
 
 
-## After the report: Alexei wants fresh coffee — "Взять кружку" (old coffee in it), then "Встать".
 func _coffee_break() -> void:
 	_thought.show_text(str(_data.get("coffee_thought", "")), 0.0)
 	await get_tree().create_timer(0.8).timeout
 	var take: Button = _action_button(str(_data.get("take_cup_button", "")))
 	await take.pressed
 	take.queue_free()
-	GameState.add_item("cup_old")  # HUD: "Взято: ..."
+	GameState.add_item("cup_old")
 	var mug: Control = _markers.get_node_or_null("Mug")
 	if mug:
 		mug.visible = false
-	($Background as Sprite2D).texture = load(DESK_NO_MUG)  # the mug is in his hand now
+	($Background as Sprite2D).texture = load(DESK_NO_MUG)
 	await get_tree().create_timer(0.5).timeout
 	var stand: Button = _action_button(str(_data.get("stand_button", "")))
 	await stand.pressed
 	stand.disabled = true
 	_thought.hide_box()
-	SceneRouter.go_to(WALK_SCENE)  # walking the hall
+	SceneRouter.go_to(WALK_SCENE)
 
 
-## A plain action button (same theme as "Изучить документы"), fades in at the same spot as the answer button.
 func _action_button(text: String) -> Button:
 	var b: Button = Button.new()
 	b.text = text
@@ -264,7 +254,6 @@ func _report_thought() -> String:
 	return str(th.get("report_mixed", ""))
 
 
-## All documents read: the background music stops, only the phone rings until answered.
 func _start_phone() -> void:
 	Audio.stop_music(0.5)
 	Audio.play_loop(Audio.PHONE_RING)
@@ -274,7 +263,6 @@ func _start_phone() -> void:
 	create_tween().tween_property(_answer, "modulate:a", 1.0, 0.4)
 
 
-## Phone answered: ring stops, black screen while Alexei picks up the receiver, then the call.
 func _on_answer() -> void:
 	_answer.disabled = true
 	Audio.stop_loop()

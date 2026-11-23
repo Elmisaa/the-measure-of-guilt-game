@@ -1,11 +1,5 @@
 class_name InventoryPanel
 extends Control
-## Alexei's things (GameState.items). Opened by the HUD bag icon or I; Esc/I/click outside closes.
-## Hover a slot: tooltip (name, what it is, what can be done). Click: a small menu of actions.
-## Keyboard: arrows/WASD + Enter, also inside the action menu.
-## An action closes the panel and Alexei says his thought (or a close-up opens, e.g. the photo).
-## Container mode (container_id set): a drawer/locker/board — same grid, plus "Взять" per item and
-## "Взять всё"; taking keeps the panel open.
 
 signal action_chosen(item_id: String, action: String)
 signal closed
@@ -35,16 +29,15 @@ var container_id: String = ""
 var _title: Label
 var _take_all: Button
 var _hint: Label
-## Keyboard: arrows/WASD move the selection, Enter opens the item's menu; in the menu up/down + Enter.
 var _slots: Array[Panel] = []
 var _sel: int = 0
 var _menu_sel: int = 0
-var _on_take: bool = false  # keyboard focus is on "Взять всё"
+var _on_take: bool = false
 const MENU_SEL: Color = Color(0.36, 0.4, 0.46, 1)
 
 
 func _ready() -> void:
-	_gs = get_node("/root/GameState")  # not the global name: class_name scripts may compile before autoloads
+	_gs = get_node("/root/GameState")
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	visible = false
 	var dim: ColorRect = ColorRect.new()
@@ -253,7 +246,6 @@ func _actions_for(id: String) -> Array[String]:
 	return out
 
 
-## Highlight a slot (mouse or keys) and show its tooltip.
 func _select(i: int, from_keys: bool) -> void:
 	if i < 0 or i >= _slots.size():
 		return
@@ -341,8 +333,6 @@ func _close_menu() -> void:
 	_menu_item = ""
 
 
-## Do an action on an item (also used by tests). Only "Взять в руку" closes the window:
-## looking (a thought or a close-up on top), drinking, taking keep it open.
 func choose(id: String, action: String) -> void:
 	_close_menu()
 	if action == "hold":
@@ -377,7 +367,7 @@ func _input(event: InputEvent) -> void:
 	if not visible:
 		return
 	var hud: Node = get_node_or_null("/root/Hud")
-	if hud and hud.is_closeup_open():  # Esc belongs to the close-up shown over the window
+	if hud and hud.is_closeup_open():
 		return
 	var step: Vector2i = _nav_dir(event)
 	if step != Vector2i.ZERO:
@@ -394,7 +384,7 @@ func _input(event: InputEvent) -> void:
 		else:
 			var c: int = _sel % COLS
 			var r: int = _sel / COLS
-			if step.y > 0 and r == ROWS - 1 and _take_all.visible:  # down from the last row -> "Взять всё"
+			if step.y > 0 and r == ROWS - 1 and _take_all.visible:
 				_set_take_focus(true)
 				return
 			c = clampi(c + step.x, 0, COLS - 1)

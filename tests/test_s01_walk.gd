@@ -1,9 +1,6 @@
 extends SceneTree
-## Walk hall: move right, camera follows within bounds, run (own sheet, spends stamina, recovers),
-## inventory (I) blocks movement, radio stations, coffee twice (pour at the machine, drink from the
-## inventory) -> pack -> phone rings, answer at the desk -> call scene.  godot --headless --path . -s res://tests/test_s01_walk.gd
 
-const SAFETY_TIMEOUT: float = 180.0  ## never leave a window hanging
+const SAFETY_TIMEOUT: float = 180.0
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
 
 
@@ -75,7 +72,6 @@ func _run() -> void:
 		push_error("FAIL camera out of bounds"); ok = false
 	await _shot("2_walking")
 
-	# run (Shift) is faster than walking, uses the run sheet and spends stamina
 	var gs: Node = root.get_node("GameState")
 	var hud: Node = root.get_node("Hud")
 	var pl0: Node2D = w.get_node("World/Player")
@@ -97,7 +93,6 @@ func _run() -> void:
 	await _wait(1.5)
 	if gs.stamina <= 0.05:
 		push_error("FAIL stamina does not recover"); ok = false
-	# Space: no jump any more; it must not use the spot he stands at
 	gs.stamina = 1.0
 	var st0: String = w._state
 	var sp: InputEventKey = InputEventKey.new()
@@ -112,7 +107,6 @@ func _run() -> void:
 	await _wait(0.3)
 	if pl0._sprite.position.y != 0.0 or w._state != st0:
 		push_error("FAIL space should do nothing in the hall"); ok = false
-	# inventory: I opens it, Alexei cannot walk while it is open
 	hud.toggle_inventory()
 	await _wait(0.3)
 	var slot: Control = hud._inventory._grid.get_child(1)
@@ -122,13 +116,13 @@ func _run() -> void:
 	hud._inventory._open_menu("photo", hud._inventory._grid.get_child(4))
 	await _shot("2d2_menu")
 	hud._inventory._close_menu()
-	# keyboard: arrows/WASD move the selection, Enter opens the menu, down + Enter picks an action
 	await _key(KEY_D)
 	await _key(KEY_RIGHT)
 	if hud._inventory._sel != 2:
 		push_error("FAIL inventory keys: sel=%d" % hud._inventory._sel); ok = false
 	await _key(KEY_D)
-	await _key(KEY_D)  # -> the cup: two actions
+	await _key(KEY_D)
+	await _key(KEY_D)
 	await _key(KEY_ENTER)
 	if not hud._inventory._menu.visible:
 		push_error("FAIL Enter did not open the item menu"); ok = false
@@ -157,7 +151,6 @@ func _run() -> void:
 	if not hud.is_inventory_open():
 		push_error("FAIL inventory should stay open after looking"); ok = false
 	hud.toggle_inventory()
-	# close-ups and drawers in the hall
 	w._interact("alexei_board")
 	await _wait(1.6)
 	if not hud.is_closeup_open():
@@ -170,12 +163,11 @@ func _run() -> void:
 	if not hud.is_container_open():
 		push_error("FAIL locker did not open"); ok = false
 	await _shot("2h_locker")
-	hud._container._take_all.pressed.emit()  # before the coffee: look, but don't take yet
+	hud._container._take_all.pressed.emit()
 	await _wait(0.3)
 	if gs.has_item("keys"):
 		push_error("FAIL locker things taken before the coffee"); ok = false
 	hud._container.close()
-	# old coffee: wash the cup in the restroom (new door), then the machine
 	await _walk_to(w, 1820.0)
 	await _wait(0.2)
 	if w._near != "restroom":
@@ -190,7 +182,7 @@ func _run() -> void:
 		await _shot("2j_restroom")
 		rr._interact("stall2")
 		await _wait(0.3)
-		rr._interact("sink")  # empty hands: only a hint
+		rr._interact("sink")
 		await _wait(0.3)
 		if not gs.has_item("cup_old"):
 			push_error("FAIL sink without the cup in hand should not wash"); ok = false
@@ -220,13 +212,12 @@ func _run() -> void:
 	pl0 = w.get_node("World/Player")
 	if absf(pl0.position.x - 1820.0) > 40.0:
 		push_error("FAIL should stand at the restroom door: %.0f" % pl0.position.x); ok = false
-	# walk to the coffee machine and use it
 	await _walk_to(w, 1350.0)
 	await _wait(0.2)
 	if w._near != "coffee":
 		push_error("FAIL not near coffee: %s" % w._near); ok = false
 	await _shot("3_coffee")
-	w._interact("coffee")  # empty hands: hint only
+	w._interact("coffee")
 	await _wait(0.3)
 	if w._state != "coffee1":
 		push_error("FAIL coffee without cup in hand"); ok = false
@@ -245,7 +236,6 @@ func _run() -> void:
 	await _wait(2.0)
 	hud.use_item("cup_full", "drink")
 	await _wait(0.3)
-	# radio on Kowalski's desk: stations then off
 	await _walk_to(w, 1700.0)
 	await _wait(0.2)
 	if w._near != "radio":
@@ -260,7 +250,6 @@ func _run() -> void:
 	await _wait(6.0)
 	if radio.station() != 2 or not radio._player.playing:
 		push_error("FAIL strange station: %d" % radio.station()); ok = false
-	# Kowalski: notices, wanted copies, his drawer
 	w._interact("notice_order")
 	await _wait(1.6)
 	await _shot("3d_order")
@@ -296,7 +285,6 @@ func _run() -> void:
 	await _wait(0.5)
 	await _walk_to(w, 1540.0)
 	await _shot("3c_radio_view")
-	# Sarah: photo, stickers, drawer (look only)
 	await _walk_to(w, 1120.0)
 	w._interact("sarah_stickers")
 	await _wait(1.6)
@@ -323,7 +311,6 @@ func _run() -> void:
 	hud._container.close()
 	if w._state != "home" or root.get_node("Audio")._loop.playing:
 		push_error("FAIL after second coffee should be free 'home' state, no ring: %s" % w._state); ok = false
-	# depth: step toward the wall
 	Input.action_press("move_up")
 	await _wait(0.8)
 	Input.action_release("move_up")
@@ -331,7 +318,6 @@ func _run() -> void:
 	if pl.depth_row() == 0:
 		push_error("FAIL depth did not switch to a smaller row"); ok = false
 	await _shot("4_depth")
-	# home: things from the locker first, then the desk
 	await _walk_to(w, 420.0)
 	w._interact("desk")
 	await _wait(0.3)

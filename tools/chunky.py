@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Make pixels N times bigger without changing colours: box-downscale by N, then
-nearest-upscale by N. Alpha is premultiplied while averaging and hardened after.
-
-  python3 tools/chunky.py in.png --factor 2 --out out.png
-  python3 tools/chunky.py in.png --factor 2 --native-out small.png   # also save the 1/N image
-"""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pixelize import harden_alpha  # noqa: E402
+from pixelize import harden_alpha
 
 
 def chunky(img: Image.Image, f: int) -> Image.Image:

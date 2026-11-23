@@ -1,9 +1,5 @@
 class_name CombatEncounter
 extends Node
-## Переиспользуемый контроллер боевой сцены для быстрой вставки в 3D-локации.
-## Автоматически находит Player (группа "player") и врагов (группа "enemies").
-## Когда все враги is_dead() == true → испускает encounter_won, ставит victory_flag и показывает баннер победы.
-## При player.died → испускает encounter_lost, показывает экран поражения и перезапускает сцену по Enter.
 
 signal encounter_won
 signal encounter_lost
@@ -21,7 +17,6 @@ var _encounter_ended: bool = false
 
 func _ready() -> void:
 	_rebind()
-	# Player может появиться позже, подписываемся через call_deferred
 	call_deferred("_connect_player_died")
 
 
@@ -94,7 +89,6 @@ func _show_victory_banner() -> void:
 	var canvas: CanvasLayer = CanvasLayer.new()
 	canvas.layer = 60
 	add_child(canvas)
-	# Полноэкранный контейнер для гарантированного центрирования
 	var center_container: CenterContainer = CenterContainer.new()
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(center_container)
@@ -115,7 +109,6 @@ func _show_defeat_banner() -> void:
 	var canvas: CanvasLayer = CanvasLayer.new()
 	canvas.layer = 60
 	add_child(canvas)
-	# Полноэкранный контейнер для гарантированного центрирования
 	var center_container: CenterContainer = CenterContainer.new()
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(center_container)

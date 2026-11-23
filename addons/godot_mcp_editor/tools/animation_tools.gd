@@ -8,9 +8,6 @@ func set_editor_plugin(plugin: EditorPlugin) -> void:
 	_editor_plugin = plugin
 
 
-# =============================================================================
-# Shared helpers
-# =============================================================================
 func _ensure_res_path(path: String) -> String:
 	if not path.begins_with("res://"): return "res://" + path
 	return path
@@ -110,9 +107,6 @@ func _get_state_machine(anim_tree: AnimationTree, state_machine_path: String = "
 	return current as AnimationNodeStateMachine
 
 
-# =============================================================================
-# create_animation
-# =============================================================================
 func create_animation(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var player_node_path: String = str(args.get("playerNodePath", "."))
@@ -172,9 +166,6 @@ func create_animation(args: Dictionary) -> Dictionary:
 	}
 
 
-# =============================================================================
-# add_animation_track
-# =============================================================================
 func add_animation_track(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var player_node_path: String = str(args.get("playerNodePath", "."))
@@ -259,9 +250,6 @@ func add_animation_track(args: Dictionary) -> Dictionary:
 	return {"ok": true, "trackType": track_type, "trackIndex": track_idx}
 
 
-# =============================================================================
-# create_animation_tree
-# =============================================================================
 func create_animation_tree(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var parent_path: String = str(args.get("parentPath", "."))
@@ -309,9 +297,6 @@ func create_animation_tree(args: Dictionary) -> Dictionary:
 	return {"ok": true, "nodeName": node_name, "rootType": root_type}
 
 
-# =============================================================================
-# add_animation_state
-# =============================================================================
 func add_animation_state(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var anim_tree_path: String = str(args.get("animTreePath", ""))
@@ -354,9 +339,6 @@ func add_animation_state(args: Dictionary) -> Dictionary:
 	return {"ok": true, "stateName": state_name, "animationName": animation_name}
 
 
-# =============================================================================
-# connect_animation_states
-# =============================================================================
 func connect_animation_states(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var anim_tree_path: String = str(args.get("animTreePath", ""))
@@ -409,9 +391,6 @@ func connect_animation_states(args: Dictionary) -> Dictionary:
 	return {"ok": true, "from": from_state, "to": to_state}
 
 
-# =============================================================================
-# create_navigation_region
-# =============================================================================
 func create_navigation_region(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var parent_path: String = str(args.get("parentPath", "."))
@@ -452,9 +431,6 @@ func create_navigation_region(args: Dictionary) -> Dictionary:
 	return {"ok": true, "nodeName": node_name, "is3D": is_3d}
 
 
-# =============================================================================
-# create_navigation_agent
-# =============================================================================
 func create_navigation_agent(args: Dictionary) -> Dictionary:
 	var scene_path: String = _ensure_res_path(str(args.get("scenePath", "")))
 	var parent_path: String = str(args.get("parentPath", "."))

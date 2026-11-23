@@ -1,6 +1,4 @@
 extends SceneTree
-## Desk: the lamp switches off/on (dark room, Alexei comments, a dim document with a "dark" remark first);
-## the computer search shows name hints and finds the new people.  godot --path . -s res://tests/test_desk_extras.gd [-- --shots]
 
 const SAFETY_TIMEOUT: float = 60.0
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
@@ -51,7 +49,6 @@ func _run() -> void:
 	await _wait(0.5)
 	if not bool(d.get("_lamp_on")):
 		push_error("FAIL lamp did not switch on"); ok = false
-	# the computer: search hints and a new person
 	var term: Terminal = d.get_node("Terminal")
 	term.call("_show_search")
 	await _wait(0.3)
@@ -64,7 +61,9 @@ func _run() -> void:
 		push_error("FAIL search shows %d hints" % hints); ok = false
 	if term.call("_lookup", "Тони Руссо") != "RUSSO" and term.call("_lookup", "Руссо") != "RUSSO":
 		push_error("FAIL new record not found"); ok = false
-	if term.call("_lookup", "Мэри Грейди") != "MARY_GRADY":
-		push_error("FAIL 'Мэри Грейди' -> %s" % term.call("_lookup", "Мэри Грейди")); ok = false
+	if term.call("_lookup", "Мария Глебова") != "MARIA_GLEBOVA":
+		push_error("FAIL 'Мария Глебова' -> %s" % term.call("_lookup", "Мария Глебова")); ok = false
+	if term.call("_lookup", "Глебов") != "GLEBOV" or term.call("_lookup", "Корнева") != "KORNEVA":
+		push_error("FAIL Глебов / Корнева not found"); ok = false
 	print("DESK EXTRAS: ", "OK" if ok else "FAILED")
 	quit(0 if ok else 1)

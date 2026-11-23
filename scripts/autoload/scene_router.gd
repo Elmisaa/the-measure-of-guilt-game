@@ -1,5 +1,4 @@
 extends CanvasLayer
-## Scene transitions with a fade to black. Autoload: SceneRouter.
 
 const FADE_TIME: float = 0.35
 
@@ -17,7 +16,6 @@ func _ready() -> void:
 	add_child(_rect)
 
 
-## hold: seconds to stay on black between scenes (e.g. "picking up the phone").
 func go_to(path: String, hold: float = 0.0) -> void:
 	if _busy:
 		return
@@ -35,7 +33,7 @@ func go_to(path: String, hold: float = 0.0) -> void:
 	await get_tree().process_frame
 	var sg: Node = get_node_or_null("/root/SaveGame")
 	if sg:
-		sg.autosave()  # every game scene start is an autosave point
+		sg.autosave()
 	t = create_tween()
 	t.tween_property(_rect, "modulate:a", 0.0, FADE_TIME)
 	await t.finished

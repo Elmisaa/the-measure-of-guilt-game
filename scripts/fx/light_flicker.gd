@@ -1,20 +1,15 @@
 class_name LightFlicker
 extends PointLight2D
-## Living light: slow "breathing" + optional rare stutter (fluorescent tube).
 
 @export var base_energy: float = 0.3
 @export var breath_amount: float = 0.05
 @export var breath_speed: float = 0.5
-## Average stutters per minute (0 = never).
 @export var stutters_per_minute: float = 0.0
 @export var stutter_energy: float = 0.0
-## Periodic flicker: a burst every N seconds (0 = off). Works together with stutters_per_minute.
 @export var flicker_every_min: float = 0.0
 @export var flicker_every_max: float = 0.0
 @export var flicker_length_min: float = 0.4
 @export var flicker_length_max: float = 1.2
-## Optional darkening overlay (e.g. a multiply sprite) shown while the lamp is "off",
-## so the glow painted into the background dims too. Hue is kept.
 @export var dim_node: CanvasItem
 
 var _noise: FastNoiseLite = FastNoiseLite.new()

@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Turn an AI-generated "pixel-art-looking" image into a real grid-aligned sprite.
-
-Steps: remove #FF00FF background -> split into frames -> crop each frame to its
-content -> downscale (nearest) to fit --size -> place into a cell (bottom-center)
--> snap colors to art/palette.png -> assemble a one-row sprite sheet.
-
-Examples:
-  python3 tools/pixelize.py art/drafts/hero_idle/v1_b.png --size 32x32 --frames 4 \
-      --out assets/characters/hero/hero_idle.png
-  python3 tools/pixelize.py art/drafts/bg_forest/v1_a.png --size 320x180 --fit stretch \
-      --keep-bg --out assets/backgrounds/forest.png
-"""
 from __future__ import annotations
 
 import argparse
@@ -20,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import is_background, load_palette, nearest_color  # noqa: E402
+from _common import is_background, load_palette, nearest_color
 
 
 def remove_background(img: Image.Image, tolerance: int) -> Image.Image:
@@ -36,7 +24,6 @@ def remove_background(img: Image.Image, tolerance: int) -> Image.Image:
 
 
 def harden_alpha(img: Image.Image, threshold: int = 128) -> Image.Image:
-    """Pixel art has no semi-transparency: alpha becomes 0 or 255."""
     r, g, b, a = img.split()
     a = a.point(lambda v: 255 if v >= threshold else 0)
     return Image.merge("RGBA", (r, g, b, a))
@@ -53,7 +40,7 @@ def fit_into_cell(frame: Image.Image, cw: int, ch: int, fit: str, resample: str 
     nw, nh = max(1, round(content.width * scale)), max(1, round(content.height * scale))
     content = content.resize((nw, nh), Image.BOX if resample == "box" else Image.NEAREST)
     cell = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-    cell.paste(content, ((cw - nw) // 2, ch - nh), content)  # bottom-center: feet on the ground
+    cell.paste(content, ((cw - nw) // 2, ch - nh), content)
     return cell
 
 
@@ -79,10 +66,6 @@ BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
 
 def grade(img: Image.Image, saturation: float, colors: int, dither: float) -> Image.Image:
-    """Desaturate, then reduce to N adaptive colors, optionally with ordered (Bayer) dithering.
-
-    dither is the strength in RGB units (0 = off, ~16-32 = subtle retro texture).
-    """
     from PIL import ImageEnhance
 
     alpha = img.getchannel("A")
@@ -128,7 +111,6 @@ def main() -> int:
     cw, ch = (int(v) for v in args.size.lower().split("x"))
     src = Image.open(args.input).convert("RGBA")
     if args.fit == "stretch" and args.frames == 1:
-        # Center-crop to the target aspect first, so backgrounds are not distorted.
         target = cw / ch
         if src.width / src.height > target:
             nw = round(src.height * target)

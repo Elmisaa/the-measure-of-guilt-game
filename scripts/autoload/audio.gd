@@ -1,10 +1,6 @@
 extends Node
-## Music and UI sounds. Autoload: Audio.
-## Music starts at game launch and loops across scenes.
 
 const MUSIC: String = "res://assets/audio/music/866779__logicmoon__star-gazers.wav"
-## Start ambience (rain + thunder). Found by its freesound id in assets/audio/ or
-## assets/audio/music/, so the file can be dropped in as is; falls back to MUSIC.
 const START_AMBIENCE_ID: String = "877124"
 const BLIP: String = "res://assets/audio/sfx/voice_blip.wav"
 const MUSIC_DB: float = -10.0
@@ -13,10 +9,9 @@ const BLIP_VOICES: int = 4
 const UI_HOVER: String = "res://assets/audio/sfx/ui_hover.wav"
 const UI_CLICK: String = "res://assets/audio/sfx/ui_click.wav"
 const UI_DB: float = -12.0
-const ICON_DB: float = -26.0  ## HUD icons: barely audible
+const ICON_DB: float = -26.0
 const PHONE_RING: String = "res://assets/audio/sfx/629201__audacitier__phone-ringing-5.mp3"
 
-## Alexei's "хм" (tools/make_hmm.py): only now and then, never the same take twice in a row.
 const HMMS: Array[String] = ["res://assets/audio/sfx/hmm_1.wav", "res://assets/audio/sfx/hmm_2.wav", "res://assets/audio/sfx/hmm_3.wav", "res://assets/audio/sfx/hmm_4.wav", "res://assets/audio/sfx/hmm_5.wav"]
 const HMM_CHANCE: float = 0.35
 const HMM_DB: float = -9.0
@@ -38,7 +33,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_music = AudioStreamPlayer.new()
 	_music.volume_db = -60.0
-	_music.finished.connect(_music.play)  # loop
+	_music.finished.connect(_music.play)
 	add_child(_music)
 	var blip: AudioStream = load(BLIP)
 	for i in BLIP_VOICES:
@@ -58,7 +53,7 @@ func _ready() -> void:
 		var p: AudioStreamPlayer = AudioStreamPlayer.new()
 		add_child(p)
 		_sfx.append(p)
-	for c: Node in get_children():  # volume sliders (Settings): music vs everything else
+	for c: Node in get_children():
 		if c is AudioStreamPlayer:
 			(c as AudioStreamPlayer).bus = "SFX"
 	_music.bus = "Music"
@@ -81,7 +76,6 @@ func ui_click() -> void:
 	_ui_click.play()
 
 
-## HUD icons: no hover sound, a very quiet click.
 func bind_icon(b: BaseButton) -> void:
 	b.pressed.connect(func() -> void:
 		_icon_click.pitch_scale = 1.3
@@ -94,7 +88,6 @@ func stop_music(fade: float = 0.6) -> void:
 	t.tween_callback(_music.stop)
 
 
-## Looping sound effect (phone ring), plays until stop_loop().
 func play_loop(path: String, db: float = -4.0) -> void:
 	var s: AudioStream = load(path)
 	if "loop" in s:
@@ -108,7 +101,6 @@ func stop_loop() -> void:
 	_loop.stop()
 
 
-## Hover + click sounds for any Button / clickable Control.
 func bind_button(c: Control) -> void:
 	c.mouse_entered.connect(ui_hover)
 	if c is BaseButton:
@@ -127,13 +119,11 @@ func _find_start_ambience() -> String:
 	return MUSIC
 
 
-## Start the initial rain/thunder ambience (id 877124) if not already playing.
-## Safe to call multiple times — only starts once.
 func play_start_ambience(fade: float = 2.5) -> void:
 	if _music.playing and _music.stream != null:
 		var current_path: String = _music.stream.get_path()
 		if current_path != "" and START_AMBIENCE_ID in current_path:
-			return  # already playing the start ambience
+			return
 	var start: AudioStream = load(_find_start_ambience())
 	if "loop" in start:
 		start.set("loop", true)
@@ -148,7 +138,6 @@ func play_music(fade: float = 2.5) -> void:
 	create_tween().tween_property(_music, "volume_db", MUSIC_DB, fade)
 
 
-## Voice heard through a phone: buzzy, band-limited blip.
 func blip_phone(pitch: float = 1.0) -> void:
 	var p: AudioStreamPlayer = _phone_blips[_next_blip]
 	_next_blip = (_next_blip + 1) % _phone_blips.size()
@@ -156,8 +145,6 @@ func blip_phone(pitch: float = 1.0) -> void:
 	p.play()
 
 
-## One-shot sound effect.
-## Called when a thought appears: sometimes a "хм" (chance, plus a 12–22 s pause after each one).
 func thought_hum() -> void:
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now < _hmm_ready_at or randf() > HMM_CHANCE:
@@ -179,7 +166,6 @@ func sfx(path: String, db: float = -6.0, pitch: float = 1.0) -> void:
 	p.play()
 
 
-## Switch background music to another looping track.
 func play_track(path: String, fade: float = 1.5, db: float = MUSIC_DB) -> void:
 	_music.stop()
 	var s: AudioStream = load(path)
@@ -191,7 +177,6 @@ func play_track(path: String, fade: float = 1.5, db: float = MUSIC_DB) -> void:
 	create_tween().tween_property(_music, "volume_db", db, fade)
 
 
-## Speech blip; pitch ~1.0 per speaker, randomized a little so it sounds like syllables.
 func blip(pitch: float = 1.0) -> void:
 	var p: AudioStreamPlayer = _blips[_next_blip]
 	_next_blip = (_next_blip + 1) % _blips.size()
@@ -199,7 +184,6 @@ func blip(pitch: float = 1.0) -> void:
 	p.play()
 
 
-## Quieter background music while something else plays in the world (the radio).
 func duck_music(on: bool, fade: float = 0.8) -> void:
 	if not _music.playing:
 		return

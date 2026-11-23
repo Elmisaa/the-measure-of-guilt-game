@@ -1,10 +1,7 @@
 extends Node
-## Player decisions, story flags, inventory and stamina. Autoload: GameState.
 
 signal inventory_changed
-## A new item was picked up (the HUD shows "Взято: ..." top-left).
 signal item_added(item_id: String)
-## An inventory action was done (after its effects): scenes react (e.g. coffee drunk).
 signal item_used(item_id: String, action: String)
 signal stamina_changed(value: float)
 
@@ -12,7 +9,6 @@ const ITEMS_PATH: String = "res://data/items.json"
 
 var flags: Dictionary = {}
 var items: Array[String] = []
-## Thought overrides set by scenes: "item:action" -> text (e.g. what Alexei thinks drinking the 2nd cup).
 var item_thoughts: Dictionary = {}
 var stamina: float = 1.0:
 	set(v):
@@ -22,9 +18,7 @@ var stamina: float = 1.0:
 			stamina_changed.emit(stamina)
 
 var _defs: Dictionary = {}
-## Drawers, lockers, boards: id -> items still inside (filled from items.json "containers").
 var containers: Dictionary = {}
-## cid -> Alexei's thought: the container can be looked through, but nothing taken yet.
 var take_locks: Dictionary = {}
 
 
@@ -35,7 +29,6 @@ func _ready() -> void:
 	reset_inventory()
 
 
-## "Новая игра": forget everything from a previous run.
 func new_game() -> void:
 	flags.clear()
 	item_thoughts.clear()
@@ -51,7 +44,6 @@ func get_flag(key: String, default: Variant = null) -> Variant:
 	return flags.get(key, default)
 
 
-# --- saves -------------------------------------------------------------------
 
 func to_dict() -> Dictionary:
 	return {"flags": flags.duplicate(true), "items": Array(items), "containers": containers.duplicate(true),
@@ -75,7 +67,6 @@ func from_dict(d: Dictionary) -> void:
 	inventory_changed.emit()
 
 
-# --- inventory -----------------------------------------------------------
 
 func reset_inventory() -> void:
 	items.clear()
@@ -91,7 +82,6 @@ func reset_inventory() -> void:
 	inventory_changed.emit()
 
 
-# --- containers (drawers, locker, board) ----------------------------------
 
 func container_items(cid: String) -> Array:
 	return containers.get(cid, [])
@@ -101,7 +91,6 @@ func container_title(cid: String) -> String:
 	return str(_defs.get("containers", {}).get(cid, {}).get("title", cid))
 
 
-## false: things can only be looked at (someone else's drawer).
 func container_can_take(cid: String) -> bool:
 	return not bool(_defs.get("containers", {}).get(cid, {}).get("no_take", false))
 
@@ -145,7 +134,6 @@ func remove_item(id: String) -> void:
 		inventory_changed.emit()
 
 
-## Swap one item for another in the same slot (empty cup <-> full cup).
 func replace_item(old_id: String, new_id: String) -> void:
 	var i: int = items.find(old_id)
 	if i < 0:
@@ -155,7 +143,6 @@ func replace_item(old_id: String, new_id: String) -> void:
 	inventory_changed.emit()
 
 
-## The thought for an action: a scene override first, then items.json.
 func item_thought(id: String, action: String) -> String:
 	var key: String = id + ":" + action
 	if item_thoughts.has(key):
@@ -163,7 +150,6 @@ func item_thought(id: String, action: String) -> String:
 	return str(item_def(id).get("actions", {}).get(action, ""))
 
 
-## Apply an action's effects (item change, stamina, sound) and tell the scenes.
 func use_item(id: String, action: String) -> void:
 	var d: Dictionary = item_def(id)
 	var fx: Dictionary = d.get("effects", {}).get(action, {})
@@ -176,7 +162,7 @@ func use_item(id: String, action: String) -> void:
 	var becomes: Dictionary = d.get("becomes", {})
 	if becomes.has(action):
 		if str(becomes[action]).is_empty():
-			remove_item(id)  # used up / put on (the coat)
+			remove_item(id)
 		else:
 			replace_item(id, str(becomes[action]))
 	item_used.emit(id, action)

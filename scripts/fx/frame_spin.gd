@@ -1,6 +1,5 @@
 class_name FrameSpin
 extends Sprite2D
-## Loops through hframes at a fixed speed (ceiling fans).
 
 @export var fps: float = 12.0
 

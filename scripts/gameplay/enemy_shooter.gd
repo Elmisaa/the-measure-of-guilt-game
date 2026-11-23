@@ -1,11 +1,5 @@
 class_name EnemyShooter
 extends CharacterBody3D
-## Враг-стрелок в 2.5D: стоит в коридоре (lane_z), видит игрока и бьёт очередями.
-## Цикл: IDLE → TELEGRAPH (вспышка на стволе) → SHOOTING (burst_count пуль) →
-## COOLDOWN (окно для ответного огня) → снова TELEGRAPH. Все задержки — float-таймеры
-## в _physics_process, без await: состояние можно прервать оглушением или смертью в любой кадр.
-## Слои: 3 = Enemy (4), маска 1 | 5 (World + PlayerBullet).
-## Если игрок в укрытии — враг целится в укрытие (ломает ящики), пока то цело.
 
 enum State { IDLE, TELEGRAPH, SHOOTING, COOLDOWN, STUNNED, DEAD }
 
@@ -19,13 +13,10 @@ const BulletScene: PackedScene = preload("res://scenes/gameplay/bullet.tscn")
 const STATE_NAMES: Array[String] = ["IDLE", "TELEGRAPH", "SHOOTING", "COOLDOWN", "STUNNED", "DEAD"]
 const LAYER_ENEMY: int = 4
 const MASK_ENEMY: int = 1 | 16
-## Высота груди (точка вылета пуль) и вынос ствола вперёд, м.
 const CHEST_HEIGHT: float = 1.25
 const MUZZLE_OFFSET: float = 0.55
 const GRAVITY: float = 18.0
-## Трение горизонтальной скорости в STUNNED (отбрасывание дубинкой).
 const KNOCKBACK_FRICTION: float = 20.0
-## Длительность белой вспышки от попадания, сек.
 const FLASH_TIME: float = 0.08
 const WHITE: Color = Color(1, 1, 1, 1)
 
@@ -38,14 +29,11 @@ const WHITE: Color = Color(1, 1, 1, 1)
 @export var cooldown_time: float = 2.0
 @export var bullet_damage: int = 15
 @export var bullet_speed: float = 16.0
-## Дополнительная пауза перед первым циклом (чтобы враги не стреляли синхронно).
 @export var start_cooldown: float = 0.0
-## Пауза перед первой атакой после обнаружения игрока.
 @export var initial_hesitation: float = 0.0
 
 var state: State = State.IDLE
 var health: int = 0
-## Враг успел перейти к атаке (TELEGRAPH/SHOOTING).
 var has_attacked: bool = false
 
 var _state_time: float = 0.0
@@ -98,7 +86,6 @@ func _physics_process(delta: float) -> void:
 	_refresh_player()
 	_face_player()
 
-	# Игрок умер/исчез — прерываем телеграф и очередь, возвращаемся в IDLE.
 	if state != State.IDLE and not _is_player_alive():
 		_reset_to_idle()
 		return
@@ -129,7 +116,6 @@ func _physics_process(delta: float) -> void:
 					_set_state(State.IDLE)
 
 
-# --- цикл стрельбы --------------------------------------------------------
 
 func _begin_telegraph() -> void:
 	_set_state(State.TELEGRAPH)
@@ -172,7 +158,6 @@ func _reset_to_idle() -> void:
 	_set_state(State.IDLE)
 
 
-## Точка прицела: активное укрытие игрока (бьём по нему, пока цело), иначе грудь игрока.
 func _aim_point() -> Vector3:
 	if _player != null and is_instance_valid(_player) and _player.is_in_cover():
 		var cover: Cover = _player.get_active_cover()
@@ -212,7 +197,6 @@ func _spawn_bullet(at: Vector3, direction: Vector3) -> void:
 		bullet.global_position = at
 
 
-# --- восприятие и поворот -------------------------------------------------
 
 func _refresh_player() -> void:
 	if _player != null and is_instance_valid(_player):
@@ -230,7 +214,6 @@ func _can_see_player() -> bool:
 	return absf(_player.global_position.x - global_position.x) <= detection_range
 
 
-## Разворот плоского визуала по X в сторону игрока (как у Player).
 func _face_player() -> void:
 	if _visual == null or _player == null or not is_instance_valid(_player):
 		return
@@ -252,7 +235,6 @@ func _tick_gravity(delta: float) -> void:
 	global_position.z = lane_z
 
 
-## STUNNED после удара/тазера: горизонтальная скорость гаснет трением, враг отлетает.
 func _tick_stunned(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0.0, KNOCKBACK_FRICTION * delta)
 	velocity.z = 0.0
@@ -264,7 +246,6 @@ func _tick_stunned(delta: float) -> void:
 	global_position.z = lane_z
 
 
-# --- урон, оглушение, смерть ---------------------------------------------
 
 func take_damage(amount: int) -> void:
 	if state == State.DEAD or amount <= 0:
@@ -277,7 +258,6 @@ func take_damage(amount: int) -> void:
 		_die()
 
 
-## Тазер/дубинка: прерывает телеграф/очередь и держит врага в STUNNED duration сек.
 func apply_stun(duration: float) -> void:
 	if state == State.DEAD or duration <= 0.0:
 		return
@@ -294,7 +274,6 @@ func _paint(color: Color) -> void:
 	_base_color = color
 
 
-## Отбрасывание дубинкой/пинком: прерывает атаку, станит и толкает по X с трением.
 func apply_knockback(dir_x: float, force: float, stun_duration: float = 0.6) -> void:
 	if state == State.DEAD or force <= 0.0:
 		return
@@ -344,7 +323,6 @@ func _tick_flash(delta: float) -> void:
 		_material.albedo_color = _base_color
 
 
-# --- состояние и дебаг-метка ---------------------------------------------
 
 func _set_state(next: State) -> void:
 	if state == next:

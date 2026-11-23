@@ -1,16 +1,12 @@
 extends Node
-## Player settings (autoload Settings): volumes per bus, fullscreen and pixel-perfect zoom, kept in user://settings.cfg.
-## Buses are made here: Music (background music, radio) and SFX (sounds, voices); Master = everything.
 
 const PATH: String = "user://settings.cfg"
 const BUSES: Array[String] = ["Music", "SFX"]
 
-## 0..1 linear volumes
 var master: float = 1.0
 var music: float = 0.8
 var sfx: float = 1.0
 var fullscreen: bool = false
-## true: only whole-number zoom (perfectly even pixels, black borders); false: the picture fills the window.
 var pixel_perfect: bool = false
 
 

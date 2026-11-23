@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""Synthesize soft UI sounds: hover (light tick) and click (muted typewriter-like tap).
-
-  python3 tools/make_ui_sounds.py --out-dir assets/audio/sfx
-"""
 from __future__ import annotations
 
 import argparse
@@ -39,7 +35,7 @@ def noise(ms: float, decay: float, vol: float, seed: int) -> list[float]:
     n = int(RATE * ms / 1000)
     out, prev = [], 0.0
     for i in range(n):
-        prev = prev * 0.6 + rnd.uniform(-1, 1) * 0.4  # soft low-pass
+        prev = prev * 0.6 + rnd.uniform(-1, 1) * 0.4
         out.append(prev * math.exp(-decay * i / n) * vol)
     return out
 

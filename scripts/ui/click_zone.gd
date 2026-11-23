@@ -1,7 +1,5 @@
 class_name ClickZone
 extends Control
-## Invisible clickable area over something painted into the background (e.g. the CRT
-## monitor). On hover — thin corner brackets (same as interactive items); click -> activated.
 
 signal activated
 

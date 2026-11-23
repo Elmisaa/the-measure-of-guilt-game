@@ -1,8 +1,4 @@
 extends SceneTree
-## Saves and the pause menu: in the hall Esc -> pause has Задания / История диалогов / Управление;
-## no task/history/bag icons; the controls hint shows on entering the hall; save to slot 1, change things,
-## load slot 1 -> the hall again with Alexei where he stood, the same things and task; autosave exists;
-## the title offers "Продолжить".  godot --path . -s res://tests/test_saves.gd [-- --shots]
 
 const SAFETY_TIMEOUT: float = 90.0
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
@@ -90,7 +86,6 @@ func _run() -> void:
 	hud._saves.close()
 	hud.close_pause()
 	var objective: String = hud.get_objective()
-	# change things, then load
 	gs.remove_item("keys")
 	(w.get_node("World/Player") as Node2D).position.x = 300.0
 	sg.load_slot("1")

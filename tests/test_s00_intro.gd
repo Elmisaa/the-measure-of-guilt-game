@@ -1,11 +1,9 @@
 extends SceneTree
-## Intro cutscene: plays to the end and lands in s01 with bars retracted; skip works.
-## godot --headless --path . -s res://tests/test_s00_intro.gd   (add "-- --shots" without --headless for screenshots)
 
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
 
 
-const SAFETY_TIMEOUT: float = 90.0  ## never leave a window hanging
+const SAFETY_TIMEOUT: float = 90.0
 
 
 func _init() -> void:
@@ -60,7 +58,7 @@ func _run() -> void:
 	if not letterbox.is_shown():
 		push_error("FAIL bars not shown"); ok = false
 	await _wait(1.5)
-	await _shot("1_window")  # with the place/date caption typed in
+	await _shot("1_window")
 	await _wait(6.5)
 	await _shot("2_coffee")
 	await _wait(1.6)
@@ -73,7 +71,6 @@ func _run() -> void:
 	if letterbox.is_shown():
 		push_error("FAIL bars still shown"); ok = false
 	await _shot("4_exposition")
-	# no skip: a press during the cutscene changes nothing
 	change_scene_to_file("res://scenes/s00/intro.tscn")
 	await _wait(1.0)
 	while current_scene.get("_in_quote"):

@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""Build an alpha mask of a warm-coloured object (hand + pencil) inside a box of a frame.
-
-Pixels whose red clearly exceeds blue and that are not too dark count as the object;
-an optional exclude box (e.g. the mug) is left out. The mask follows the frame's pixel grid.
-
-  python3 tools/hand_mask.py assets/backgrounds/s00/cut_coffee.png --box 280,140,346,206 \
-      --exclude 320,200,400,290 --out assets/fx/s00/hand_mask.png
-"""
 from __future__ import annotations
 
 import argparse

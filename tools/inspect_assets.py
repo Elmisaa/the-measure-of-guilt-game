@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Text report about PNG assets, so Claude never has to open images.
-
-  python3 tools/inspect_assets.py [path ...] [--cell 32x32]
-
-Per file: size, mode, transparency, color count, leftover magenta pixels,
-colors outside art/palette.png, and frame count if --cell is given.
-"""
 from __future__ import annotations
 
 import argparse
@@ -15,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import ROOT, is_background, load_palette  # noqa: E402
+from _common import ROOT, is_background, load_palette
 
 
 def inspect(path: Path, palette: set[tuple[int, int, int]], cell: tuple[int, int] | None) -> str:
@@ -67,7 +60,7 @@ def main() -> int:
     for f in files:
         try:
             print(inspect(f, palette, cell))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"{f}: ERROR {e}")
     return 0
 

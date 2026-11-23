@@ -1,11 +1,9 @@
 extends SceneTree
-## Phone call: all lines -> knock -> hang-up (dial tone) -> thoughts -> leave button -> fade.
-## godot --headless --path . -s res://tests/test_s01_call.gd  (add "-- --shots" without --headless)
 
 var _shots: bool = "--shots" in OS.get_cmdline_user_args()
 
 
-const SAFETY_TIMEOUT: float = 90.0  ## never leave a window hanging
+const SAFETY_TIMEOUT: float = 90.0
 
 
 func _init() -> void:
@@ -30,7 +28,6 @@ func _wait(sec: float) -> void:
 	await create_timer(sec).timeout
 
 
-## One player press: finish typing, or next page, or next line.
 func _click() -> void:
 	var c: Node = current_scene
 	while c._busy and not c._after_lines:
@@ -58,7 +55,7 @@ func _run() -> void:
 		if str(call._lines[i].get("event", "")) == "knock":
 			knock_i = i
 	var guard: int = 0
-	while call._index < knock_i and guard < 40:  # up to the knock event
+	while call._index < knock_i and guard < 40:
 		await _click()
 		guard += 1
 		await _wait(0.35)
@@ -71,7 +68,7 @@ func _run() -> void:
 	if call._index != knock_i + 1:
 		push_error("FAIL after knock index=%d" % call._index); ok = false
 	await _shot("4_scream")
-	await _click()  # -> hangup event
+	await _click()
 	await _wait(3.6)
 	if not audio._loop.playing:
 		push_error("FAIL no dial tone"); ok = false
@@ -96,7 +93,6 @@ func _run() -> void:
 	btn.pressed.emit()
 	await _wait(2.0)
 	await _wait(2.5)
-	# "Подняться" -> back to the hall to put the coat on (state "leave")
 	if current_scene == null or current_scene.name != "Walk" or str(current_scene.get("_state")) != "leave":
 		push_error("FAIL leave did not return to the hall in state 'leave': %s" % [current_scene]); ok = false
 	if audio._loop.playing:

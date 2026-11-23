@@ -1,13 +1,5 @@
 class_name Player
 extends CharacterBody3D
-## Боевой игрок в 3D (2.5D-вид сбоку): X — влево/вправо, Y — вертикаль, Z — глубина.
-## Ходьба A/D, стрельба по ЛКМ, перезарядка R, укрытие S/Space (зажимать), тазер Q, фонарь F.
-## Прицела-режима нет: Visual всегда смотрит на точку прицела, ствол и AimMarker видны всегда.
-## ПКМ (combat_melee) — пинок/дубинка: бьёт врагов рядом, отбрасывает их и станит.
-## Выбор цели: ближайший живой враг у точки прицела подсвечивается TargetMarker, а выстрел
-## корректируется ему в грудь (пуля пролетает мимо остальных врагов).
-## Экшены регистрируются в рантайме (_ensure_combat_input), project.godot не трогаем.
-## Движение по X: global_position.z удерживается на lane_z, в укрытии — на lane_z + offset укрытия.
 
 enum State { IDLE, RUN, COVER, DEAD }
 
@@ -17,41 +9,27 @@ signal health_changed(health: int, max_health: int)
 signal ammo_changed(current: int, max: int)
 signal reload_started
 signal reload_finished
-## Перезарядка прервана (смерть, оглушение).
 signal reload_cancelled
-## Ближний бой и тазер.
 signal melee_swung(direction: Vector3)
-## Тазер попал в цель.
 signal taser_fired(target: Node3D)
 signal cover_changed(in_cover: bool)
 signal flashlight_toggled(on: bool)
 signal shoot_fired(direction: Vector3)
-## Выбранная цель ближнего прицела сменилась (null — цели нет).
 signal target_changed(target: Node3D)
 
 const BulletScene: PackedScene = preload("res://scenes/gameplay/bullet.tscn")
 
-## Слои коллизий (общие на проект): 1 = World, 2 = Player, 3 = Enemy, 4 = Cover,
-## 5 = PlayerBullet, 6 = EnemyBullet, 7 = CoverZone. Игрок: слой 2, маска World + EnemyBullet.
 const STICK_TO_FLOOR: float = -0.1
-## Высота груди: точка прицела и вылета пули (м).
 const CHEST_HEIGHT: float = 1.25
-## Горизонтальный вылет пули от центра тела (м).
 const MUZZLE_OFFSET: float = 0.45
-## Фоллбэк прицела без камеры (headless-тесты): половина экрана = этот радиус в метрах.
 const FALLBACK_AIM_RANGE: float = 5.0
-## Шаг вглубь/обратно и присед в укрытии.
 const COVER_Z_SPEED: float = 3.0
 const COVER_CROUCH: float = 0.65
 const COVER_CROUCH_SPEED: float = 4.0
-## Центр врага для выбора цели (ноги стоят на Y = 0) и высота груди для выстрела в цель.
 const TARGET_CENTER_HEIGHT: float = 0.9
 const TARGET_CHEST_HEIGHT: float = 1.15
-## Враг ближе этого расстояния считается «вплотную» и попадает под удар с любой стороны.
 const CLOSE_MELEE_RANGE: float = 0.9
-## Сколько секунд видна вспышка взмаха.
 const MELEE_VISUAL_TIME: float = 0.14
-## Сколько секунд виден разряд тазера.
 const TASER_BEAM_TIME: float = 0.18
 
 @export var speed: float = 3.5
@@ -60,14 +38,12 @@ const TASER_BEAM_TIME: float = 0.18
 @export var ammo_max: int = 17
 @export var gravity: float = 18.0
 @export var reload_time: float = 1.5
-## Радиус выбора цели вокруг точки прицела (м).
 @export var target_select_radius: float = 1.4
 @export var melee_range: float = 1.9
 @export var melee_damage: int = 15
 @export var melee_knockback: float = 9.5
 @export var melee_stun: float = 0.65
 @export var melee_cooldown: float = 0.55
-## Тазер: число зарядов, радиус, длительность стана и кулдаун.
 @export var taser_charges_max: int = 3
 @export var taser_range: float = 4.2
 @export var taser_stun_duration: float = 3.0
@@ -80,16 +56,11 @@ var state: State = State.IDLE
 var health: int = 0
 var ammo_current: int = 0
 var is_reloading: bool = false
-## Оглушение: внешняя система ставит true — ввод и перезарядка прерываются.
 var stunned: bool = false
-## Прячется за укрытием (State.COVER).
 var in_cover: bool = false
 var flashlight_on: bool = false
-## Точка прицела извне (скриптовые сцены, тесты). null — по курсору мыши.
 var aim_override: Variant = null
-## Живой враг у точки прицела (пуля летит мимо остальных врагов именно в него).
 var selected_target: Node3D = null
-## Оставшиеся заряды тазера (пополняются только при рестарте сцены).
 var taser_charges: int = 0
 
 var _visual: Node3D
@@ -103,11 +74,9 @@ var _melee_timer: Timer
 var _taser_timer: Timer
 var _hud: Node
 var _facing: float = 1.0
-## Кулдаун ближнего боя: пока false, ПКМ игнорируется.
 var _melee_ready: bool = true
 var _melee_visual_left: float = 0.0
 var _taser_beam_left: float = 0.0
-## Укрытия, чьи CoverZone сейчас накрывают игрока.
 var _covers: Array[Cover] = []
 var _active_cover: Cover = null
 
@@ -116,7 +85,7 @@ func _ready() -> void:
 	add_to_group("player")
 	_ensure_combat_input()
 	_ensure_reload_timer()
-	_hud = get_node_or_null("/root/Hud")  # не глобальное имя: class_name компилируется раньше
+	_hud = get_node_or_null("/root/Hud")
 	_visual = get_node_or_null("Visual") as Node3D
 	_aim_marker = get_node_or_null("AimMarker") as Node3D
 	if _aim_marker != null:
@@ -142,8 +111,6 @@ func _ready() -> void:
 		flashlight_toggled.emit(true)
 
 
-## Экшены боя по образцу walk_player.gd: недостающие добавляем в InputMap в рантайме.
-## move_left / move_right переиспользуем (их создаёт и ходьба по участку).
 func _ensure_combat_input() -> void:
 	for pair: Array in [
 		["move_left", [KEY_A, KEY_LEFT]],
@@ -171,7 +138,6 @@ func _ensure_combat_input() -> void:
 		InputMap.action_add_event(action, ev)
 
 
-## Перезарядка на узле Timer: её можно безопасно прервать в любой момент.
 func _ensure_reload_timer() -> void:
 	_reload_timer = get_node_or_null("ReloadTimer") as Timer
 	if _reload_timer == null:
@@ -184,7 +150,6 @@ func _ensure_reload_timer() -> void:
 		_reload_timer.timeout.connect(_on_reload_timeout)
 
 
-## Кулдаун ПКМ и вспышка взмаха: узлы берём из сцены, при их отсутствии создаём сами.
 func _ensure_melee_nodes() -> void:
 	_melee_timer = get_node_or_null("MeleeCooldownTimer") as Timer
 	if _melee_timer == null:
@@ -208,7 +173,6 @@ func _ensure_melee_nodes() -> void:
 	_ensure_target_marker()
 
 
-## Яркое кольцо на выбранном враге (top_level — живёт в мировых координатах).
 func _ensure_target_marker() -> void:
 	_target_marker = get_node_or_null("TargetMarker") as Node3D
 	if _target_marker == null:
@@ -248,7 +212,6 @@ func _on_melee_timeout() -> void:
 	_melee_ready = true
 
 
-## Тазер: узел-таймер кулдауна и тонкий светящийся луч в мировых координатах.
 func _ensure_taser_nodes() -> void:
 	_taser_timer = get_node_or_null("TaserCooldownTimer") as Timer
 	if _taser_timer == null:
@@ -295,7 +258,7 @@ func _physics_process(delta: float) -> void:
 	var dead: bool = state == State.DEAD
 	var move_axis: float = 0.0
 	if not dead and not blocked:
-		_update_aim()  # прицела-режима нет: разворот и маркер всегда за точкой прицела
+		_update_aim()
 		_update_cover_input()
 	if not dead and not blocked and not in_cover:
 		move_axis = Input.get_axis("move_left", "move_right")
@@ -306,7 +269,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y -= gravity * delta
 	move_and_slide()
-	_update_depth(delta)  # 2.5D: ходим по X, Z держим на lane_z или глубине укрытия
+	_update_depth(delta)
 
 	if dead:
 		return
@@ -316,16 +279,13 @@ func _physics_process(delta: float) -> void:
 		_set_state(State.RUN if not is_zero_approx(move_axis) else State.IDLE)
 
 
-## UI (пауза, история, инвентарь, крупный план) забирает ввод у игры.
 func _ui_blocked() -> bool:
 	if _hud == null:
 		_hud = get_node_or_null("/root/Hud")
 	return _hud != null and _hud.is_blocking()
 
 
-# --- 2.5D-глубина и присед ------------------------------------------------
 
-## Z: за укрытием уходим на его глубину, иначе плавно возвращаемся на lane_z.
 func _update_depth(delta: float) -> void:
 	var target_z: float = lane_z
 	if in_cover and is_instance_valid(_active_cover):
@@ -336,9 +296,7 @@ func _update_depth(delta: float) -> void:
 		_visual.scale.y = move_toward(_visual.scale.y, target_scale, COVER_CROUCH_SPEED * delta)
 
 
-# --- укрытия --------------------------------------------------------------
 
-## CoverZone сообщает, что игрок рядом с укрытием.
 func register_cover(cover: Cover) -> void:
 	if cover == null or not is_instance_valid(cover):
 		return
@@ -358,7 +316,6 @@ func has_cover_nearby() -> bool:
 	return nearby_cover() != null
 
 
-## Ближайшее доступное укрытие (по X), либо null.
 func nearby_cover() -> Cover:
 	var best: Cover = null
 	var best_distance: float = INF
@@ -398,14 +355,12 @@ func is_in_cover() -> bool:
 	return in_cover
 
 
-## Укрытие, за которым игрок прячется сейчас (null, если не в укрытии или оно разрушено).
 func get_active_cover() -> Cover:
 	if in_cover and is_instance_valid(_active_cover):
 		return _active_cover
 	return null
 
 
-## Зажимаем combat_cover рядом с укрытием — прячемся; отпустили — выходим.
 func _update_cover_input() -> void:
 	var held: bool = Input.is_action_pressed("combat_cover")
 	if in_cover:
@@ -423,10 +378,7 @@ func _on_cover_destroyed(cover: Cover) -> void:
 		exit_cover()
 
 
-# --- прицел в 2.5D --------------------------------------------------------
 
-## Точка прицела: луч активной Camera3D до плоскости Z = lane_z.
-## Без камеры (headless) — проекция курсора на ту же плоскость вокруг игрока.
 func aim_point() -> Vector3:
 	if aim_override is Vector3:
 		var fixed_point: Vector3 = aim_override as Vector3
@@ -448,7 +400,7 @@ func aim_point() -> Vector3:
 func _fallback_aim_point() -> Vector3:
 	var aim_y: float = global_position.y + CHEST_HEIGHT
 	var vp: Viewport = get_viewport() if is_inside_tree() else null
-	if vp == null:  # совсем без дерева (юнит-вызовы): смотрим туда, куда развёрнуты
+	if vp == null:
 		return Vector3(global_position.x + _facing * FALLBACK_AIM_RANGE, aim_y, lane_z)
 	var screen: Vector2 = vp.get_visible_rect().size
 	var mouse: Vector2 = vp.get_mouse_position()
@@ -466,8 +418,6 @@ func _update_aim() -> void:
 	_update_target_selection(point)
 
 
-## Ближайший живой враг, чей центр (x, y + 0.9) лежит в target_select_radius от прицела.
-## Работает и в COVER: цель можно выбрать заранее, из-за укрытия.
 func _update_target_selection(point: Vector3) -> void:
 	var best: Node3D = null
 	var best_distance: float = target_select_radius
@@ -491,7 +441,6 @@ func _update_target_selection(point: Vector3) -> void:
 		_update_target_marker()
 
 
-## Жив ли враг: is_dead() у наших врагов, иначе запасной вариант по health.
 func _is_enemy_alive(enemy: Node3D) -> bool:
 	if enemy == null or not is_instance_valid(enemy) or enemy.is_queued_for_deletion():
 		return false
@@ -532,14 +481,13 @@ func _hide_target_marker() -> void:
 		_target_marker.visible = false
 
 
-## Направление от груди к точке прицела (для пули/ближнего боя).
 func aim_direction() -> Vector3:
 	var from: Vector3 = Vector3(global_position.x, global_position.y + CHEST_HEIGHT, lane_z)
 	var to: Vector3 = aim_point()
 	var dir: Vector3 = to - from
 	if dir.length_squared() < 0.0001:
 		return Vector3(_facing, 0.0, 0.0)
-	dir.z = 0.0  # пули летают в плоскости коридора
+	dir.z = 0.0
 	return dir.normalized()
 
 
@@ -563,15 +511,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_flashlight()
 
 
-# --- действия -------------------------------------------------------------
 
 func shoot() -> void:
 	if not is_alive() or is_reloading or stunned:
 		return
-	if in_cover:  # за укрытием можно только целиться, но не стрелять
+	if in_cover:
 		return
 	if ammo_current <= 0:
-		print("Click")  # холостой щелчок: звук появится с ассетами
+		print("Click")
 		return
 	ammo_current -= 1
 	ammo_changed.emit(ammo_current, ammo_max)
@@ -582,7 +529,6 @@ func shoot() -> void:
 	shoot_fired.emit(direction)
 
 
-## Выбранная цель важнее точки прицела: пуля летит ей в грудь (y + 1.15).
 func _shot_direction(target: Node3D) -> Vector3:
 	if target != null:
 		var origin: Vector3 = Vector3(global_position.x, global_position.y + CHEST_HEIGHT, lane_z)
@@ -594,7 +540,6 @@ func _shot_direction(target: Node3D) -> Vector3:
 	return aim_direction()
 
 
-## ПКМ: пинок/дубинка. Работает даже во время перезарядки и из укрытия (встаём и бьём).
 func melee() -> void:
 	if not is_alive() or stunned or not _melee_ready:
 		return
@@ -610,7 +555,6 @@ func melee() -> void:
 	_apply_melee_hits()
 
 
-## Публичный алиас для скриптовых сцен и тестов.
 func perform_melee() -> void:
 	melee()
 
@@ -623,7 +567,6 @@ func _show_melee_visual() -> void:
 	_melee_visual_left = MELEE_VISUAL_TIME
 
 
-## Все живые враги в melee_range со стороны взгляда (вплотную — с любой стороны).
 func _apply_melee_hits() -> void:
 	if not is_inside_tree():
 		return
@@ -647,7 +590,6 @@ func _apply_melee_hits() -> void:
 			enemy.call("apply_knockback", dir_x, melee_knockback, melee_stun)
 
 
-## Тазер (Q): бьёт выбранную цель или ближайшего активного врага со стороны взгляда.
 func taser() -> void:
 	if not is_alive() or stunned or in_cover:
 		return
@@ -660,7 +602,7 @@ func taser() -> void:
 		target = selected_target
 	else:
 		target = _find_taser_target()
-	if target == null:  # нет цели — заряд не тратим
+	if target == null:
 		return
 	taser_charges -= 1
 	_taser_timer.start(maxf(taser_cooldown, 0.01))
@@ -672,7 +614,6 @@ func taser() -> void:
 	taser_charges_changed.emit(taser_charges, taser_charges_max)
 
 
-## Пригоден ли враг как цель тазера.
 func _taser_target_valid(enemy: Node3D, allow_surrendered: bool) -> bool:
 	if not _is_enemy_alive(enemy):
 		return false
@@ -703,7 +644,6 @@ func _find_taser_target() -> Node3D:
 	return best
 
 
-## Тонкий яркий луч от груди игрока до груди цели (виден даже поверх стен).
 func _show_taser_beam(target: Node3D) -> void:
 	if _taser_beam == null:
 		return
@@ -747,7 +687,6 @@ func _on_reload_timeout() -> void:
 	reload_finished.emit()
 
 
-## Прерывание перезарядки (смерть, оглушение): таймер останавливаем, патроны не выдаём.
 func cancel_reload() -> void:
 	if not is_reloading:
 		return
@@ -784,33 +723,24 @@ func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 	world.add_child(bullet)
 
 
-# --- поворот и стейт ------------------------------------------------------
 
-## Разворот спрайта по знаку X (scale.x = -1 влево): ствол смотрит на прицел.
 func _face_direction(direction_x: float) -> void:
 	if is_zero_approx(direction_x):
 		return
 	_facing = -1.0 if direction_x < 0.0 else 1.0
 	if _visual != null:
 		_visual.scale.x = _facing
-	# Flashlight is no longer under Visual, so it doesn't inherit the scale flip.
-	# Its rotation is handled by _aim_flashlight().
 
 
 func _face_point(point: Vector3) -> void:
 	_face_direction(point.x - global_position.x)
 
 
-## Направляет фонарик на точку прицела (aim_point) с лёгким наклоном вниз.
-## SpotLight3D в Godot светит вдоль локальной -Z, поэтому используем look_at().
-## Фонарик позиционируется чуть ВПЕРЕДИ героя (x = facing * 0.45), чтобы луч не утыкался в модель.
 func _aim_flashlight(target_point: Vector3) -> void:
 	if _flashlight == null or not _flashlight.visible:
 		return
-	# Позиционируем фонарик чуть вперёд от центра игрока по направлению взгляда
 	var flashlight_local_x: float = _facing * 0.45
 	_flashlight.position = Vector3(flashlight_local_x, 1.25, 0.05)
-	# Направляем луч на точку минимум в 3.0 м вперёд (с лёгким наклоном вниз -0.25)
 	var from_pos: Vector3 = _flashlight.global_position
 	var to_pos: Vector3 = Vector3(target_point.x, target_point.y - 0.25, target_point.z)
 	var dir: Vector3 = (to_pos - from_pos).normalized()
@@ -829,7 +759,6 @@ func is_alive() -> bool:
 	return health > 0
 
 
-## Возвращает направление взгляда игрока: -1.0 (влево) или 1.0 (вправо).
 func get_facing_direction() -> float:
 	return _facing
 

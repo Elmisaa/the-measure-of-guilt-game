@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Cutscene frame -> game frame: scale to cover WxH (box filter), centre-crop, then chunky pixels (factor N).
-
-  python3 tools/frame_px.py in.png --size 680x290 --factor 4 --out out.png [--sat 0.6] [--cool 0.15]
---sat: saturation multiplier (1 = as generated); --cool: blend toward the game's cold night blue (keeps brightness).
-"""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageEnhance
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from chunky import chunky  # noqa: E402
+from chunky import chunky
 
 
 def cover(img: Image.Image, w: int, h: int) -> Image.Image:

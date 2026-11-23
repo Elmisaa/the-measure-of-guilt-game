@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Encode a WAV to high-quality OGG Vorbis (near-transparent, ~240 kbps).
-
-Needs the `soundfile` package (pip install soundfile) — bundles libsndfile with Vorbis.
-  python3 tools/to_ogg.py art/sources/audio/x.wav assets/audio/music/x.ogg [--quality 0.75]
-quality: 0..1 (1 = best). 0.75 sounds like the original for ambience/music.
-"""
 import argparse
 import os
 

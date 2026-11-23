@@ -1,24 +1,21 @@
 class_name RealRain
 extends Node2D
-## Screen-space rain for cutscenes: two depths of thin streaks (far — short, faint, slower; near — long,
-## brighter, fast), wind gusts that change the slant, and splashes where drops hit the ground band.
-## Not snapped to the pixel grid on purpose: thin fast lines read as real rain over the pixel art.
 
 @export var area: Rect2 = Rect2(0, 44, 640, 272)
-@export var intensity: float = 1.0:  ## 0 = off, 1 = heavy
+@export var intensity: float = 1.0:
 	set(v):
 		intensity = clampf(v, 0.0, 1.5)
-@export var ground: Vector2 = Vector2(250, 316)  ## screen y band where splashes appear (x = top, y = bottom); 0,0 = none
+@export var ground: Vector2 = Vector2(250, 316)
 @export var tint: Color = Color(0.72, 0.8, 0.95)
 
 const FAR: int = 220
 const NEAR: int = 90
 
 var _p: PackedVector2Array = PackedVector2Array()
-var _v: PackedFloat32Array = PackedFloat32Array()  # speed
-var _l: PackedFloat32Array = PackedFloat32Array()  # length
+var _v: PackedFloat32Array = PackedFloat32Array()
+var _l: PackedFloat32Array = PackedFloat32Array()
 var _near: PackedByteArray = PackedByteArray()
-var _splash: Array[Vector3] = []  # x, y, age
+var _splash: Array[Vector3] = []
 var _t: float = 0.0
 var _wind: float = 0.16
 
@@ -42,7 +39,7 @@ func _spawn(i: int, anywhere: bool) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	_wind = 0.14 + 0.08 * sin(_t * 0.7) + 0.05 * sin(_t * 2.3)  # gusts
+	_wind = 0.14 + 0.08 * sin(_t * 0.7) + 0.05 * sin(_t * 2.3)
 	var active_far: int = int(FAR * minf(intensity, 1.0))
 	var active_near: int = int(NEAR * intensity)
 	for i: int in _p.size():
@@ -79,7 +76,7 @@ func _draw() -> void:
 		var dir: Vector2 = Vector2(_wind, 1.0).normalized()
 		var a: float = 0.26 if near else 0.13
 		draw_line(p - dir * _l[i], p, Color(tint, a), 1.0 if not near else 1.5)
-	for s: Vector3 in _splash:  # a little crown that opens and fades
+	for s: Vector3 in _splash:
 		var k: float = s.z / 0.22
 		var r: float = 1.0 + k * 4.0
 		var c: Color = Color(tint, 0.35 * (1.0 - k))

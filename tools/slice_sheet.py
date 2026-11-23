@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""Slice a generated sprite row (on #FF00FF) into frames, pixelize and assemble.
-
-Frames are found by gaps of empty columns, so uneven spacing from the generator
-is fine. All frames get one common scale (so the character keeps its height),
-are bottom-aligned in equal cells and box-downscaled; optional integer upscale.
-
-  python3 tools/slice_sheet.py art/drafts/walk_probe/alexei_v1_a.png --height 40 --scale 2 \
-      --out assets/characters/alexei/walk.png --gif art/previews/alexei_walk.gif --fps 10
-"""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pixelize import harden_alpha, remove_background  # noqa: E402
+from pixelize import harden_alpha, remove_background
 
 
 def find_frames(img: Image.Image, min_gap: int, min_w: int) -> list[tuple[int, int]]:

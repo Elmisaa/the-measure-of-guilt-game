@@ -1,11 +1,5 @@
 class_name Radio
 extends Node2D
-## Desk radio. Each use: off -> station 1 -> station 2 -> strange station -> off, with a knob click
-## and a burst of dial static between. Sound comes from the radio (quieter farther away).
-## A small red lamp blinks while it is off (draws the eye); steady green while playing.
-## Origin = bottom centre of the radio (stands on the desk). Art is 48x48 at 4x pixels.
-## The strange station is only noise; over the radio its caption appears ("Странная станция")
-## and a 4-digit code shows one digit at a time, then repeats (CODE; GameState flag "radio_code").
 
 signal station_changed(index: int, name: String)
 
@@ -23,18 +17,15 @@ const DIGIT_TIME: float = 1.3
 const CODE_HOLD: float = 2.6
 const CODE_GAP: float = 1.2
 const CAPTION_COLOR: Color = Color(0.62, 0.86, 0.72)
-## Top of the caption relative to the radio's base (desk top y=236 -> about y=72 in the hall):
-## above Alexei's head (~134 at the wall) — between the ceiling lamps and the notice board.
 const CAPTION_Y: float = -164.0
 
-## {name, tracks: [res paths], db}: a station plays its tracks in turn, looping.
 var stations: Array[Dictionary] = [
 	{"name": "88.3 — Ночной джаз", "tracks": ["res://assets/audio/music/radio/ruskerdax_moil.mp3"], "db": 0.0},
 	{"name": "101.9 — Саксофон до утра", "tracks": ["res://assets/audio/music/radio/prosensory_jazz_sax.mp3", "res://assets/audio/music/radio/prosensory_public_domain_jazz.mp3"], "db": 0.0},
 	{"name": "Странная станция", "tracks": ["res://assets/audio/music/radio/strange_station.ogg"], "db": -2.0, "code": true},
 ]
 
-var _station: int = -1  # -1 = off
+var _station: int = -1
 var _track: int = 0
 var _sprite: Sprite2D
 var _led: ColorRect
@@ -97,8 +88,6 @@ func _glow_texture() -> Texture2D:
 	return g
 
 
-## Same look as spoken lines (name small and coloured, the line big and white, no plate), hung high
-## over the radio so it never covers Alexei standing in front of it.
 func _build_caption() -> void:
 	_caption = VBoxContainer.new()
 	_caption.add_theme_constant_override("separation", 1)
@@ -120,7 +109,6 @@ func _build_caption() -> void:
 	add_child(_caption)
 
 
-## Digits one by one ("4 _ _ _" -> "4 7 _ _" ...), hold the whole code, short blank, again.
 func _update_code(delta: float) -> void:
 	_code_t += delta
 	var n: int = CODE.length()
@@ -140,13 +128,12 @@ func _process(delta: float) -> void:
 	_t += delta
 	if _caption.visible:
 		_update_code(delta)
-	if _station < 0:  # off: short red blinks to catch the eye
+	if _station < 0:
 		var lit: bool = fmod(_t, BLINK_PERIOD) < BLINK_ON
 		_led.color = Color(0.95, 0.22, 0.18) if lit else Color(0.25, 0.07, 0.06)
 		_glow.energy = 0.7 if lit else 0.0
 
 
-## Next station (or off after the last one). Returns the new index (-1 = off).
 func cycle() -> int:
 	_station += 1
 	if _station >= stations.size():
@@ -155,7 +142,6 @@ func cycle() -> int:
 	return _station
 
 
-## Jump straight to a station (restoring after another room); -1 = off.
 func set_station(i: int) -> void:
 	if i == _station or i >= stations.size():
 		return

@@ -1,17 +1,13 @@
 extends Node2D
-## s00: epigraph quote on black -> intro cutscene (window in the rain -> coffee on
-## Alexei's desk) -> s01. Letterbox bars stay until s01, which retracts them.
-## Neither the quote nor the cutscene can be skipped.
 
 const NEXT_SCENE: String = "res://scenes/s01/exposition.tscn"
 const FADE_IN: float = 1.0
 const SHOT_TIME: float = 4.0
 const CROSS_TIME: float = 0.5
-const PAN_PX: float = 40.0  ## frames are 680 wide, view 640
+const PAN_PX: float = 40.0
 const QUOTE_FADE: float = 1.6
 const QUOTE_HOLD: float = 6.0
 const QUOTE_GAP: float = 0.8
-## Where and when: typed line by line at the lower left of the first shot (above the letterbox bar).
 const PLACE_SHOT_TIME: float = 7.0
 const PLACE_CHAR: float = 0.055
 const PLACE_POS: Vector2 = Vector2(28, 250)
@@ -26,6 +22,7 @@ var _leaving: bool = false
 var _in_quote: bool = false
 var _quote_skip: bool = false
 var _place: VBoxContainer
+var _chapter: Label
 
 
 func _ready() -> void:
@@ -62,10 +59,13 @@ func _show_quote() -> void:
 func _play() -> void:
 	_pan(_window, 0.0, -PAN_PX, FADE_IN + PLACE_SHOT_TIME)
 	await _fade_to(0.0, FADE_IN)
+	var ch: Tween = create_tween()
+	ch.tween_property(_chapter, "modulate:a", 1.0, 1.2)
 	_type_place()
 	await _wait(PLACE_SHOT_TIME - CROSS_TIME)
 	var out: Tween = create_tween()
 	out.tween_property(_place, "modulate:a", 0.0, CROSS_TIME)
+	out.parallel().tween_property(_chapter, "modulate:a", 0.0, CROSS_TIME)
 	await _fade_to(1.0, CROSS_TIME)
 	if _leaving:
 		return
@@ -81,12 +81,24 @@ func _play() -> void:
 
 func _build_place() -> void:
 	var layer: CanvasLayer = CanvasLayer.new()
-	layer.layer = 81  # over the fade; it fades itself
+	layer.layer = 81
 	add_child(layer)
 	_place = VBoxContainer.new()
 	_place.position = PLACE_POS
 	_place.add_theme_constant_override("separation", 2)
 	layer.add_child(_place)
+	_chapter = Label.new()
+	_chapter.text = str(DialogueData.load_file("s00_intro").get("chapter", "Глава 1"))
+	_chapter.position = Vector2(0, 40)
+	_chapter.size = Vector2(640, 40)
+	_chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_chapter.add_theme_font_size_override("font_size", 32)
+	_chapter.add_theme_color_override("font_color", Color(0.93, 0.9, 0.82))
+	_chapter.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	_chapter.add_theme_constant_override("shadow_offset_x", 2)
+	_chapter.add_theme_constant_override("shadow_offset_y", 2)
+	_chapter.modulate.a = 0.0
+	layer.add_child(_chapter)
 	var lines: Array = DialogueData.load_file("s00_intro").get("place", [])
 	for i: int in lines.size():
 		var l: Label = Label.new()
@@ -101,7 +113,6 @@ func _build_place() -> void:
 		_place.add_child(l)
 
 
-## Typewriter, line by line, with a soft key tick.
 func _type_place() -> void:
 	for l: Node in _place.get_children():
 		var lab: Label = l as Label
@@ -122,7 +133,6 @@ func _leave() -> void:
 	SceneRouter.go_to(NEXT_SCENE)
 
 
-## Pans a shot horizontally on the 2px grid (no sub-pixel shimmer).
 func _pan(shot: Node2D, from_x: float, to_x: float, time: float) -> void:
 	var t: Tween = create_tween()
 	t.tween_method(func(x: float) -> void: shot.position.x = roundf(x / 2.0) * 2.0, from_x, to_x, time)

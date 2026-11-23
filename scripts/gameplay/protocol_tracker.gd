@@ -1,15 +1,11 @@
 class_name ProtocolTracker
 extends Node
-## Лёгкий счётчик полицейского протокола. Висит отдельным узлом (обычно под CombatHud),
-## сам находит игрока и всех врагов группы "enemies" — в том числе появившихся позже.
-## Очки: тазер +50, сдача +50, арест +150; штрафы приходят от врагов сигналом protocol_violation.
 
 signal score_changed(new_score: int, delta: int, reason: String)
 
 const TASER_POINTS: int = 50
 const SURRENDER_POINTS: int = 50
 const ARREST_POINTS: int = 150
-## Коды нарушений от врагов → читаемые подписи для HUD/тестов.
 const VIOLATION_LABELS: Dictionary = {
 	"NO_WARNING": "NO WARNING",
 	"SHOT_SURRENDERED": "SHOT SURRENDERED",
@@ -18,7 +14,6 @@ const VIOLATION_LABELS: Dictionary = {
 var score: int = 0
 
 var _player: Player = null
-## Ключ — instance id врага, значение — сам узел (чтобы не терять связи при смене группы).
 var _enemies: Dictionary = {}
 
 
@@ -30,7 +25,6 @@ func _process(_delta: float) -> void:
 	_rebind()
 
 
-## Подписка на игрока и на всех врагов; отписываемся от исчезнувших из группы.
 func _rebind() -> void:
 	if not is_inside_tree():
 		return
@@ -61,7 +55,6 @@ func _bind_player(node: Player) -> void:
 
 
 func _bind_enemy(enemy: Node) -> void:
-	# No more surrender/protocol_violation signals in simplified combat
 	pass
 
 
@@ -74,6 +67,5 @@ func _add_score(delta: int, reason: String) -> void:
 	score_changed.emit(score, delta, reason)
 
 
-## Сброс между сценами/раундами (сигнал не шлём — HUD обновит при следующем начислении).
 func reset() -> void:
 	score = 0

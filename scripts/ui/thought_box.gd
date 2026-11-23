@@ -1,13 +1,12 @@
 class_name ThoughtBox
 extends PanelContainer
-## Hero's thoughts: dark plate at the bottom centre of the screen.
 
 const BOTTOM_MARGIN: float = 8.0
 const FADE_TIME: float = 0.25
 const MAX_LINE_CHARS: int = 95
 
 var _label: Label
-var _more: Label  ## blinking "..." — there is more to read, press Space/click
+var _more: Label
 var _blink_t: float = 0.0
 var _tween: Tween
 var _hide_left: float = -1.0
@@ -54,7 +53,6 @@ func _process(delta: float) -> void:
 			hide_box()
 
 
-## Sometimes Alexei says "хм" when a new thought pops up (Audio.thought_hum); off for hints.
 var hum: bool = true
 var _raw: String = ""
 
@@ -63,18 +61,16 @@ func get_text() -> String:
 	return _raw if visible else ""
 
 
-## Start the countdown for a thought shown "until hidden".
 func hide_in(sec: float) -> void:
 	_hide_left = sec
 
 
-## duration <= 0: stays until hide_box(). more: show a blinking "..." (text continues).
 func show_text(text: String, duration: float = 0.0, more: bool = false) -> void:
 	_more.visible = more
 	_blink_t = 0.0
 	_label.text = _two_lines(text) if text.length() > MAX_LINE_CHARS else text
 	_raw = text
-	var hud: Node = get_node_or_null("/root/Hud")  # not the global name: class_name scripts may compile before autoloads
+	var hud: Node = get_node_or_null("/root/Hud")
 	if hud and not text.is_empty():
 		hud.log_thought(text)
 	var audio: Node = get_node_or_null("/root/Audio")
@@ -91,8 +87,6 @@ func show_text(text: String, duration: float = 0.0, more: bool = false) -> void:
 	_hide_left = duration
 
 
-## Long thoughts: break once at the space nearest the middle (autowrap would
-## size the plate before it knows its width and blow it up to full screen).
 func _two_lines(text: String) -> String:
 	var mid: int = text.length() / 2
 	for d in mid:

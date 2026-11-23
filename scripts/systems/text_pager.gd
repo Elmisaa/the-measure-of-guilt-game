@@ -1,7 +1,5 @@
 class_name TextPager
 extends RefCounted
-## Splits long text into "pages" by sentences, so the player reads one short
-## chunk at a time and presses Space/click for the next one.
 
 
 static func pages(text: String, max_chars: int = 80) -> PackedStringArray:

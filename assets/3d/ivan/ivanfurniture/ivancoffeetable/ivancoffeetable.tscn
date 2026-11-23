@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="./IvanCoffeeTable.glb" id="1_mesh"]
+
+
+[node name="IvanCoffeeTable" type="Node3D"]
+
+[node name="Geometry" parent="." instance=ExtResource("1_mesh")]
+
+[node name="TabletopSurface" type="Marker3D" parent="."]
+position = Vector3(0, 0.451, 0)

@@ -1,10 +1,5 @@
 class_name Bullet
 extends Area3D
-## 3D-пуля: летит по полному 3D-вектору direction, сама удаляется по таймеру.
-## Слои: 16 = PlayerBullet, 32 = EnemyBullet.
-## Пуля игрока: маска 1 | 4 | 128 (World, Cover, BossTarget).
-## Пуля врага: маска 1 | 2 | 8 (World, Player, Cover).
-## Попадание: Body/Area с take_bullet_hit() — вызываем и удаляем пулю.
 
 const LAYER_PLAYER_BULLET: int = 16
 const LAYER_ENEMY_BULLET: int = 32
@@ -40,8 +35,6 @@ func _ready() -> void:
 	_life.timeout.connect(queue_free)
 	_life.start(lifetime)
 
-## Настройка пули: направление, сторона, урон, скорость, цель.
-## intended_target — выбранная цель: пуля пролетает сквозь других врагов.
 @warning_ignore("shadowed_variable")
 func configure(dir: Vector3, is_enemy: bool, dmg: int, spd: float, target: Node3D = null) -> void:
 	direction = dir.normalized()
@@ -69,14 +62,11 @@ func _apply_visual() -> void:
 	material.emission_energy_multiplier = EMISSION_ENERGY
 	mesh.material_override = material
 
-## Ориентация пули по полному 3D-вектору direction.
 func _orient() -> void:
 	if direction.length_squared() < 0.0001:
 		return
-	# Поворачиваем длинную ось (X) в сторону direction
 	var forward: Vector3 = direction.normalized()
 	var up: Vector3 = Vector3.UP
-	# Если летим почти вертикально — используем другой up
 	if abs(forward.dot(up)) > 0.99:
 		up = Vector3.FORWARD
 	var right: Vector3 = forward.cross(up).normalized()
@@ -100,7 +90,6 @@ func _on_body_entered(body: Node3D) -> void:
 			body.call("take_damage", damage)
 	queue_free()
 
-## Пуля игрока с выбранной целью пролетает мимо остальных врагов.
 func _fly_through(body: Node3D) -> bool:
 	if is_enemy or intended_target == null:
 		return false

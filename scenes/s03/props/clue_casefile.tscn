@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[sub_resource type="BoxMesh" id="BoxMesh_ubtcc"]
+size = Vector3(0.45, 0.05, 0.32)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ubtcc"]
+size = Vector3(1, 1.2, 1)
+
+[node name="clue_casefile" type="Node3D" unique_id=1214245033]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=987224902]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+mesh = SubResource("BoxMesh_ubtcc")
+
+[node name="interaction_area" type="Area3D" parent="." unique_id=1226408992]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="interaction_area" unique_id=487459929]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_ubtcc")

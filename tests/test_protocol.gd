@@ -1,7 +1,4 @@
 extends SceneTree
-## Smoke test для Шага 5: тазер Q, приказ/арест E, состояния сдачи врагов
-## и счётчик полицейского протокола в HUD.
-## godot --headless --path . -s res://tests/test_protocol.gd
 
 const PlayerScript: Script = preload("res://scripts/gameplay/player.gd")
 const EnemyScript: Script = preload("res://scripts/gameplay/enemy_shooter.gd")
@@ -99,7 +96,6 @@ func _run() -> void:
 			_check(protocol_text.text == "PROTOCOL: %d" % new_score, "protocol HUD line did not follow the score")
 	)
 
-	# --- тазер Q: заряд, стан, луч, кулдаун ------------------------------
 	_check(player.get_node_or_null("TaserCooldownTimer") is Timer, "no TaserCooldownTimer node")
 	_check(player.get_node_or_null("TaserBeam") is MeshInstance3D, "no TaserBeam node")
 	_check(player.get_node_or_null("ShoutLabel") is Label3D, "no ShoutLabel node")
@@ -124,7 +120,6 @@ func _run() -> void:
 	player.taser()
 	_check(player.taser_charges == 2, "taser ignored its cooldown")
 
-	# Нет цели в радиусе — заряд не тратится
 	target.queue_free()
 	await create_timer(1.3).timeout
 	await _frames(2)
@@ -132,7 +127,6 @@ func _run() -> void:
 	player.taser()
 	_check(player.taser_charges == 2, "taser spent a charge without a target")
 
-	# --- E: приказ и арест ----------------------------------------------
 	var shout: Label3D = player.get_node("ShoutLabel") as Label3D
 	var yielder: Node3D = _make_enemy(world, Vector3(1.2, 0, 0), {
 		"detection_range": 0.0, "surrenders_on_warning": true,
@@ -157,14 +151,12 @@ func _run() -> void:
 	_clear_enemies()
 	await _frames(2)
 
-	# --- последний активный враг сдаётся по приказу ----------------------
 	var last: Node3D = _make_enemy(world, Vector3(5.0, 0, 0), {"detection_range": 0.0})
 	await _frames(2)
 	player.interact()
 	_check(bool(last.get("warned")), "order did not warn the enemy")
 	_check(bool(last.call("is_surrendered")), "last standing enemy did not surrender")
 
-	# --- нарушения протокола от пули игрока -----------------------------
 	var violations: Array[String] = []
 	last.connect("protocol_violation", func(reason: String, _delta: int) -> void: violations.append(reason))
 	last.call("take_damage", 5, true)
@@ -190,7 +182,6 @@ func _run() -> void:
 	_clear_enemies()
 	await _frames(2)
 
-	# --- одинаковый интерфейс у EnemyMelee ------------------------------
 	var melee: Node3D = _make_melee(world, Vector3(4.0, 0, 0), {"detection_range": 0.0})
 	await _frames(2)
 	var melee_surrendered: Array[Node3D] = []

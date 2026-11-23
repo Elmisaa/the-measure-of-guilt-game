@@ -1,7 +1,5 @@
 class_name BossTarget
 extends Area3D
-## Тестовая 3D-мишень для босс-арены. Слой 128 (BossTarget).
-## При попадании пули мигает и print("HIT").
 
 signal hit
 
@@ -14,7 +12,7 @@ var _hit_count: int = 0
 
 func _ready() -> void:
 	collision_layer = 128
-	collision_mask = 1 | 4 | 128  # World, Cover, BossTarget
+	collision_mask = 1 | 4 | 128
 	
 	_mesh = get_node_or_null("Mesh") as MeshInstance3D
 	if _mesh != null and _mesh.material_override is StandardMaterial3D:

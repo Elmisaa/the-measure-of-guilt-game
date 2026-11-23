@@ -1,11 +1,5 @@
 class_name EnemyMelee
 extends CharacterBody3D
-## Враг ближнего боя в 2.5D: бежит по X к игроку и бьёт его «ножом/битой».
-## Цикл: IDLE → CHASE (бежит даже к игроку в укрытии!) → WINDUP (красная вспышка,
-## сигнал melee_telegraphed — окно для контрудара дубинкой) → ATTACK (урон, выбивает
-## из укрытия) → COOLDOWN. Все задержки — float-таймеры в _physics_process, без await:
-## состояние можно прервать оглушением, отбрасыванием или смертью в любой кадр.
-## Слои: 3 = Enemy (4), маска 1 | 5 (World + PlayerBullet).
 
 enum State { IDLE, CHASE, WINDUP, ATTACK, COOLDOWN, STUNNED, DEAD }
 
@@ -19,13 +13,9 @@ const STATE_NAMES: Array[String] = ["IDLE", "CHASE", "WINDUP", "ATTACK", "COOLDO
 const LAYER_ENEMY: int = 4
 const MASK_ENEMY: int = 1 | 16
 const GRAVITY: float = 18.0
-## Трение горизонтальной скорости в STUNNED (отбрасывание дубинкой).
 const KNOCKBACK_FRICTION: float = 20.0
-## Длительность белой вспышки от попадания, сек.
 const FLASH_TIME: float = 0.08
-## Сколько длится кадр ATTACK после попадания.
 const ATTACK_LINGER: float = 0.12
-## Насколько дальше attack_range достаёт удар (игрок успел отойти — промах).
 const HIT_REACH: float = 0.4
 const WHITE: Color = Color(1, 1, 1, 1)
 
@@ -37,14 +27,11 @@ const WHITE: Color = Color(1, 1, 1, 1)
 @export var attack_cooldown: float = 1.0
 @export var detection_range: float = 12.0
 @export var lane_z: float = 0.0
-## Дополнительная пауза перед первым броском (чтобы враги не бежали синхронно).
 @export var start_cooldown: float = 0.0
-## Пауза перед первой атакой после обнаружения игрока.
 @export var initial_hesitation: float = 0.0
 
 var state: State = State.IDLE
 var health: int = 0
-## Враг успел перейти к атаке (WINDUP/ATTACK).
 var has_attacked: bool = false
 
 var _state_time: float = 0.0
@@ -91,7 +78,6 @@ func _physics_process(delta: float) -> void:
 	_face_player()
 
 
-# --- поведение ------------------------------------------------------------
 
 func _update_state(delta: float) -> void:
 	match state:
@@ -134,7 +120,6 @@ func _update_state(delta: float) -> void:
 				_set_state(State.IDLE)
 
 
-## Бежит по X к игроку, даже если тот прячется за укрытием — выгоняет его оттуда.
 func _tick_chase() -> void:
 	if not _is_player_alive():
 		_reset_to_idle()
@@ -163,7 +148,6 @@ func _begin_attack() -> void:
 	_resolve_attack()
 
 
-## Удар: урон игроку и выбивание из укрытия (если он всё ещё в радиусе attack_range + 0.4).
 func _resolve_attack() -> void:
 	if not _is_player_alive():
 		return
@@ -198,7 +182,6 @@ func _move(delta: float) -> void:
 	global_position.z = lane_z
 
 
-# --- восприятие и поворот -------------------------------------------------
 
 func _refresh_player() -> void:
 	if _player != null and is_instance_valid(_player):
@@ -222,7 +205,6 @@ func _player_in_attack_range() -> bool:
 	return absf(_player.global_position.x - global_position.x) <= attack_range
 
 
-## Разворот плоского визуала по X в сторону игрока (как у Player).
 func _face_player() -> void:
 	if _visual == null or _player == null or not is_instance_valid(_player):
 		return
@@ -233,7 +215,6 @@ func _face_player() -> void:
 	_visual.scale.x = _facing
 
 
-# --- урон, оглушение, отбрасывание, смерть --------------------------------
 
 func take_damage(amount: int) -> void:
 	if state == State.DEAD or amount <= 0:
@@ -246,7 +227,6 @@ func take_damage(amount: int) -> void:
 		_die()
 
 
-## Оглушение: прерывает замах/удар и держит врага в STUNNED duration сек.
 func apply_stun(duration: float) -> void:
 	if state == State.DEAD or duration <= 0.0:
 		return
@@ -263,7 +243,6 @@ func _paint(color: Color) -> void:
 	_base_color = color
 
 
-## Отбрасывание дубинкой/пинком: прерывает замах, станит и толкает по X с трением.
 func apply_knockback(dir_x: float, force: float, stun_duration: float = 0.6) -> void:
 	if state == State.DEAD or force <= 0.0:
 		return
@@ -314,7 +293,6 @@ func _tick_flash(delta: float) -> void:
 		_material.albedo_color = _base_color
 
 
-# --- состояние и дебаг-метка ---------------------------------------------
 
 func _set_state(next: State) -> void:
 	if state == next:

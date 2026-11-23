@@ -1,6 +1,4 @@
 extends CanvasLayer
-## Cinematic black bars (top/bottom). Autoload: Letterbox.
-## show_bars() for cutscenes; retract() slides the top bar up and the bottom bar down.
 
 const BAR_HEIGHT: float = 44.0
 
@@ -25,7 +23,6 @@ func _make_bar() -> ColorRect:
 	return r
 
 
-## amount: 1 = bars fully in, 0 = hidden off-screen.
 func _place(amount: float) -> void:
 	var off: float = roundf(BAR_HEIGHT * (1.0 - amount))
 	_top.position = Vector2(0.0, -off)

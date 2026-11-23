@@ -1,8 +1,5 @@
 class_name CombatHud
 extends CanvasLayer
-## Боевой HUD под 640x360: HP, патроны, заряды тазера, состояние, подсказки.
-## Игрока находит сам — по player_path или через группу "player" (add_to_group в Player._ready).
-## Значения берёт из сигналов игрока и сразу инициализирует их, поэтому "Player: -" не бывает.
 
 const WEAPON_NAME: String = "GLOCK 19"
 const HINT_TEXT: String = "A/D — шаг | S/Space — укрытие | ЛКМ — выстрел | R — перезарядка | ПКМ — удар | Q — тазер"
@@ -17,7 +14,6 @@ const PANEL_BG: Color = Color(0.03, 0.03, 0.05, 0.82)
 const PANEL_BORDER: Color = Color(0.45, 0.48, 0.55, 0.55)
 const TASER_COLOR: Color = Color(0.55, 0.9, 1, 1)
 const TASER_EMPTY_COLOR: Color = Color(1, 0.42, 0.38, 1)
-## Сколько кадров ждём появления игрока в группе (игрок может появиться позже HUD).
 const MAX_BIND_TRIES: int = 120
 
 @export var player_path: NodePath
@@ -39,7 +35,6 @@ func _ready() -> void:
 	_bind_player()
 
 
-# --- построение UI --------------------------------------------------------
 
 func _build_ui() -> void:
 	var panel: PanelContainer = PanelContainer.new()
@@ -110,7 +105,6 @@ func _make_label(node_name: String, color: Color) -> Label:
 	return label
 
 
-## Метки TaserText/ProtocolText приходят из сцены; fallback — создаём кодом.
 func _take_label(node_name: String, color: Color, parent: Node) -> Label:
 	var label: Label = get_node_or_null(node_name) as Label
 	if label == null:
@@ -145,7 +139,6 @@ func _bar_style(color: Color) -> StyleBoxFlat:
 	return style
 
 
-# --- привязка к игроку ----------------------------------------------------
 
 func _bind_player() -> void:
 	var found: Player = null
@@ -174,12 +167,10 @@ func _bind_player() -> void:
 	_on_reload_finished()
 
 
-## Игрок, к которому привязан HUD (null, пока не найден).
 func target_player() -> Player:
 	return _player
 
 
-# --- сигналы игрока -------------------------------------------------------
 
 func _on_health_changed(health: int, max_health: int) -> void:
 	_hp_text.text = "HP: %d / %d" % [health, max_health]
@@ -223,6 +214,5 @@ func _on_reload_cancelled() -> void:
 
 
 func _on_cover_changed(in_cover: bool) -> void:
-	# Само состояние COVER приходит через state_changed; здесь подсвечиваем подсказку.
 	if _hint_text != null:
 		_hint_text.add_theme_color_override("font_color", COVER_COLOR if in_cover else MUTED_COLOR)

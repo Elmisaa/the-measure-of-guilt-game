@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""CRT switch-off sound -> assets/audio/sfx/crt_off.wav"""
 
 def crt_off() -> None:
-    """CRT switching off: a short static crackle, a falling high whine, a soft thump."""
     import wave
     import numpy as np
     sr = 44100

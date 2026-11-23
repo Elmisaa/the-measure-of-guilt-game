@@ -56,7 +56,6 @@ func _init_tools() -> void:
 			add_child(_animation_tools)
 
 	_tool_map = {
-		# Scene tools
 		"create_scene": [_scene_tools, "create_scene"],
 		"list_scene_nodes": [_scene_tools, "list_scene_nodes"],
 		"add_node": [_scene_tools, "add_node"],
@@ -72,7 +71,6 @@ func _init_tools() -> void:
 		"list_connections": [_scene_tools, "list_connections"],
 		"rescan_filesystem": [_scene_tools, "rescan_filesystem"],
 
-		# Resource tools
 		"create_resource": [_resource_tools, "create_resource"],
 		"modify_resource": [_resource_tools, "modify_resource"],
 		"create_material": [_resource_tools, "create_material"],
@@ -83,7 +81,6 @@ func _init_tools() -> void:
 		"set_theme_font_size": [_resource_tools, "set_theme_font_size"],
 		"apply_theme_shader": [_resource_tools, "apply_theme_shader"],
 
-		# Animation tools
 		"create_animation": [_animation_tools, "create_animation"],
 		"add_animation_track": [_animation_tools, "add_animation_track"],
 		"create_animation_tree": [_animation_tools, "create_animation_tree"],

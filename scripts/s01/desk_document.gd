@@ -1,7 +1,5 @@
 class_name DeskDocument
 extends Sprite2D
-## A document on the desk: lifts and twitches under the mouse, click -> clicked(doc_id).
-## Place it in the scene by its top-left corner; the script recentres it for rotation.
 
 signal clicked(doc_id: String)
 

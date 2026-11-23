@@ -1,7 +1,4 @@
 shader_type canvas_item;
-// Rigidly moves the masked object (hand + pencil) by offset_px on the pixel grid.
-// Pixels the object leaves behind are filled from the nearest unmasked pixels to the
-// left (the forearm/shirt), so nothing bends or smears.
 
 uniform sampler2D mask_tex : filter_nearest;
 uniform vec2 offset_px = vec2(0.0);

@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="./panelling.gdshader" id="1"]
+[ext_resource type="Texture2D" path="./walnut_panel.png" id="2"]
+[ext_resource type="Texture2D" path="./walnut_panel_normal.png" id="3"]
+
+
+[sub_resource type="ShaderMaterial" id="Walnut"]
+shader = ExtResource("1")
+shader_parameter/walnut = ExtResource("2")
+shader_parameter/moulding = ExtResource("3")
+
+[sub_resource type="QuadMesh" id="Facing"]
+material = SubResource("Walnut")
+size = Vector2(1.44, 0.96)
+
+[node name="IvanWallPanel" type="Node3D"]
+
+[node name="Cladding" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.48, 0.005)
+mesh = SubResource("Facing")

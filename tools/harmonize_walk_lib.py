@@ -1,4 +1,3 @@
-"""Lab colour helpers shared by the walk/run sprite scripts."""
 import numpy as np
 def to_lab(a):
     a=a/255.0; a=np.where(a>0.04045,((a+0.055)/1.055)**2.4,a/12.92)

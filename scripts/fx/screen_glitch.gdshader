@@ -1,10 +1,8 @@
 shader_type canvas_item;
-// Screen interference: random horizontal row tears + noise + faint scanlines.
-// Rows are 4px (matches the 4x pixel of the frame). intensity 0..1.
 
 uniform sampler2D screen : hint_screen_texture, filter_nearest;
 uniform float intensity = 0.0;
-uniform float saturation = 1.0;  // 1 = full colour, 0 = black and white
+uniform float saturation = 1.0;
 
 float hash(float n) { return fract(sin(n) * 43758.5453); }
 

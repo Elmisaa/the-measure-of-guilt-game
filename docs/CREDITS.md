@@ -21,3 +21,5 @@
 | Звуки машины (дверь, стартер, холостые, выключение, дворники) | синтез, `tools/make_car_sfx.py` | свой | assets/audio/sfx/ |
 | Кадры s02_drive, иконка пальто | Codex $imagegen по ТЗ проекта | свой | assets/backgrounds/s02/, assets/ui/items/coat.png |
 | Музыка кат-сцены s02_drive (18 с) | из видео пользователя (2026-11-23) | **уточнить источник и права** | assets/audio/music/drive_theme.wav |
+| Пентхаус Фёдора (3D-сцена, текстуры, пиксельные предметы) | проект пользователя «hackatone 2» | свой | scenes/s03/penthouse_set.tscn, assets/3d/penthouse/ |
+| Диван sofa_02 (glTF 1k) | вероятно Poly Haven | **уточнить** (Poly Haven — CC0) | assets/3d/penthouse/models/sofa/ |

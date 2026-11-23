@@ -1,25 +1,29 @@
 extends Node2D
-## First screen: the precinct at night (full screen), the title, and a menu:
-## Продолжить (latest save) / Новая игра / Загрузить / Настройки / Выход. Arrows/WASD + Enter, or the mouse.
 
 const INTRO: String = "res://scenes/s00/intro.tscn"
-const BACKGROUND: String = "res://assets/backgrounds/s01/exposition.png"  ## 640x360: fills the screen
+const BACKGROUND: String = "res://assets/backgrounds/menu/title_board.png"
+const SWAY: Vector2 = Vector2(40, 22)
+const SENSITIVITY: float = 2.5
 
 var _menu: VBoxContainer
 var _settings: SettingsPanel
 var _saves: SaveSlotsPanel
 var _ui: CanvasLayer
 var _starting: bool = false
+var _bg: Sprite2D
+var _sway_t: float = 0.0
 
 
 func _ready() -> void:
 	Hud.set_hud_visible(false)
-	Letterbox.hide_bars()  # the menu fills the whole screen (no cinema bars)
+	Letterbox.hide_bars()
 	Audio.play_start_ambience()
 	var bg: Sprite2D = Sprite2D.new()
 	bg.texture = load(BACKGROUND)
 	bg.centered = false
+	bg.position = -SWAY
 	add_child(bg)
+	_bg = bg
 	_ui = CanvasLayer.new()
 	_ui.layer = 20
 	add_child(_ui)
@@ -63,11 +67,6 @@ func _ready() -> void:
 	for i: int in buttons.size():
 		buttons[i].focus_neighbor_top = buttons[i].get_path_to(buttons[(i - 1 + buttons.size()) % buttons.size()])
 		buttons[i].focus_neighbor_bottom = buttons[i].get_path_to(buttons[(i + 1) % buttons.size()])
-	var ver: Label = Label.new()
-	ver.text = "прототип · ↑↓ / WASD, Enter"
-	ver.add_theme_color_override("font_color", Color(0.4, 0.43, 0.47))
-	ver.position = Vector2(372, 290)
-	_ui.add_child(ver)
 	_settings = SettingsPanel.new()
 	_ui.add_child(_settings)
 	var settings_btn: Button = buttons[buttons.size() - 2]
@@ -103,3 +102,15 @@ func _input(event: InputEvent) -> void:
 	if _settings.is_open() or _saves.is_open() or _starting:
 		return
 	MenuUI.wasd_to_focus(event, get_viewport())
+
+
+func _process(delta: float) -> void:
+	if _bg == null:
+		return
+	_sway_t += delta
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var m: Vector2 = (get_viewport().get_mouse_position() / vp - Vector2(0.5, 0.5)) * 2.0 * SENSITIVITY
+	m = m.clamp(Vector2(-1, -1), Vector2(1, 1))
+	var breathe: Vector2 = Vector2(sin(_sway_t * 0.4) * 2.0, sin(_sway_t * 0.27) * 1.5)
+	var target: Vector2 = -SWAY - m * SWAY * 0.9 + breathe
+	_bg.position = _bg.position.lerp(target, clampf(delta * 4.0, 0.0, 1.0)).round()

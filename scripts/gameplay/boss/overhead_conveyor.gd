@@ -1,14 +1,10 @@
 class_name OverheadConveyor
 extends Node3D
-## Потолочный конвейер: балка-рельса Y=4.8, X от -11 до +11, Z=-0.5.
-## 3 каретки едут зацикленно (speed=2.6 м/с). 2 несут контейнеры с мишенями (слой 128, группа "boss_targets"), 1 — пустая.
-## При попадании в крепление: контейнер падает (14 м/с), красная зона на полу, при ударе — container_crashed(hit_boss, boss_damage, impact_pos).
-## Через 4 сек на каретке спавнится новый контейнер.
 
 signal container_crashed(hit_boss: bool, boss_damage: int, impact_pos: Vector3)
 
 @export var speed: float = 2.6
-@export var rail_length: float = 22.0  # X от -11 до +11
+@export var rail_length: float = 22.0
 @export var rail_y: float = 4.6
 @export var rail_z: float = 0.0
 @export var carriage_count: int = 3
@@ -27,16 +23,15 @@ var _has_container: Array[bool] = []
 var _dropping: Array[bool] = []
 var _respawn_timers: Array[Timer] = []
 var _drop_zone_meshes: Array[MeshInstance3D] = []
-var _direction: float = 1.0  # 1 = вправо, -1 = влево
+var _direction: float = 1.0
 
 func _ready() -> void:
 	_build_rail()
 	_build_carriages()
-	# Начальные позиции: равномерно распределяем
 	for i in _carriages.size():
 		var x: float = -rail_length * 0.5 + i * carriage_spacing
 		_carriages[i].position = Vector3(x, 0, 0)
-		_has_container[i] = (i != 1)  # 2-я каретка (индекс 1) пустая
+		_has_container[i] = (i != 1)
 		_update_carriage_visual(i)
 
 func _build_rail() -> void:
@@ -52,13 +47,13 @@ func _build_rail() -> void:
 	add_child(_rail_mesh)
 
 func _get_claw_y() -> float:
-	return rail_y - 0.5  # 4.1
+	return rail_y - 0.5
 
 func _get_container_y() -> float:
-	return _get_claw_y() - 0.7  # 3.4
+	return _get_claw_y() - 0.7
 
 func _get_target_y() -> float:
-	return _get_claw_y() - 0.3  # 3.8
+	return _get_claw_y() - 0.3
 
 func _build_carriages() -> void:
 	for i in range(carriage_count):
@@ -67,7 +62,6 @@ func _build_carriages() -> void:
 		add_child(carriage)
 		_carriages.append(carriage)
 		
-		# Клешня (BoxMesh)
 		var claw: MeshInstance3D = MeshInstance3D.new()
 		claw.name = "Claw"
 		var claw_box: BoxMesh = BoxMesh.new()
@@ -79,21 +73,19 @@ func _build_carriages() -> void:
 		claw.position = Vector3(0, _get_claw_y(), 0)
 		carriage.add_child(claw)
 		
-		# Контейнер (невидимый по умолчанию)
 		var container: MeshInstance3D = MeshInstance3D.new()
 		container.name = "Container"
 		var cont_box: BoxMesh = BoxMesh.new()
 		cont_box.size = Vector3(1.6, 1.1, 1.0)
 		container.mesh = cont_box
 		var cont_mat: StandardMaterial3D = StandardMaterial3D.new()
-		cont_mat.albedo_color = Color(0.35, 0.25, 0.15, 1)  # ржавый
+		cont_mat.albedo_color = Color(0.35, 0.25, 0.15, 1)
 		container.material_override = cont_mat
 		container.position = Vector3(0, _get_container_y(), 0)
 		container.visible = false
 		carriage.add_child(container)
 		_container_meshes.append(container)
 		
-		# Мишень крепления (Area3D на слое 128)
 		var target: Area3D = Area3D.new()
 		target.name = "AttachmentTarget"
 		target.collision_layer = 128
@@ -104,7 +96,6 @@ func _build_carriages() -> void:
 		target_col.shape = target_shape
 		target_col.position = Vector3(0, _get_target_y(), 0)
 		target.add_child(target_col)
-		# Визуал мишени — сфера
 		var target_vis: MeshInstance3D = MeshInstance3D.new()
 		target_vis.name = "TargetVisual"
 		var sphere: SphereMesh = SphereMesh.new()
@@ -125,10 +116,8 @@ func _build_carriages() -> void:
 		carriage.add_child(target)
 		_attachment_targets.append(target)
 		
-		# Сигнал попадания
 		target.area_entered.connect(_on_attachment_hit.bind(i))
 		
-		# Таймер респавна
 		var timer: Timer = Timer.new()
 		timer.name = "RespawnTimer_%d" % i
 		timer.one_shot = true
@@ -140,7 +129,6 @@ func _build_carriages() -> void:
 		_has_container.append(false)
 		_dropping.append(false)
 		
-		# Зона падения на полу (невидимая)
 		var drop_zone: MeshInstance3D = MeshInstance3D.new()
 		drop_zone.name = "DropZone"
 		var box: BoxMesh = BoxMesh.new()
@@ -160,14 +148,12 @@ func _build_carriages() -> void:
 		_drop_zone_meshes.append(drop_zone)
 
 func _physics_process(delta: float) -> void:
-	# Движение кареток
 	for i in _carriages.size():
 		if _dropping[i]:
 			_process_drop(i, delta)
 		else:
 			_move_carriage(i, delta)
 	
-	# Проверка зоны босса для подсветки мишеней
 	_update_boss_zone_highlight()
 
 func _move_carriage(index: int, delta: float) -> void:
@@ -175,14 +161,11 @@ func _move_carriage(index: int, delta: float) -> void:
 	var pos: Vector3 = carriage.position
 	pos.x += speed * _direction * delta
 	
-	# Проверка границ
 	var half_len: float = rail_length * 0.5
 	if _direction > 0 and pos.x > half_len:
-		# Ушли за правый край — телепортируем влево
 		pos.x = -half_len
 		_direction = -1.0
 	elif _direction < 0 and pos.x < -half_len:
-		# Ушли за левый край — телепортируем вправо
 		pos.x = half_len
 		_direction = 1.0
 	
@@ -193,12 +176,10 @@ func _process_drop(index: int, delta: float) -> void:
 	var container: MeshInstance3D = _container_meshes[index]
 	var drop_zone: MeshInstance3D = _drop_zone_meshes[index]
 	
-	# Контейнер падает относительно каретки
 	var container_pos: Vector3 = container.position
 	container_pos.y -= drop_speed * delta
 	container.position = container_pos
 	
-	# Проверка удара о пол (Y = 0), контейнер 1.1 высоты, центр на 0.55 = низ на 0
 	if container_pos.y <= 0.55:
 		container_pos.y = 0.55
 		container.position = container_pos
@@ -215,17 +196,13 @@ func _finish_drop(index: int) -> void:
 	drop_zone.visible = false
 	target.visible = false
 	
-	# Проверка попадания в зону босса
 	var impact_x: float = carriage.global_position.x
 	var hit_boss: bool = abs(impact_x - boss_x) <= boss_hit_half_width
 	
-	# Вспышка удара
 	_create_impact_flash(carriage.global_position)
 	
-	# Сигнал
 	container_crashed.emit(hit_boss, boss_damage if hit_boss else 0, carriage.global_position)
 	
-	# Запуск респавна
 	_respawn_timers[index].start()
 
 func _create_impact_flash(pos: Vector3) -> void:
@@ -264,7 +241,6 @@ func _start_drop(index: int) -> void:
 	var target: Area3D = _attachment_targets[index]
 	target.visible = false
 	
-	# Показать зону падения
 	var drop_zone: MeshInstance3D = _drop_zone_meshes[index]
 	drop_zone.position = Vector3(_carriages[index].global_position.x, 0.05, _carriages[index].global_position.z)
 	drop_zone.visible = true

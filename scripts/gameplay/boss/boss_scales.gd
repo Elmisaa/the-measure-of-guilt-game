@@ -1,7 +1,5 @@
 class_name BossScales
 extends Node3D
-## Сущность «Весы» — босс Заброшенного цеха.
-## 4 атаки, неуязвимость к пулям, сопротивление 100 (снижается бочками -25 и контейнерами -50).
 
 signal resistance_changed(cur: int, max_val: int)
 signal phase_broken
@@ -34,15 +32,13 @@ func _ready() -> void:
 	_ensure_timers()
 	_find_player_and_systems()
 	
-	# Запуск цикла атак
 	_attack_timer.start(attack_interval)
 
 func _build_boss_visual() -> void:
-	# База (StaticBody3D для коллизии пуль, слой 4)
 	var base: StaticBody3D = StaticBody3D.new()
 	base.name = "BossBase"
 	base.collision_layer = 4
-	base.collision_mask = 1 | 16 | 32  # World, PlayerBullet, EnemyBullet
+	base.collision_mask = 1 | 16 | 32
 	var base_shape: BoxShape3D = BoxShape3D.new()
 	base_shape.size = Vector3(2.0, 3.2, 1.0)
 	var base_col: CollisionShape3D = CollisionShape3D.new()
@@ -50,12 +46,10 @@ func _build_boss_visual() -> void:
 	base_col.position = Vector3(0, 1.6, 0)
 	base.add_child(base_col)
 	
-	# Визуал босса — силуэт весов
 	var visual: Node3D = Node3D.new()
 	visual.name = "Visual"
 	base.add_child(visual)
 	
-	# Стойка
 	var post: MeshInstance3D = MeshInstance3D.new()
 	var post_box: BoxMesh = BoxMesh.new()
 	post_box.size = Vector3(0.4, 3.2, 0.4)
@@ -66,7 +60,6 @@ func _build_boss_visual() -> void:
 	post.position = Vector3(0, 1.6, 0)
 	visual.add_child(post)
 	
-	# Перекладина
 	var beam: MeshInstance3D = MeshInstance3D.new()
 	var beam_box: BoxMesh = BoxMesh.new()
 	beam_box.size = Vector3(2.0, 0.3, 0.3)
@@ -77,7 +70,6 @@ func _build_boss_visual() -> void:
 	beam.position = Vector3(0, 3.2, 0)
 	visual.add_child(beam)
 	
-	# Левая чаша
 	var left_pan: MeshInstance3D = MeshInstance3D.new()
 	var pan_shape: CylinderMesh = CylinderMesh.new()
 	pan_shape.height = 0.6
@@ -90,14 +82,12 @@ func _build_boss_visual() -> void:
 	left_pan.position = Vector3(-0.9, 2.6, 0)
 	visual.add_child(left_pan)
 	
-	# Правая чаша
 	var right_pan: MeshInstance3D = MeshInstance3D.new()
 	right_pan.mesh = pan_shape.duplicate()
 	right_pan.material_override = pan_mat.duplicate()
 	right_pan.position = Vector3(0.9, 2.6, 0)
 	visual.add_child(right_pan)
 	
-	# Цепочки
 	for i in range(4):
 		var chain: MeshInstance3D = MeshInstance3D.new()
 		var chain_box: BoxMesh = BoxMesh.new()
@@ -109,7 +99,6 @@ func _build_boss_visual() -> void:
 		chain.position = Vector3(-0.9 + i % 2 * 1.8, 2.9 - (i / 2) * 0.4, 0)
 		visual.add_child(chain)
 	
-	# Щит (невидимый по умолчанию)
 	_shield_mesh = MeshInstance3D.new()
 	_shield_mesh.name = "Shield"
 	var shield_shape: SphereMesh = SphereMesh.new()
@@ -127,11 +116,10 @@ func _build_boss_visual() -> void:
 	_shield_mesh.visible = false
 	base.add_child(_shield_mesh)
 	
-	# Area3D для обнаружения попаданий пуль (слой 4, маска пуль игрока)
 	var hit_area: Area3D = Area3D.new()
 	hit_area.name = "HitArea"
 	hit_area.collision_layer = 4
-	hit_area.collision_mask = 16  # PlayerBullet layer
+	hit_area.collision_mask = 16
 	var hit_shape: BoxShape3D = BoxShape3D.new()
 	hit_shape.size = Vector3(2.5, 3.5, 1.5)
 	var hit_col: CollisionShape3D = CollisionShape3D.new()
@@ -145,7 +133,6 @@ func _build_boss_visual() -> void:
 	add_child(base)
 
 func _ensure_timers() -> void:
-	# Timer цикла атак
 	_attack_timer = Timer.new()
 	_attack_timer.name = "AttackTimer"
 	_attack_timer.one_shot = true
@@ -153,7 +140,6 @@ func _ensure_timers() -> void:
 	_attack_timer.timeout.connect(_on_attack_timeout)
 	add_child(_attack_timer)
 	
-	# Timer вспышки щита
 	_shield_timer = Timer.new()
 	_shield_timer.name = "ShieldTimer"
 	_shield_timer.one_shot = true
@@ -162,19 +148,16 @@ func _ensure_timers() -> void:
 	add_child(_shield_timer)
 
 func _find_player_and_systems() -> void:
-	# Игрок
 	for node in get_tree().get_nodes_in_group("player"):
 		if node is Node3D:
 			_player = node as Node3D
 			break
 	
-	# Конвейер
 	for node in get_tree().get_nodes_in_group("boss_targets"):
 		if node.get_class() == "OverheadConveyor":
 			_conveyor = node as OverheadConveyor
 			break
 	
-	# Бочки
 	for node in get_tree().get_nodes_in_group("boss_targets"):
 		if node.get_class() == "ExplosiveBarrel":
 			_barrels.append(node as ExplosiveBarrel)
@@ -195,7 +178,6 @@ func _execute_attack(index: int) -> void:
 		3: _attack_drop_container()
 
 func _attack_spikes() -> void:
-	# 1) Шипы: 0.45с телеграф на руке → веер из 3 снарядов в сторону игрока
 	var hand_pos: Vector3 = global_position + Vector3(0, 2.5, 0)
 	_create_telegraph(hand_pos, 0.45, Color(1, 0.2, 0.2, 0.8))
 	
@@ -215,15 +197,12 @@ func _fire_spikes(origin: Vector3, delay: float) -> void:
 	if dir_to_player.length_squared() < 0.001:
 		dir_to_player = Vector3(-1, 0, 0)
 	
-	# Веер из 3 снарядов: центр, влево, вправо
 	var angles: Array[float] = [-0.25, 0.0, 0.25]
 	for angle in angles:
 		var rotated_dir: Vector3 = dir_to_player.rotated(Vector3.UP, angle)
 		_spawn_enemy_bullet(origin + rotated_dir * 0.5, rotated_dir, 15)
 
 func _attack_shockwave() -> void:
-	# 2) Ударная волна по полу: полоса Z игрока (ширина 1.8м, вся длина X)
-	# 0.75с предупреждение на полу Y=0.04 → удар 20 урона
 	if _player == null:
 		return
 	
@@ -231,7 +210,6 @@ func _attack_shockwave() -> void:
 	var warn_z_min: float = player_z - 0.9
 	var warn_z_max: float = player_z + 0.9
 	
-	# Рисуем предупреждение на полу
 	_create_floor_warning(warn_z_min, warn_z_max, 0.75)
 	
 	var tween: Tween = create_tween()
@@ -242,24 +220,17 @@ func _execute_shockwave(z_min: float, z_max: float, delay: float) -> void:
 	if not is_inside_tree() or current_resistance <= 0:
 		return
 	
-	# Урон игроку, если он на этой полосе Z
 	if _player != null:
 		var pz: float = _player.global_position.z
 		if pz >= z_min and pz <= z_max and _player.has_method("take_damage"):
 			_player.call("take_damage", 20)
 	
-	# Визуал ударной волны
 	_create_shockwave_visual(z_min, z_max)
 
 func _attack_throw_barrel() -> void:
-	# 3) Бросок взрывной бочки (контратака -25)
-	# Поднимает бочку перед собой (x=4.2, y=1.3, z=player.z, near_boss=true) на 2.2с
-	# Под игроком красная зона. Если игрок выстрелит в бочку за 2.2с — взрыв у Весов (-25 к боссу)
-	# Если не успел — взрывается в зоне игрока (20 урона в радиусе)
 	if _player == null:
 		return
 	
-	# Найти доступную бочку или создать новую
 	var barrel: ExplosiveBarrel = _get_available_barrel()
 	if barrel == null:
 		return
@@ -272,10 +243,8 @@ func _attack_throw_barrel() -> void:
 	barrel.add_to_group("boss_targets")
 	barrel.visible = true
 	
-	# Красная зона под игроком
 	_create_drop_zone_visual(_player.global_position, 2.2)
 	
-	# Таймер: если бочка не взорвана за 2.2с — взрыв в зоне игрока
 	var tween: Tween = create_tween()
 	tween.tween_callback(_on_barrel_throw_timeout.bind(barrel, _player.global_position).bind(2.2))
 
@@ -284,28 +253,21 @@ func _on_barrel_throw_timeout(barrel: ExplosiveBarrel, target_pos: Vector3, dela
 	if not is_inside_tree() or not is_instance_valid(barrel):
 		return
 	
-	# Если бочка всё ещё существует и не взорвалась — переносим к игроку и взрываем
 	if barrel.is_inside_tree() and barrel.get_parent() != null:
 		barrel.global_position = target_pos
 		barrel.near_boss = false
-		barrel.take_bullet_hit()  # Взрыв у игрока
+		barrel.take_bullet_hit()
 
 func _attack_drop_container() -> void:
-	# 4) Обрушение с конвейера + контратака (-50)
-	# Когда игрок сбивает клешню над боссом (abs(x - boss_x) <= 2.5) — контейнер вызывает apply_environment_damage(50)!
-	# Также босс сам сбрасывает груз над позицией игрока (красная зона 1.0с, 25 урона)
 	if _conveyor == null:
-		# Fallback: просто сбрасываем свой контейнер
 		_drop_own_container()
 		return
 	
-	# Проверяем, есть ли контейнер над зоной босса
 	var dropped: bool = false
 	for i in _conveyor._carriages.size():
 		if _conveyor._has_container[i] and not _conveyor._dropping[i]:
 			var carriage: Node3D = _conveyor._carriages[i]
 			if abs(carriage.global_position.x - boss_x) <= 2.5:
-				# Запускаем падение этого контейнера
 				_conveyor._start_drop(i)
 				dropped = true
 				break
@@ -314,7 +276,6 @@ func _attack_drop_container() -> void:
 		_drop_own_container()
 
 func _drop_own_container() -> void:
-	# Бросаем свой контейнер над игроком
 	if _player == null:
 		return
 	
@@ -329,10 +290,8 @@ func _execute_container_drop(pos: Vector3, delay: float) -> void:
 	if not is_inside_tree() or current_resistance <= 0:
 		return
 	
-	# Вспышка удара
 	_create_impact_flash(pos)
 	
-	# Урон игроку в радиусе 1.5м
 	if _player != null:
 		var dist: float = _player.global_position.distance_to(pos)
 		if dist <= 1.5 and _player.has_method("take_damage"):
@@ -343,7 +302,6 @@ func _get_available_barrel() -> ExplosiveBarrel:
 		if is_instance_valid(barrel) and not barrel._is_exploding:
 			return barrel
 	
-	# Создать новую, если нет доступных
 	var barrel_scene: PackedScene = preload("res://scenes/gameplay/boss/explosive_barrel.tscn")
 	var new_barrel: ExplosiveBarrel = barrel_scene.instantiate() as ExplosiveBarrel
 	add_child(new_barrel)
@@ -357,7 +315,6 @@ func apply_environment_damage(amount: int) -> void:
 	current_resistance = maxi(0, current_resistance - amount)
 	resistance_changed.emit(current_resistance, max_resistance)
 	
-	# Мигание белым
 	_flash_white()
 	
 	if current_resistance <= 0:
@@ -534,5 +491,5 @@ func _spawn_enemy_bullet(pos: Vector3, dir: Vector3, dmg: int) -> void:
 	bullet.global_position = pos
 	if bullet.has_method("configure"):
 		bullet.call("configure", dir, true, dmg, 30.0, null)
-	bullet.collision_mask = 1 | 2 | 4  # World, Player, Cover
+	bullet.collision_mask = 1 | 2 | 4
 	add_child(bullet)

@@ -1,7 +1,5 @@
 class_name MenuUI
 extends RefCounted
-## Shared look for menus (title, pause, settings): plain text items; the focused one is bright with a
-## "›" in front. Arrows/WASD move the focus, Enter/Space presses; the mouse just moves the focus.
 
 const COLOR: Color = Color(0.62, 0.66, 0.7)
 const COLOR_ON: Color = Color(0.95, 0.88, 0.66)
@@ -43,7 +41,6 @@ static func button(text: String) -> Button:
 	return b
 
 
-## WASD also moves the focus (arrows already do).
 static func wasd_to_focus(event: InputEvent, vp: Viewport) -> bool:
 	var k: InputEventKey = event as InputEventKey
 	if k == null or not k.pressed:

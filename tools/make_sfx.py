@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Draft sound effects for the phone call scene (placeholders until real recordings).
-
-  python3 tools/make_sfx.py --out-dir assets/audio/sfx
-
-pickup.wav     — handset lifted off the cradle: plastic click + cradle spring + rustle
-knock.wav      — heavy muffled knock on a door, heard through a phone line
-hangup.wav     — receiver dropped / line cut: clatter + click
-dialtone.wav   — one cycle of a long monotonous tone + pause (loop it)
-blip_phone.wav — voice blip "through the phone": band-limited, buzzy
-paper_rustle.wav — soft rustle of a sheet (hover)
-page_flip.wav  — page turning: whoosh + soft snap (open a document)
-"""
 from __future__ import annotations
 
 import argparse
@@ -102,7 +90,6 @@ def main() -> int:
         buzz.append((0.35 * sq + 0.5 * math.sin(2 * math.pi * 900 * t)) * env * 0.45)
     write(o / "blip_phone.wav", mix((0, buzz), (0, noise(55, 0.08, 3, 0.1, 10))))
 
-    # paper: bright crackly noise (low smoothing) shaped into a few short grains
     def grain(ms_len: float, vol: float, seed: int) -> list[float]:
         g = noise(ms_len, vol, 0.0, 0.25, seed)
         n = len(g)
@@ -113,8 +100,7 @@ def main() -> int:
     whoosh = noise(260, 0.5, 0.0, 0.55, 30)
     whoosh = [v * math.sin(math.pi * i / len(whoosh)) ** 2 for i, v in enumerate(whoosh)]
     snap = mix((0, noise(30, 0.7, 6, 0.2, 31)), (0, tone(180, 60, 0.25, 8)))
-    # CRT power-on: thump + degauss hum + high whine settling
-    whine = tone(15000 / 2.0, 900, 0.05, 2)  # aliased to an audible high tone at 22 kHz
+    whine = tone(15000 / 2.0, 900, 0.05, 2)
     write(o / "crt_on.wav", mix((0, tone(55, 300, 0.7, 5, 1)), (0, noise(80, 0.5, 8, 0.4, 40)), (ms(40), tone(60, 700, 0.25, 3, 30, 0.1)), (ms(60), whine)))
     write(o / "key_tick.wav", mix((0, noise(14, 0.6, 9, 0.15, 41)), (0, tone(1800, 12, 0.15, 9))))
     write(o / "page_flip.wav", mix((0, grain(60, 0.3, 32)), (ms(30), whoosh), (ms(250), snap), (ms(270), grain(50, 0.2, 33))))

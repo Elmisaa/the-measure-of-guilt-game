@@ -1,5 +1,4 @@
 extends Node2D
-## s01 format 1: side view of the precinct. Speech lines -> "Изучить документы" -> desk.
 
 const DESK_SCENE: String = "res://scenes/s01/desk.tscn"
 const CHARS_PER_SEC: float = 30.0
@@ -61,7 +60,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_advance()
 
 
-## Speech blips: one soft blip every 2 letters while the line is being typed.
 func _process(_delta: float) -> void:
 	if not (_typing and _typing.is_running()) or _typing_label != _line:
 		return
@@ -128,7 +126,7 @@ func _on_marker(marker_id: String) -> void:
 	if not markers.has(marker_id):
 		return
 	if not _done and _index >= 0 and _index < _lines.size() and _lines[_index].get("type", "say") == "think":
-		return  # don't cover a story thought
+		return
 	_thought.show_text(str(markers[marker_id]), MARKER_THOUGHT_TIME)
 
 

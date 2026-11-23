@@ -1,13 +1,10 @@
 extends Node2D
-## s01 part 3: Fyodor's phone call. Tension grows line by line through the lamp,
-## Fyodor's trembling text, screen interference and frame shakes — not through
-## Alexei's face. Knock on the door -> line goes dead -> thoughts -> leave.
 
 const CHARS_PER_SEC: float = 32.0
 const START_DELAY: float = 0.8
 const SFX: String = "res://assets/audio/sfx/"
 const WALK_SCENE: String = "res://scenes/s01/walk.tscn"
-const FATHER: String = "Отец"  ## speaker id of the voice on the phone
+const FATHER: String = "Отец"
 const PUNCT: String = ".,!?…—-:;\"«»“”"
 
 @onready var _frame: Node2D = $Frame
@@ -33,7 +30,7 @@ var _typing_node: Control
 var _shown: int = 0
 var _blip_phone: bool = false
 var _pitch: float = 1.0
-var _busy: bool = true  # events / waiting: clicks ignored
+var _busy: bool = true
 var _tension: float = 0.0
 var _glitch_spike: float = 0.0
 var _shake_left: float = 0.0
@@ -48,7 +45,7 @@ var _fyodor_fmt: String = "%s"
 var _say_count: int = 0
 var _say_done: int = 0
 var _saturation: float = 1.0
-var _call_over: bool = false  ## line went dead: colours come back
+var _call_over: bool = false
 
 const FYODOR_PAGE: int = 90
 const ALEXEI_PAGE: int = 80
@@ -80,17 +77,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	# glitch intensity: base from tension + decaying spikes
 	_glitch_spike = maxf(0.0, _glitch_spike - delta * 1.5)
 	var gi: float = clampf(_tension * 0.45 + _glitch_spike, 0.0, 1.0)
-	# colours drain toward black-and-white as the call goes on
 	var target_sat: float = 1.0 if _call_over else lerpf(1.0, MIN_SATURATION, float(_say_done) / maxf(1.0, float(_say_count)))
 	_saturation = move_toward(_saturation, target_sat, delta * (0.6 if _call_over else 0.15))
 	_glitch.visible = gi > 0.01 or _saturation < 0.99
 	var mat: ShaderMaterial = _glitch.material as ShaderMaterial
 	mat.set_shader_parameter("intensity", gi)
 	mat.set_shader_parameter("saturation", _saturation)
-	# frame shake on whole pixels (4px grid of the frame art)
 	if _shake_left > 0.0:
 		_shake_left -= delta
 		_shake_step -= delta
@@ -201,7 +195,7 @@ func _event(event_name: String) -> void:
 			_glitch_spike = 0.8
 			_set_tension(0.0)
 			_call_over = true
-			_saturation = 1.0  # colour snaps back at once
+			_saturation = 1.0
 			await get_tree().create_timer(0.8).timeout
 			Audio.play_loop(SFX + "dialtone.wav", -10.0)
 			await get_tree().create_timer(1.5).timeout
@@ -228,14 +222,12 @@ func _on_leave() -> void:
 	var f: Tween = create_tween()
 	f.tween_property(_black, "color:a", 1.0, 1.5)
 	await f.finished
-	# "Подняться": back in the hall — put the coat on and leave (walk.gd state "leave")
 	GameState.set_flag("walk_state", "leave")
 	GameState.set_flag("walk_return_x", null)
 	GameState.set_flag("radio_station", -1)
 	SceneRouter.go_to(WALK_SCENE, 0.6)
 
 
-# --- tension helpers ---------------------------------------------------
 
 func _set_tension(t: float) -> void:
 	_tension = t
@@ -244,7 +236,7 @@ func _set_tension(t: float) -> void:
 	_lamp.flicker_length_max = lerpf(0.6, 1.2, t)
 	if t <= 0.0:
 		_lamp.flicker_every_min = 0.0
-		_lamp.flicker_every_max = 0.0  # steady after the line goes dead
+		_lamp.flicker_every_max = 0.0
 
 
 func _lamp_blackout(sec: float) -> void:
@@ -261,7 +253,6 @@ func _shake(amp: int, sec: float) -> void:
 	_shake_left = maxf(_shake_left, sec)
 
 
-# --- text helpers --------------------------------------------------------
 
 func _type(node: Control, length: int) -> void:
 	_typing_node = node
@@ -292,7 +283,6 @@ func _update_blips() -> void:
 				Audio.blip(_pitch)
 
 
-## Shows the current page of the current line (speech or thought) with typing.
 func _show_page() -> void:
 	var s: String = _pages[_page]
 	if _page_is_thought:

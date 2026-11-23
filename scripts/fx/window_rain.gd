@@ -1,21 +1,18 @@
 class_name WindowRain
 extends Node2D
-## Rain streaks visible only through the windows of a painted background.
-## The window mask is computed at runtime from the background: pixels inside
-## `areas` that are bluish and bright enough. Drawn on the 2x pixel grid.
 
 @export var background: Sprite2D
 @export var areas: Array[Rect2] = []
 @export var drops: int = 45
 @export var speed_min: float = 140.0
 @export var speed_max: float = 200.0
-@export var slant: float = -0.12  ## x per y
+@export var slant: float = -0.12
 @export var color: Color = Color(0.8, 0.9, 1.0, 0.45)
-@export var min_blue: int = 20  ## b - r
+@export var min_blue: int = 20
 @export var min_luma: float = 0.1
-@export var max_luma: float = 0.45  ## brighter = blinds/highlights, not outside
+@export var max_luma: float = 0.45
 
-@export var cell: int = 2  ## art pixel size on screen
+@export var cell: int = 2
 
 var _mask: PackedByteArray = PackedByteArray()
 var _gw: int = 0

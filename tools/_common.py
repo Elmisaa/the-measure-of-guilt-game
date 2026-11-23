@@ -1,4 +1,3 @@
-"""Shared helpers for the art pipeline scripts (Python 3 + Pillow)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,7 +10,6 @@ MAGENTA = (255, 0, 255)
 
 
 def load_palette(path: Path | None = None) -> list[tuple[int, int, int]]:
-    """Unique opaque colors of a palette image (e.g. a lospec PNG). Empty list if missing."""
     path = path or DEFAULT_PALETTE
     if not path.exists():
         return []
@@ -25,7 +23,6 @@ def load_palette(path: Path | None = None) -> list[tuple[int, int, int]]:
 
 def nearest_color(c: tuple[int, int, int], palette: list[tuple[int, int, int]]) -> tuple[int, int, int]:
     r, g, b = c
-    # Weighted RGB distance — cheap approximation of perceptual difference.
     return min(palette, key=lambda p: 2 * (p[0] - r) ** 2 + 4 * (p[1] - g) ** 2 + 3 * (p[2] - b) ** 2)
 
 

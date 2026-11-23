@@ -1,7 +1,4 @@
 extends Node2D
-## s01 restroom (one screen): walk like in the hall (WalkPlayer), the sink washes the old coffee out
-## of the cup, mirror/stalls/dryer are thoughts, the door goes back to the hall (its state is kept
-## in GameState flags by walk.gd). Spots: data/dialogues/s01_restroom.json.
 
 const HALL: String = "res://scenes/s01/walk.tscn"
 const WATER: String = "res://assets/audio/sfx/water.wav"
@@ -51,7 +48,7 @@ func _add_spot(s: Dictionary) -> void:
 	m.size = Vector2(float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
 	_spots_root.add_child(m)
 	m.custom_minimum_size = m.size
-	m.mouse_enabled = true  # click works on spots Alexei is near (E too)
+	m.mouse_enabled = true
 	m.activated.connect(func(id: String) -> void: _interact(id))
 	_spots[m.marker_id] = {"marker": m, "rect": r, "data": s}
 
@@ -90,7 +87,7 @@ func _label_for(id: String) -> String:
 func _unhandled_input(event: InputEvent) -> void:
 	if _busy or _near == "" or Hud.is_blocking():
 		return
-	if event.is_action_pressed("interact"):  # E only (Space pages thoughts)
+	if event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		_interact(_near)
 
@@ -100,7 +97,7 @@ func _interact(id: String) -> void:
 		return
 	var sd: Dictionary = _spots[id]["data"]
 	if not Hud.held_item.is_empty() and not (str(sd.get("kind", "")) in ["sink", "door"]):
-		Hud.set_held("")  # anything else: put the thing away and just look
+		Hud.set_held("")
 	match str(sd.get("kind", "")):
 		"door":
 			_busy = true
@@ -115,7 +112,6 @@ func _interact(id: String) -> void:
 				_thought.show_text(t, THOUGHT_TIME)
 
 
-## The old cup in hand: pour out yesterday's coffee and wash it; the hall moves from "wash" to "coffee1".
 func _sink() -> void:
 	if Hud.held_item != "cup_old":
 		if not Hud.held_item.is_empty():

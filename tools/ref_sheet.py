@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""Pack all reference images of a scene into ONE compact contact sheet for Claude.
-
-  python3 tools/ref_sheet.py <scene> [--tile 360] [--cols 4]
-
-Reads art/refs/<scene>/ (png/jpg/jpeg/webp/gif, any size), fits each image into a
---tile square (keeping aspect), captions it with a number + filename, and saves
-art/refs/<scene>/_sheet.jpg. Claude opens only this sheet (one image instead of
-many full-size files), and reads notes.md next to it.
-"""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import ROOT  # noqa: E402
+from _common import ROOT
 
 EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 CAPTION_H = 16
@@ -45,7 +36,6 @@ def main() -> int:
     for i, f in enumerate(files):
         img = Image.open(f).convert("RGB")
         scale = min(t / img.width, t / img.height)
-        # Upscaling small pixel art: keep it crisp; downscaling photos: smooth.
         method = Image.NEAREST if scale >= 1 else Image.LANCZOS
         img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), method)
         x = PAD + (i % cols) * (t + PAD)

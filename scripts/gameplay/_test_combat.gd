@@ -1,14 +1,11 @@
 extends Node3D
-## Тестовая арена первой перестрелки: камера следит за игроком по X,
-## ножевик впереди и два стрелка справа (победа — по всем врагам группы "enemies").
-## Смерть игрока / зачистка арены показывают текст и ждут Enter для перезапуска сцены.
 
 const RESULT_DIED: String = "YOU DIED — Enter to restart"
 const RESULT_CLEAR: String = "AREA CLEAR — Enter to restart"
 const CAMERA_Y: float = 1.9
 const CAMERA_Z: float = 7.5
 const CAMERA_FOLLOW_SPEED: float = 5.0
-const ENEMY_DEAD_STATE: int = 5  # EnemyShooter.State.DEAD
+const ENEMY_DEAD_STATE: int = 5
 
 var _player: Player
 var _camera: Camera3D

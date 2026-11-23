@@ -1,10 +1,8 @@
 class_name SaveSlotsPanel
 extends Control
-## Save / load window (pause menu and title screen). mode "save": slots 1–3 (overwrite at once);
-## mode "load": the autosave and slots 1–3, empty ones greyed out. Keyboard like the other menus.
 
 signal closed
-signal loading  ## a save was chosen: the scene is about to change
+signal loading
 
 var mode: String = "load"
 var _panel: PanelContainer

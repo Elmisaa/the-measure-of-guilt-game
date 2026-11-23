@@ -1,9 +1,5 @@
 class_name HintMarker
 extends Control
-## An interactive spot over a painted object. No visible marker: on hover thin corner
-## brackets appear and the cursor becomes a hand. Click -> activated(id).
-## (The periodic light glint is off — the user didn't like it; glint_enabled turns it back on.)
-## The Control's rect should cover the object.
 
 signal activated(marker_id: String)
 
@@ -18,10 +14,9 @@ const BRACKET: float = 5.0
 const BRACKET_COLOR: Color = Color(0.92, 0.95, 1.0, 0.55)
 
 var _hover: bool = false
-## Inactive spots show no hints and ignore the mouse (e.g. Alexei is too far away).
 var active: bool = true
 var _wait: float = 0.0
-var _glint: float = -1.0  # -1 idle, 0..1 sweep progress
+var _glint: float = -1.0
 
 
 func _ready() -> void:
@@ -33,7 +28,6 @@ func _ready() -> void:
 	_wait = randf_range(1.5, glint_every_max)
 
 
-## Walking scenes have no cursor: markers there only light up, they are used with E.
 var mouse_enabled: bool = true:
 	set(v):
 		mouse_enabled = v
@@ -71,7 +65,6 @@ func _draw() -> void:
 	if not active:
 		return
 	if _glint >= 0.0:
-		# a narrow diagonal sheen sweeping left -> right, faded at both ends
 		var w: float = 6.0
 		var x: float = lerpf(-size.y - w, size.x, _glint)
 		var a: float = glint_alpha * sin(PI * _glint)

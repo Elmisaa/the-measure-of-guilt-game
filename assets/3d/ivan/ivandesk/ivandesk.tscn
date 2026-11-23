@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="ivan_desk_mesh.glb" id="1_desk"]
+
+[node name="IvanDesk" type="Node3D"]
+
+[node name="Geometry" parent="." instance=ExtResource("1_desk")]
+
+[node name="DesktopSurface" type="Marker3D" parent="."]
+position = Vector3(0, 0.8, 0)

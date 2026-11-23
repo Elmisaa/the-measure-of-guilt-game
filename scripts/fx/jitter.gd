@@ -1,7 +1,5 @@
 class_name Jitter
 extends Node
-## Makes its parent Control/Node2D twitch by whole pixels (nervous, "ringing" feel).
-## Bursts of quick shakes with short calm gaps.
 
 @export var amplitude: int = 1
 @export var step_time: float = 0.05

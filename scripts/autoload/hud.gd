@@ -1,11 +1,7 @@
 extends CanvasLayer
-## Gameplay HUD. Autoload: Hud.
-## Top-right icons: current task (hover/click shows it), dialogue history (click opens log)
-## and Alexei's things (inventory: click or I). Bottom-left: stamina bar (in walking scenes).
 
 const CURSOR: String = "res://assets/ui/cursor.png"
 const CURSOR_HOVER: String = "res://assets/ui/cursor_hover.png"
-## What each key does, for the pause menu ("Управление") and the hint at the start of a walking scene.
 const CONTROLS: Array = [
 	["Ходьба", [["A / D,  ← →", "идти"], ["W / S,  ↑ ↓", "шаг к стене / от стены"], ["Shift", "бег (тратит силы)"],
 		["E  или  клик", "взаимодействовать"], ["I", "вещи"], ["Q / ПКМ", "убрать вещь из рук"]]],
@@ -23,6 +19,7 @@ const TASK_SHOW_TIME: float = 3.5
 const TASK_ANNOUNCE_TIME: float = 5.0
 
 var _root: Control
+const TASK_MAX_W: float = 300.0
 var _task_panel: PanelContainer
 var _task_label: Label
 var _task_hide_left: float = -1.0
@@ -34,7 +31,7 @@ var _last_entry: String = ""
 var _history_open: bool = false
 var _done_objectives: Array[String] = []
 var _log_entries: Array[String] = []
-var _info: Control  ## tasks / controls window from the pause menu
+var _info: Control
 var _info_box: VBoxContainer
 var _info_panel: PanelContainer
 var _saves: SaveSlotsPanel
@@ -50,7 +47,6 @@ var _stamina_on: bool = false
 var _stamina_fill: ColorRect
 var _hud_on: bool = false
 var _toasts: VBoxContainer
-## An item "in hand" (inventory -> "Взять в руку"): used on the next spot (E/click). Right click/Esc drops it.
 var held_item: String = ""
 var _held_icon: TextureRect
 var _held_label: Label
@@ -83,7 +79,7 @@ func _ready() -> void:
 	_container = InventoryPanel.new()
 	_root.add_child(_container)
 	_container.action_chosen.connect(_on_container_action)
-	_root.move_child(_item_thought, -1)  # thoughts stay readable over an open inventory
+	_root.move_child(_item_thought, -1)
 	_closeup = DocumentView.new()
 	add_child(_closeup)
 	_closeup.layer = layer + 5
@@ -202,13 +198,12 @@ func _input(event: InputEvent) -> void:
 		return
 
 
-# --- API ---------------------------------------------------------------
 
 func set_hud_visible(v: bool) -> void:
 	_hud_on = v
 	if not v:
 		hide_controls_hint()
-		for c: Node in _toasts.get_children():  # "Взято: ..." does not follow into a cutscene
+		for c: Node in _toasts.get_children():
 			c.queue_free()
 		_task_panel.visible = false
 		close_history()
@@ -220,11 +215,9 @@ func set_hud_visible(v: bool) -> void:
 		_on_stamina(GameState.stamina)
 
 
-## Changes are silent; announce = on entering a scene: the task plate shows under the icon for a while,
-## then hides (the player can hover/click the icon to see it again).
 func set_objective(text: String, announce: bool = false) -> void:
 	if not _objective.is_empty() and _objective != text and not _done_objectives.has(_objective):
-		_done_objectives.append(_objective)  # for "Задания" in the pause menu
+		_done_objectives.append(_objective)
 	_objective = text
 	_task_label.text = text
 	if announce:
@@ -237,7 +230,6 @@ func announce_objective() -> void:
 			_show_task(TASK_ANNOUNCE_TIME)).call_deferred()
 
 
-## The stamina bar belongs to scenes where Alexei walks (hall, restroom).
 func show_stamina(v: bool) -> void:
 	_stamina_on = v
 	_on_stamina(GameState.stamina)
@@ -251,12 +243,10 @@ func log_thought(text: String) -> void:
 	_add_entry("[color=%s]%s[/color]" % [THOUGHT_COLOR, text])
 
 
-## History, inventory or an item close-up is open: the scene should not react to input.
 func is_blocking() -> bool:
 	return _pause.visible or _history_open or _inventory.is_open() or _container.is_open() or _closeup.is_open()
 
 
-## A drawer / locker / board: its things in an inventory-style window.
 func open_container(cid: String) -> void:
 	close_history()
 	_inventory.close()
@@ -296,7 +286,6 @@ func is_inventory_open() -> bool:
 	return _inventory.is_open()
 
 
-## Same as clicking an item and an action in the inventory (tests use it too).
 func use_item(id: String, action: String) -> void:
 	_on_item_action(id, action)
 
@@ -337,7 +326,6 @@ func get_objective() -> String:
 	return _objective
 
 
-## New game: no tasks, no history.
 func reset_journal() -> void:
 	clear_log()
 	_objective = ""
@@ -359,16 +347,34 @@ func journal_from_dict(d: Dictionary) -> void:
 	_task_label.text = _objective
 
 
-# --- internals ---------------------------------------------------------
 
 func _show_task(duration: float) -> void:
 	if _objective.is_empty():
 		return
 	_task_panel.visible = true
+	_fit_task_label()
+	_task_hide_left = duration
+	_place_task()
+	await get_tree().process_frame
+	_place_task()
+
+
+func _place_task() -> void:
 	_task_panel.reset_size()
 	var s: Vector2 = _task_panel.get_combined_minimum_size()
+	_task_panel.size = s
 	_task_panel.position = Vector2(640.0 - MARGIN - s.x, MARGIN)
-	_task_hide_left = duration
+
+
+func _fit_task_label() -> void:
+	var f: Font = _task_label.get_theme_font("font")
+	var fs: int = _task_label.get_theme_font_size("font_size")
+	var w: float = f.get_string_size(_task_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 2.0
+	var wrap: bool = w > TASK_MAX_W
+	_task_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	_task_label.custom_minimum_size = Vector2(TASK_MAX_W if wrap else w, 0)
+	_task_label.size = Vector2.ZERO
+	_task_panel.size = Vector2.ZERO
 
 
 func _add_entry(bbcode: String) -> void:
@@ -406,11 +412,10 @@ func _build_stamina() -> void:
 	_stamina_root.visible = false
 
 
-## Shown only while running / recovering; reddish when nearly empty.
 func _on_stamina(v: float) -> void:
 	_stamina_fill.size.x = roundf(STAMINA_SIZE.x * v)
 	_stamina_fill.color = Color(0.62, 0.74, 0.7) if v > 0.25 else Color(0.78, 0.42, 0.36)
-	_stamina_root.visible = _hud_on and _stamina_on  # always on in walking scenes
+	_stamina_root.visible = _hud_on and _stamina_on
 
 
 func _build_held() -> void:
@@ -430,8 +435,6 @@ func _build_held() -> void:
 	_root.add_child(_held_label)
 
 
-## Esc in a game scene (nothing else open): pause — Продолжить / Задания / История диалогов / Вещи /
-## Управление / Сохранить / Загрузить / Настройки / В главное меню.
 func _build_pause() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_pause = Control.new()
@@ -485,7 +488,6 @@ func _build_pause() -> void:
 	_build_info()
 
 
-## A plain reading window over the pause menu: tasks or controls. Esc / Enter / click closes.
 func _build_info() -> void:
 	_info = Control.new()
 	_info.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -551,7 +553,7 @@ func _open_tasks() -> void:
 	_info_line("• " + (_objective if not _objective.is_empty() else "—"), Color(0.95, 0.88, 0.66))
 	if not _done_objectives.is_empty():
 		_info_line("Выполнено:", Color(0.45, 0.5, 0.55))
-		var from: int = maxi(0, _done_objectives.size() - 8)  # the last few
+		var from: int = maxi(0, _done_objectives.size() - 8)
 		for i: int in range(_done_objectives.size() - 1, from - 1, -1):
 			_info_line("✓ " + _done_objectives[i], Color(0.5, 0.54, 0.58))
 	_info_show()
@@ -581,7 +583,6 @@ func _key_row(parent: Control, key: String, what: String) -> void:
 	row.add_child(w)
 
 
-## Left side, at the start of a walking scene: what the keys do here. Fades out by itself.
 func _build_controls_hint() -> void:
 	_controls_hint = PanelContainer.new()
 	_controls_hint.add_theme_stylebox_override("panel", _panel_style(6.0))
@@ -702,7 +703,6 @@ func _build_tutorial() -> void:
 	_root.add_child(_tut_panel)
 
 
-## A control hint for the player (top centre). Stays until the scene hides it (the player did it).
 func show_tutorial(text: String) -> void:
 	_tut_label.text = text
 	_tut_panel.visible = true
@@ -726,7 +726,6 @@ func _held_text(id: String) -> String:
 	return "В руке: %s   (клик — применить, ПКМ/Esc — убрать)" % n
 
 
-## Walking scenes: the held thing's hint speaks about E; the cursor stays visible everywhere.
 func set_walk_mode(v: bool) -> void:
 	walk_mode = v
 	if not held_item.is_empty():
@@ -740,8 +739,6 @@ func _update_cursor() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-## The game's own pixel cursor (pen nib): plain, and warm amber over anything clickable
-## (Controls with the pointing-hand shape). Scaled with the window so the pixels stay whole.
 func _setup_cursor() -> void:
 	if DisplayServer.get_name() == "headless" or not ResourceLoader.exists(CURSOR):
 		return
@@ -757,7 +754,6 @@ func _setup_cursor() -> void:
 		Input.set_custom_mouse_cursor(ImageTexture.create_from_image(img), pair[1], Vector2.ZERO)
 
 
-## Put an item in Alexei's hand ("" = empty hands). Its icon follows the mouse (or sits in the corner).
 func set_held(id: String) -> void:
 	held_item = id
 	var on: bool = not id.is_empty()
@@ -790,7 +786,6 @@ func _on_item_action(id: String, action: String) -> void:
 		_item_thought.show_text(text, 3.5)
 
 
-## A close-up from the world (photo on a desk, a notice): {closeup, text, text_rect, reaction}.
 func open_closeup(doc: Dictionary) -> void:
 	_closeup.open(doc)
 
@@ -799,7 +794,6 @@ func is_closeup_open() -> bool:
 	return _closeup.is_open()
 
 
-## "Взято: <item>" with its icon, top-left; fades out by itself. Several stack.
 func show_item_taken(id: String) -> void:
 	var d: Dictionary = GameState.item_def(id)
 	var panel: PanelContainer = PanelContainer.new()

@@ -1,16 +1,10 @@
 extends SceneTree
-## Smoke test for the enemy shooter and the first firefight:
-## bullet.configure layers/colors, IDLE → TELEGRAPH (flash) → SHOOTING (3 enemy bullets) → COOLDOWN,
-## enemy bullet damages an open player, cover soaks the burst and breaks after 4 hits (player unharmed),
-## 3 player shots (25 dmg) kill a 75 HP enemy, apply_stun interrupts TELEGRAPH.
-## godot --headless --path . -s res://tests/test_combat.gd
 
 const PlayerScript: Script = preload("res://scripts/gameplay/player.gd")
 const EnemyScript: Script = preload("res://scripts/gameplay/enemy_shooter.gd")
 const MeleeScript: Script = preload("res://scripts/gameplay/enemy_melee.gd")
 const SAFETY_TIMEOUT: float = 90.0
 
-## 1 = World, 2 = Player, 3 = Enemy, 4 = Cover, 5 = PlayerBullet, 6 = EnemyBullet.
 const LAYER_PLAYER_BULLET: int = 16
 const MASK_PLAYER_BULLET: int = 1 | 4 | 8
 const LAYER_ENEMY_BULLET: int = 32
@@ -38,7 +32,6 @@ func _check(condition: bool, message: String) -> void:
 		_fail(message)
 
 
-## Process frames: input state and deferred frees are flushed by the main loop.
 func _frames(count: int) -> void:
 	for i in count:
 		await process_frame
@@ -116,7 +109,6 @@ func _wait_for_state(enemy: Node3D, wanted: int, max_frames: int) -> bool:
 
 
 func _run() -> void:
-	# --- configure(): слои, маски, урон и сторона пули --------------------
 	var bullet_scene: PackedScene = load("res://scenes/gameplay/bullet.tscn") as PackedScene
 	var player_bullet: Node3D = bullet_scene.instantiate() as Node3D
 	player_bullet.call("configure", Vector3.RIGHT, false, 25, 22.0)
@@ -135,7 +127,6 @@ func _run() -> void:
 	_check(bool(enemy_bullet.get("is_enemy")), "enemy bullet is not marked as enemy")
 	enemy_bullet.free()
 
-	# --- мир: пол, игрок ---------------------------------------------------
 	var world: Node3D = Node3D.new()
 	world.name = "CombatWorld"
 	root.add_child(world)
@@ -146,7 +137,6 @@ func _run() -> void:
 	await _frames(4)
 	_check(player.get_active_cover() == null, "get_active_cover() is not null outside cover")
 
-	# --- цикл врага: IDLE → TELEGRAPH → SHOOTING (3 пули) → COOLDOWN -------
 	var shot_dirs: Array[Vector3] = []
 	var bullet_layers: Array[int] = []
 	var enemy: Node3D = _make_enemy(world, Vector3(3.5, 0, 0), {})
@@ -189,12 +179,10 @@ func _run() -> void:
 	if debug_label != null:
 		_check(debug_label.text.contains("COOLDOWN"), "debug label does not show COOLDOWN: " + debug_label.text)
 
-	# Пуля врага ранит открытого игрока
 	await create_timer(0.4).timeout
 	_check(player.health < 100, "open player took no damage from enemy bullets: %d" % player.health)
 	_check(player.health > 0, "open player died from a single burst")
 
-	# --- укрытие: пули бьют по ящику, игрок не ранен ----------------------
 	enemy.queue_free()
 	_clear_bullets(world)
 	await _frames(2)
@@ -227,7 +215,6 @@ func _run() -> void:
 	_check(not player.is_in_cover(), "player stayed in cover after the crate broke")
 	_check(player.get_active_cover() == null, "get_active_cover() is not null after the crate broke")
 
-	# --- 3 выстрела игрока убивают врага (75 HP) --------------------------
 	cover_enemy.queue_free()
 	_clear_bullets(world)
 	await _frames(2)
@@ -251,7 +238,6 @@ func _run() -> void:
 	if victim_flash != null:
 		_check(not victim_flash.visible, "telegraph flash is visible on a dead enemy")
 
-	# --- apply_stun прерывает TELEGRAPH -----------------------------------
 	var stunned_enemy: Node3D = _make_enemy(world, Vector3(3.5, 0, 0), {"telegraph_time": 5.0})
 	var stun_flash: Node3D = stunned_enemy.get_node("Visual/TelegraphFlash") as Node3D
 	_check(await _wait_for_state(stunned_enemy, EnemyScript.State.TELEGRAPH, 120), "enemy did not enter TELEGRAPH before stun")
@@ -266,7 +252,6 @@ func _run() -> void:
 	await create_timer(0.8).timeout
 	_check(int(stunned_enemy.get("state")) != EnemyScript.State.STUNNED, "stun did not end")
 
-	# --- выбор цели: пуля летит мимо ножевика в выбранного стрелка --------
 	_clear_enemies()
 	_clear_bullets(world)
 	await _frames(2)
@@ -302,7 +287,6 @@ func _run() -> void:
 	_check(int(far.get("health")) < far_hp, "selected shooter took no damage: %d" % int(far.get("health")))
 	_check(int(blocker.get("health")) == blocker_hp, "melee blocker took damage instead of the selected shooter")
 
-	# --- выбор цели работает в COVER -------------------------------------
 	var cover_target: Cover = _make_cover(world, Vector3(0, 0, 0.35), Vector3(1.4, 1.05, 1.0), false)
 	await _frames(2)
 	Input.action_press("combat_cover")
@@ -316,7 +300,6 @@ func _run() -> void:
 	cover_target.queue_free()
 	await _frames(2)
 
-	# --- EnemyMelee: CHASE → WINDUP → ATTACK, выбивает игрока из укрытия --
 	_clear_enemies()
 	_clear_bullets(world)
 	await _frames(2)
@@ -356,7 +339,6 @@ func _run() -> void:
 	cover_ai.queue_free()
 	await _frames(2)
 
-	# --- ПКМ: 15 урона, прерывание WINDUP, стан и отбрасывание > 1 м ------
 	_clear_enemies()
 	_clear_bullets(world)
 	await _frames(2)
@@ -382,7 +364,6 @@ func _run() -> void:
 	_clear_bullets(world)
 	await _frames(2)
 
-	# --- тестовая арена собирается ----------------------------------------
 	var combat_scene: PackedScene = load("res://scenes/gameplay/_test_combat.tscn") as PackedScene
 	_check(combat_scene != null, "_test_combat.tscn did not load")
 	if combat_scene != null:
