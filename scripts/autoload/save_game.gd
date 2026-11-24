@@ -21,6 +21,7 @@ const SCENES: Dictionary = {
 	"res://scenes/s04/ivan_flat.tscn": "Квартира Ивана",
 	"res://scenes/s04/ivan_talk.tscn": "Квартира Ивана. Разговор",
 	"res://scenes/s06/factory_present.tscn": "Заброшенный завод",
+	"res://scenes/s07/final_arena.tscn": "Последний приговор",
 }
 
 var _loading: bool = false

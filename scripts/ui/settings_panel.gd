@@ -6,6 +6,7 @@ signal closed
 var _panel: PanelContainer
 var _first: Control
 var _rows: Array[Control] = []
+var _bindings: PanelContainer
 
 
 func _ready() -> void:
@@ -44,6 +45,18 @@ func _ready() -> void:
 		_changed())
 	col.add_child(px)
 	_rows.append(px)
+	var keys: Button = MenuUI.button("Клавиши")
+	col.add_child(keys)
+	_rows.append(keys)
+	_bindings = preload("res://scripts/ui/key_bindings_panel.gd").new()
+	add_child(_bindings)
+	keys.pressed.connect(func() -> void:
+		_panel.hide()
+		_bindings.open())
+	_bindings.visibility_changed.connect(func() -> void:
+		if not _bindings.visible and visible:
+			_panel.show()
+			keys.grab_focus())
 	var hint: Label = Label.new()
 	hint.text = "↑↓ — выбор, ←→ — изменить, Esc — назад"
 	hint.add_theme_color_override("font_color", Color(0.45, 0.5, 0.55))
@@ -125,6 +138,8 @@ func close() -> void:
 	if not visible:
 		return
 	visible = false
+	_bindings.hide()
+	_panel.show()
 	closed.emit()
 
 
@@ -134,6 +149,9 @@ func is_open() -> bool:
 
 func _input(event: InputEvent) -> void:
 	if not visible:
+		return
+	if _bindings.visible:
+		_bindings.handle_input(event)
 		return
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()

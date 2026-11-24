@@ -3,13 +3,30 @@ extends CanvasLayer
 const CURSOR: String = "res://assets/ui/cursor.png"
 const CURSOR_HOVER: String = "res://assets/ui/cursor_hover.png"
 const CONTROLS: Array = [
-	["Ходьба", [["A / D,  ← →", "идти"], ["W / S,  ↑ ↓", "шаг к стене / от стены"], ["Shift", "бег (тратит силы)"],
-		["E  или  клик", "взаимодействовать"], ["I", "вещи"], ["Q / ПКМ", "убрать вещь из рук"]]],
-	["Сцены и диалоги", [["Клик", "осмотреть, выбрать"], ["Пробел / клик", "дальше по тексту"]]],
-	["Меню", [["Esc", "пауза: задания, история, сохранение"], ["↑ ↓ / W S,  Enter", "выбор в меню"]]],
+	["Перемещение", [
+		["{move_left} / {move_right}", "влево / вправо"],
+		["{move_up} / {move_down}", "вглубь / к камере"],
+		["{run}", "бег"],
+		["{interact} / клик", "взаимодействовать"],
+	]],
+	["Предметы", [
+		["{pickup_dropped} / клик", "поднять выброшенный предмет"],
+		["{inventory}", "инвентарь → выбросить"],
+		["{stow_item} / ПКМ", "убрать вещь из рук"],
+	]],
+	["Завод и бой", [
+		["{flashlight}", "фонарь"],
+		["{boss_dash} / {combat_reload}", "рывок / перезарядка"],
+		["ЛКМ", "выстрел"],
+	]],
+	["Диалоги и меню", [["Пробел / клик", "дальше по тексту"], ["Esc", "пауза"]]],
 ]
-const WALK_CONTROLS: Array = [["A / D", "идти"], ["W / S", "шаг вглубь"], ["Shift", "бег"], ["E / клик", "действие"],
-	["I", "вещи"], ["Esc", "меню"]]
+const WALK_CONTROLS: Array = [
+	["{move_left} / {move_right}", "идти"], ["{move_up} / {move_down}", "шаг вглубь"],
+	["{run}", "бег"], ["{interact} / клик", "действие"],
+	["{pickup_dropped}", "поднять выброшенное"],
+	["{inventory}", "вещи"], ["Esc", "меню"],
+]
 const STAMINA_POS: Vector2 = Vector2(8, 346)
 const STAMINA_SIZE: Vector2 = Vector2(64, 4)
 const MARGIN: float = 8.0
@@ -86,11 +103,6 @@ func _ready() -> void:
 	_closeup = DocumentView.new()
 	add_child(_closeup)
 	_closeup.layer = layer + 5
-	if not InputMap.has_action("inventory"):
-		InputMap.add_action("inventory")
-		var ev: InputEventKey = InputEventKey.new()
-		ev.physical_keycode = KEY_I
-		InputMap.action_add_event("inventory", ev)
 	GameState.stamina_changed.connect(_on_stamina)
 	GameState.item_added.connect(show_item_taken)
 	_build_held()
@@ -102,6 +114,10 @@ func _ready() -> void:
 	_toasts.add_theme_constant_override("separation", 4)
 	_toasts.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_toasts)
+	Settings.bindings_changed.connect(func() -> void:
+		_task_label.text = get_objective()
+		if not held_item.is_empty():
+			_held_label.text = _held_text(held_item))
 	set_hud_visible(false)
 	_setup_cursor()
 	get_tree().root.size_changed.connect(_setup_cursor)
@@ -188,15 +204,13 @@ func _input(event: InputEvent) -> void:
 		return
 	if _pause.visible:
 		return
-	var key: InputEventKey = event as InputEventKey
-	if key and key.pressed and not key.echo and key.physical_keycode == KEY_G and _ground_pickup.visible and not is_blocking():
+	if event.is_action_pressed("pickup_dropped") and _ground_pickup.visible and not is_blocking():
 		get_viewport().set_input_as_handled()
 		_ground_pickup.pick_up()
 		return
 	if not held_item.is_empty() and not is_blocking():
 		var mb: InputEventMouseButton = event as InputEventMouseButton
-		var kq: InputEventKey = event as InputEventKey
-		var drop_key: bool = kq != null and kq.pressed and not kq.echo and kq.physical_keycode == KEY_Q
+		var drop_key: bool = event.is_action_pressed("stow_item")
 		if event.is_action_pressed("ui_cancel") or drop_key or (mb and mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT):
 			get_viewport().set_input_as_handled()
 			set_held("")
@@ -228,7 +242,7 @@ func set_objective(text: String, announce: bool = false) -> void:
 	if not _objective.is_empty() and _objective != text and not _done_objectives.has(_objective):
 		_done_objectives.append(_objective)
 	_objective = text
-	_task_label.text = text
+	_task_label.text = get_objective()
 	if announce:
 		announce_objective()
 
@@ -333,7 +347,7 @@ func clear_log() -> void:
 
 
 func get_objective() -> String:
-	return _objective
+	return Settings.format_keys(_objective)
 
 
 func reset_journal() -> void:
@@ -354,7 +368,7 @@ func journal_from_dict(d: Dictionary) -> void:
 	for e: Variant in d.get("log", []):
 		_add_entry(str(e))
 	_objective = str(d.get("objective", ""))
-	_task_label.text = _objective
+	_task_label.text = get_objective()
 
 
 
@@ -430,6 +444,8 @@ func _on_stamina(v: float) -> void:
 
 func _build_held() -> void:
 	_held_icon = TextureRect.new()
+	_held_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_held_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_held_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_held_icon.size = Vector2(32, 32)
 	_held_icon.modulate = Color(1, 1, 1, 0.9)
@@ -565,7 +581,7 @@ func _open_tasks() -> void:
 		_info_line("Выполнено:", Color(0.45, 0.5, 0.55))
 		var from: int = maxi(0, _done_objectives.size() - 8)
 		for i: int in range(_done_objectives.size() - 1, from - 1, -1):
-			_info_line("✓ " + _done_objectives[i], Color(0.5, 0.54, 0.58))
+			_info_line("✓ " + Settings.format_keys(_done_objectives[i]), Color(0.5, 0.54, 0.58))
 	_info_show()
 
 
@@ -574,7 +590,7 @@ func _open_controls() -> void:
 	for sec: Array in CONTROLS:
 		_info_line(str(sec[0]), Color(0.62, 0.86, 0.72))
 		for kv: Array in sec[1]:
-			_key_row(_info_box, str(kv[0]), str(kv[1]))
+			_key_row(_info_box, Settings.format_keys(str(kv[0])), str(kv[1]))
 	_info_show()
 
 
@@ -617,7 +633,7 @@ func show_controls_hint(sec: float = 9.0) -> void:
 		row.add_theme_constant_override("separation", 6)
 		col.add_child(row)
 		var k: Label = Label.new()
-		k.text = str(kv[0])
+		k.text = Settings.format_keys(str(kv[0]))
 		k.custom_minimum_size = Vector2(62, 0)
 		k.add_theme_color_override("font_color", Color(0.95, 0.88, 0.66))
 		row.add_child(k)
@@ -732,7 +748,7 @@ func tutorial_text() -> String:
 func _held_text(id: String) -> String:
 	var n: String = str(GameState.item_def(id).get("name", id))
 	if walk_mode:
-		return "В руке: %s   (E / клик у нужного места — применить, Q/ПКМ — убрать)" % n
+		return Settings.format_keys("В руке: %s   ({interact} / клик — применить, {stow_item} / ПКМ — убрать)" % n)
 	return "В руке: %s   (клик — применить, ПКМ/Esc — убрать)" % n
 
 
@@ -792,10 +808,11 @@ func _on_item_action(id: String, action: String) -> void:
 	var text: String = GameState.item_thought(id, action)
 	var closeup: String = str(GameState.item_def(id).get("closeup", ""))
 	GameState.use_item(id, action)
+	var d: Dictionary = GameState.item_def(id)
+	var written: String = str(d.get("closeup_text", ""))
 	if action == "look" and not closeup.is_empty():
-		var d: Dictionary = GameState.item_def(id)
-		var doc: Dictionary = {"closeup": closeup, "text": str(d.get("closeup_text", "")), "reaction": text}
-		for k: String in ["text_rect", "texts"]:
+		var doc: Dictionary = {"closeup": closeup, "text": written, "reaction": text}
+		for k: String in ["text_rect", "texts", "photos"]:
 			if d.has(k):
 				doc[k] = d[k]
 		_closeup.open(doc)
@@ -821,6 +838,8 @@ func show_item_taken(id: String) -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(row)
 	var icon: TextureRect = TextureRect.new()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2(32, 32)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var path: String = str(d.get("icon", ""))

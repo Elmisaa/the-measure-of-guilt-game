@@ -69,6 +69,12 @@ func _run() -> void:
 	await _wait(3.0)
 	var f: Node = current_scene
 	var pl: Node3D = f.get_node("Player")
+	var sprite: Sprite3D = pl.get_node("AnimatedSprite")
+	var camera: Camera3D = root.get_camera_3d()
+	if not sprite.shaded or not is_equal_approx(camera.size, 5.6):
+		push_error("FAIL sprite lighting and camera scale should match the Ivan playtest"); ok = false
+	if not (f.get_node("Ivan") as Sprite3D).shaded:
+		push_error("FAIL Ivan sprite has to respond to room lights"); ok = false
 	for x: float in [-13.5, -4.4, 3.9, 11.0]:
 		pl.position.x = x
 		await _wait(0.4)
@@ -87,7 +93,7 @@ func _run() -> void:
 	for need: String in ["choice", "punch"]:
 		if not seen.has(need):
 			push_error("FAIL talk skipped %s" % need); ok = false
-	if (_choice == "2") != gs.has_item("journal"):
+	if (_choice == "2") != gs.has_item("journal") or (_choice == "2") != bool(gs.get_flag("argument_2", false)):
 		push_error("FAIL journal item vs choice %s" % _choice); ok = false
 	await _wait(1.6)
 	var f2: Node = current_scene
@@ -135,7 +141,7 @@ func _run() -> void:
 			click.button_index = MOUSE_BUTTON_LEFT
 			click.pressed = false
 			Input.parse_input_event(click)
-		if not saw_final_pose and mikhail.frame == 7 and fyodor.frame == 7 and overhead.light_energy == 0.0 and lit_lamp.material_override == null:
+		if not saw_final_pose and mikhail.frame == 7 and fyodor.frame == 1 and overhead.light_energy == 0.0 and lit_lamp.material_override == null:
 			saw_final_pose = true
 			await _wait(0.36)
 			await _shot("flashback_end")

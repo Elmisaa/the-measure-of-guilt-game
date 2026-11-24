@@ -26,6 +26,7 @@ var _chapter: Label
 
 
 func _ready() -> void:
+	Audio.play_start_ambience()
 	Letterbox.show_bars()
 	Hud.set_hud_visible(false)
 	_coffee.visible = false

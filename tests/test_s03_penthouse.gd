@@ -66,6 +66,29 @@ func _run() -> void:
 		push_error("FAIL Alexei did not walk right: %.2f -> %.2f" % [x0, pl.position.x]); ok = false
 	if cam.position.x <= c0 + 0.5:
 		push_error("FAIL camera did not follow"); ok = false
+	var before_depth: float = pl.position.z
+	var before_screen: float = cam.unproject_position(pl.global_position).y
+	var depth_key: InputEventKey = InputEventKey.new()
+	depth_key.keycode = KEY_W
+	depth_key.physical_keycode = KEY_W
+	depth_key.pressed = true
+	Input.parse_input_event(depth_key)
+	await _wait(0.35)
+	var away: float = pl.position.z
+	var away_screen: float = cam.unproject_position(pl.global_position).y
+	var release: InputEventKey = depth_key.duplicate()
+	release.pressed = false
+	Input.parse_input_event(release)
+	var toward: InputEventKey = depth_key.duplicate()
+	toward.keycode = KEY_S
+	toward.physical_keycode = KEY_S
+	Input.parse_input_event(toward)
+	await _wait(0.35)
+	var toward_release: InputEventKey = toward.duplicate()
+	toward_release.pressed = false
+	Input.parse_input_event(toward_release)
+	if away >= before_depth - 0.75 or pl.position.z <= away + 0.75 or before_screen - away_screen < 15.0:
+		push_error("FAIL W and S should move Alexei in both depth directions"); ok = false
 	await _shot("2_walking")
 	pl.position.x = 3.1
 	await _wait(0.3)

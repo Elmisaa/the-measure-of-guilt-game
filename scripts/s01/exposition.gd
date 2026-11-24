@@ -26,6 +26,7 @@ var _shown_chars: int = 0
 
 
 func _ready() -> void:
+	Audio.play_start_ambience()
 	var all: Dictionary = DialogueData.load_file("s01_precinct")
 	_data_all = all
 	_data = all.get("exposition", {})

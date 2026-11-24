@@ -1,0 +1,555 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/3d/factory/workshop/art/gate_mark.png" id="T_gate_mark"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/workshop/art/gate_sheet.png" id="T_gate_sheet"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/workshop/art/hazard.png" id="T_hazard"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/workshop/art/FoundryColumn/ColumnPatina.png" id="T_return_wall"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/workshop/art/approach_floor.png" id="T_return_floor"]
+
+[sub_resource type="StandardMaterial3D" id="ReturnWallMaterial"]
+albedo_color = Color(0.52, 0.56, 0.63, 1)
+albedo_texture = ExtResource("T_return_wall")
+texture_filter = 0
+uv1_triplanar = true
+uv1_scale = Vector3(0.55, 0.55, 0.55)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="ReturnWall"]
+size = Vector3(4.8, 7.2, 0.35)
+material = SubResource("ReturnWallMaterial")
+
+[sub_resource type="StandardMaterial3D" id="ReturnFloorMaterial"]
+albedo_color = Color(0.56, 0.62, 0.72, 1)
+albedo_texture = ExtResource("T_return_floor")
+texture_filter = 0
+roughness = 0.88
+
+[sub_resource type="PlaneMesh" id="ReturnFloor"]
+size = Vector2(4.8, 6.0)
+material = SubResource("ReturnFloorMaterial")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_557_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_557_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_557_Surface")
+size = Vector3(0.4, 10.8, 11.144068)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_559_Collision"]
+resource_local_to_scene = true
+size = Vector3(0.4, 10.8, 6.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_560_RearPierEastSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_560_RearPierEastSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_560_RearPierEastSkin")
+size = Vector2(6.7, 10.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_562_RearPierWestSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_562_RearPierWestSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_562_RearPierWestSkin")
+size = Vector2(6.7, 10.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_564_GateRail0_0"]
+resource_local_to_scene = true
+albedo_color = Color(0.517647, 0.45098, 0.4, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_564_GateRail0_0"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_564_GateRail0_0")
+size = Vector3(0.09, 3.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_566_GateRail0_1"]
+resource_local_to_scene = true
+albedo_color = Color(0.517647, 0.45098, 0.4, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_566_GateRail0_1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_566_GateRail0_1")
+size = Vector3(0.09, 3.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_568_GateBuffer01"]
+resource_local_to_scene = true
+albedo_color = Color(0.152941, 0.156863, 0.188235, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_568_GateBuffer01"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_568_GateBuffer01")
+size = Vector3(0.18, 1.36, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_570_BufferStripe01"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_hazard")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_570_BufferStripe01"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_570_BufferStripe01")
+size = Vector2(0.34, 1.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_572_GateBuffer11"]
+resource_local_to_scene = true
+albedo_color = Color(0.152941, 0.156863, 0.188235, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_572_GateBuffer11"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_572_GateBuffer11")
+size = Vector3(0.18, 1.36, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_574_BufferStripe11"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_hazard")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_574_BufferStripe11"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_574_BufferStripe11")
+size = Vector2(0.34, 1.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_576_SideCode0"]
+resource_local_to_scene = true
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("T_gate_mark")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_576_SideCode0"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_576_SideCode0")
+size = Vector2(0.87, 0.47)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_578_SideCode1"]
+resource_local_to_scene = true
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("T_gate_mark")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_578_SideCode1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_578_SideCode1")
+size = Vector2(0.87, 0.47)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_580_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_580_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_580_Surface")
+size = Vector3(0.4, 10.8, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_582_Collision"]
+resource_local_to_scene = true
+size = Vector3(0.4, 10.8, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_583_FrontPierEastSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_583_FrontPierEastSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_583_FrontPierEastSkin")
+size = Vector2(1.5, 10.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_585_FrontPierWestSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_585_FrontPierWestSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_585_FrontPierWestSkin")
+size = Vector2(1.5, 10.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_587_GateRail1_0"]
+resource_local_to_scene = true
+albedo_color = Color(0.517647, 0.45098, 0.4, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_587_GateRail1_0"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_587_GateRail1_0")
+size = Vector3(0.09, 3.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_589_GateRail1_1"]
+resource_local_to_scene = true
+albedo_color = Color(0.517647, 0.45098, 0.4, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_589_GateRail1_1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_589_GateRail1_1")
+size = Vector3(0.09, 3.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_591_GateBuffer00"]
+resource_local_to_scene = true
+albedo_color = Color(0.152941, 0.156863, 0.188235, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_591_GateBuffer00"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_591_GateBuffer00")
+size = Vector3(0.18, 1.36, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_593_BufferStripe00"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_hazard")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_593_BufferStripe00"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_593_BufferStripe00")
+size = Vector2(0.34, 1.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_595_GateBuffer10"]
+resource_local_to_scene = true
+albedo_color = Color(0.152941, 0.156863, 0.188235, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_595_GateBuffer10"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_595_GateBuffer10")
+size = Vector3(0.18, 1.36, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_597_BufferStripe10"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_hazard")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_597_BufferStripe10"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_597_BufferStripe10")
+size = Vector2(0.34, 1.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_599_FrontFlange"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_599_FrontFlange"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_599_FrontFlange")
+size = Vector3(0.48557615, 10.738818, 4.9366837)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pkatc"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_599_FrontFlange")
+size = Vector3(0.48557615, 10.738818, 13.501139)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_605_SectorMark"]
+resource_local_to_scene = true
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("T_gate_mark")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_605_SectorMark"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_605_SectorMark")
+size = Vector2(0.48, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_607_PilotHousing"]
+resource_local_to_scene = true
+albedo_color = Color(0.145098, 0.160784, 0.203922, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_607_PilotHousing"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_607_PilotHousing")
+size = Vector3(0.31, 0.24, 0.14)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_609_PilotLight"]
+resource_local_to_scene = true
+albedo_color = Color(0.94902, 0.388235, 0.286275, 1)
+roughness = 0.86
+emission_enabled = true
+emission = Color(0.980392, 0.223529, 0.113725, 1)
+emission_energy_multiplier = 1.7
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_609_PilotLight"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_609_PilotLight")
+size = Vector3(0.15, 0.13, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_611_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_611_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_611_Surface")
+size = Vector3(0.4, 7, 3.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_613_Collision"]
+resource_local_to_scene = true
+size = Vector3(0.4, 7, 3.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_614_LintelEastSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_614_LintelEastSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_614_LintelEastSkin")
+size = Vector2(3.8, 7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_616_LintelWestSkin"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_gate_sheet")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_616_LintelWestSkin"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_616_LintelWestSkin")
+size = Vector2(3.8, 7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_618_GateHead"]
+resource_local_to_scene = true
+albedo_color = Color(0.396078, 0.282353, 0.243137, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_618_GateHead"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_618_GateHead")
+size = Vector3(0.52, 0.26, 4.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_622_GatePilotBase1"]
+resource_local_to_scene = true
+albedo_color = Color(0.145098, 0.160784, 0.203922, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_622_GatePilotBase1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_622_GatePilotBase1")
+size = Vector3(0.19, 0.25, 0.72)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_626_GatePilotLens1"]
+resource_local_to_scene = true
+albedo_color = Color(0.94902, 0.388235, 0.286275, 1)
+roughness = 0.86
+emission_enabled = true
+emission = Color(0.980392, 0.223529, 0.113725, 1)
+emission_energy_multiplier = 1.7
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_626_GatePilotLens1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_626_GatePilotLens1")
+size = Vector3(0.035, 0.1, 0.31)
+
+[node name="WorkshopEntrance" type="Node3D"]
+
+[node name="ReturnWall" type="MeshInstance3D" parent="."]
+position = Vector3(5.38, 3.58, -4.23)
+mesh = SubResource("ReturnWall")
+
+[node name="ReturnFloor" type="MeshInstance3D" parent="."]
+position = Vector3(5.38, 0, -1.14)
+mesh = SubResource("ReturnFloor")
+
+[node name="RearPier" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.4, -5.05)
+
+[node name="Surface" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.222034)
+mesh = SubResource("BoxMesh_557_Surface")
+
+[node name="Collision" type="CollisionShape3D" parent="RearPier"]
+shape = SubResource("BoxShape3D_559_Collision")
+
+[node name="RearPierEastSkin" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_560_RearPierEastSkin")
+
+[node name="RearPierWestSkin" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_562_RearPierWestSkin")
+
+[node name="GateRail0_0" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.245, -3.5, 3.275)
+mesh = SubResource("BoxMesh_564_GateRail0_0")
+
+[node name="GateRail0_1" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.245, -3.5, 3.275)
+mesh = SubResource("BoxMesh_566_GateRail0_1")
+
+[node name="GateBuffer01" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -4.72, 3.12)
+mesh = SubResource("BoxMesh_568_GateBuffer01")
+
+[node name="BufferStripe01" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.395, -4.71, 3.12)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_570_BufferStripe01")
+
+[node name="GateBuffer11" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, -4.72, 3.12)
+mesh = SubResource("BoxMesh_572_GateBuffer11")
+
+[node name="BufferStripe11" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.395, -4.71, 3.12)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_574_BufferStripe11")
+
+[node name="SideCode0" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-1.06872776e-07, 0, 1.0000001, 0, 3.1113284, 0, -2.4449642, 0, -4.3711392e-08, 0.3, -2.9292026, 1.4603429)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_576_SideCode0")
+
+[node name="SideCode1" type="MeshInstance3D" parent="RearPier"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.3, -2.3, 2.6)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_578_SideCode1")
+
+[node name="FrontPier" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.4, 2.85)
+
+[node name="Surface" type="MeshInstance3D" parent="FrontPier"]
+mesh = SubResource("BoxMesh_580_Surface")
+
+[node name="Collision" type="CollisionShape3D" parent="FrontPier"]
+shape = SubResource("BoxShape3D_582_Collision")
+
+[node name="FrontPierEastSkin" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_583_FrontPierEastSkin")
+
+[node name="FrontPierWestSkin" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_585_FrontPierWestSkin")
+
+[node name="GateRail1_0" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.245, -3.5, -0.675)
+mesh = SubResource("BoxMesh_587_GateRail1_0")
+
+[node name="GateRail1_1" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.245, -3.5, -0.675)
+mesh = SubResource("BoxMesh_589_GateRail1_1")
+
+[node name="GateBuffer00" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -4.72, -0.52)
+mesh = SubResource("BoxMesh_591_GateBuffer00")
+
+[node name="BufferStripe00" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.395, -4.71, -0.52)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_593_BufferStripe00")
+
+[node name="GateBuffer10" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, -4.72, -0.52)
+mesh = SubResource("BoxMesh_595_GateBuffer10")
+
+[node name="BufferStripe10" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.395, -4.71, -0.52)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_597_BufferStripe10")
+
+[node name="FrontFlange" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.047211915, -0.07443857, 3.042232)
+mesh = SubResource("BoxMesh_599_FrontFlange")
+
+[node name="SectorMark" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.84, 0.833)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_605_SectorMark")
+
+[node name="PilotHousing" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.18, 0.87)
+mesh = SubResource("BoxMesh_607_PilotHousing")
+
+[node name="PilotLight" type="MeshInstance3D" parent="FrontPier"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.17, 0.95)
+mesh = SubResource("BoxMesh_609_PilotLight")
+
+[node name="Lintel" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 0.2)
+
+[node name="Surface" type="MeshInstance3D" parent="Lintel"]
+mesh = SubResource("BoxMesh_611_Surface")
+
+[node name="Collision" type="CollisionShape3D" parent="Lintel"]
+shape = SubResource("BoxShape3D_613_Collision")
+
+[node name="LintelEastSkin" type="MeshInstance3D" parent="Lintel"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_614_LintelEastSkin")
+
+[node name="LintelWestSkin" type="MeshInstance3D" parent="Lintel"]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.204, 0, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_616_LintelWestSkin")
+
+[node name="GateHead" type="MeshInstance3D" parent="Lintel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.37, 0)
+mesh = SubResource("BoxMesh_618_GateHead")
+
+[node name="GatePilotBase1" type="MeshInstance3D" parent="Lintel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, -3.06, 0)
+mesh = SubResource("BoxMesh_622_GatePilotBase1")
+
+[node name="GatePilotLens1" type="MeshInstance3D" parent="Lintel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.41, -3.06, 0)
+mesh = SubResource("BoxMesh_626_GatePilotLens1")
+
+[node name="GateSocket" type="Marker3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0.2)
+metadata/clear_width_m = 3.8
+metadata/clear_height_m = 3.8

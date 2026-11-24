@@ -1,5 +1,5 @@
 class_name WalkPlayer
-extends Node2D
+extends CharacterBody2D
 
 signal moved(x: float)
 
@@ -21,7 +21,7 @@ const BREATH: String = "res://assets/audio/sfx/breath.wav"
 var y_far: float = 346.0
 var y_near: float = 346.0
 var scale_far: float = 1.0
-@export var depth_speed: float = 40.0
+@export var depth_speed: float = 82.0
 var min_x: float = 0.0
 var max_x: float = 2000.0
 var frozen: bool = false
@@ -43,7 +43,6 @@ var _hud: Node
 
 
 func _ready() -> void:
-	_ensure_actions()
 	_gs = get_node_or_null("/root/GameState")
 	_hud = get_node_or_null("/root/Hud")
 	_sprite = Sprite2D.new()
@@ -69,31 +68,24 @@ func set_coat(on: bool) -> void:
 	_set_sheet(was_run)
 
 
-func _ensure_actions() -> void:
-	for pair: Array in [["move_left", [KEY_A, KEY_LEFT]], ["move_right", [KEY_D, KEY_RIGHT]], ["move_up", [KEY_W, KEY_UP]], ["move_down", [KEY_S, KEY_DOWN]], ["interact", [KEY_E]], ["run", [KEY_SHIFT]]]:
-		var action: String = pair[0]
-		if InputMap.has_action(action):
-			continue
-		InputMap.add_action(action)
-		for code: int in pair[1]:
-			var ev: InputEventKey = InputEventKey.new()
-			ev.physical_keycode = code
-			InputMap.action_add_event(action, ev)
-
-
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	var stop: bool = frozen or (_hud != null and _hud.is_blocking())
 	var dir: float = 0.0 if stop else Input.get_axis("move_left", "move_right")
 	var vdir: float = 0.0 if stop or y_far == y_near else Input.get_axis("move_up", "move_down")
-	_walking = absf(dir) > 0.1 or absf(vdir) > 0.1
-	_running = _walking and Input.is_action_pressed("run") and not _winded
-	_update_stamina(delta)
+	var previous: Vector2 = position
+	var wants_run: bool = Input.is_action_pressed("run") and not _winded
 	if absf(dir) > 0.1:
-		position.x = clampf(position.x + dir * (run_speed if _running else speed) * delta, min_x, max_x)
+		var target_x: float = clampf(position.x + dir * (run_speed if wants_run else speed) * delta, min_x, max_x)
+		move_and_collide(Vector2(target_x - position.x, 0.0))
 		_sprite.flip_h = dir < 0.0
-		moved.emit(position.x)
 	if absf(vdir) > 0.1:
-		position.y = clampf(position.y + vdir * depth_speed * delta, y_far, y_near)
+		var target_y: float = clampf(position.y + vdir * depth_speed * delta, y_far, y_near)
+		move_and_collide(Vector2(0.0, target_y - position.y))
+	_walking = position.distance_squared_to(previous) > 0.01
+	_running = wants_run and _walking
+	_update_stamina(delta)
+	if not is_equal_approx(position.x, previous.x):
+		moved.emit(position.x)
 	_apply_depth()
 	_t += delta
 	if _running and run_sheet != null:

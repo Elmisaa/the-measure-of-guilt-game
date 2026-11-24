@@ -5,6 +5,11 @@ signal item_added(item_id: String)
 signal item_used(item_id: String, action: String)
 signal stamina_changed(value: float)
 
+const EVIDENCE_FLAGS: Dictionary = {
+	"confession": "argument_1",
+	"journal": "argument_2",
+	"dmitry_recorder": "argument_3",
+}
 const ITEMS_PATH: String = "res://data/items.json"
 
 var flags: Dictionary = {}
@@ -39,6 +44,12 @@ func new_game() -> void:
 
 func set_flag(key: String, value: Variant) -> void:
 	flags[key] = value
+	if value is bool and not value:
+		for id: String in EVIDENCE_FLAGS:
+			if EVIDENCE_FLAGS[id] == key:
+				dropped_items.erase(id)
+				remove_item(id)
+				break
 
 
 func get_flag(key: String, default: Variant = null) -> Variant:
@@ -56,9 +67,14 @@ func from_dict(d: Dictionary) -> void:
 	new_game()
 	flags = (d.get("flags", {}) as Dictionary).duplicate(true)
 	items.clear()
+	var definitions: Dictionary = _defs.get("items", {})
 	for it: Variant in d.get("items", []):
-		items.append(str(it))
-	dropped_items = (d.get("dropped_items", {}) as Dictionary).duplicate(true)
+		if definitions.has(str(it)) and _evidence_allowed(str(it)):
+			items.append(str(it))
+	var saved_drops: Dictionary = d.get("dropped_items", {})
+	for id: String in saved_drops:
+		if definitions.has(id) and _evidence_allowed(id):
+			dropped_items[id] = saved_drops[id].duplicate(true)
 	var cs: Dictionary = d.get("containers", {})
 	for cid: String in cs:
 		var arr: Array[String] = []
@@ -69,6 +85,15 @@ func from_dict(d: Dictionary) -> void:
 	stamina = float(d.get("stamina", 1.0))
 	inventory_changed.emit()
 
+
+
+func _evidence_allowed(id: String) -> bool:
+	var flag: String = str(EVIDENCE_FLAGS.get(id, ""))
+	return flag.is_empty() or bool(get_flag(flag, true))
+
+
+func has_story_evidence(id: String) -> bool:
+	return EVIDENCE_FLAGS.has(id) and has_item(id) and _evidence_allowed(id)
 
 
 func reset_inventory() -> void:
@@ -146,7 +171,7 @@ func take_dropped_item(id: String, scene_path: String) -> void:
 
 
 func add_item(id: String) -> void:
-	if not owns_item(id):
+	if _evidence_allowed(id) and not owns_item(id):
 		items.append(id)
 		inventory_changed.emit()
 		item_added.emit(id)

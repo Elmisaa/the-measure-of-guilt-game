@@ -13,6 +13,7 @@ const BulletScene: PackedScene = preload("res://scenes/gameplay/bullet.tscn")
 const STICK_TO_FLOOR: float = -0.1
 const CHEST_HEIGHT: float = 1.15
 const MUZZLE_OFFSET: float = 0.35
+const SHOT_SPEED: float = 40.0
 
 @export var speed: float = 4.8
 @export var max_health: int = 100
@@ -26,6 +27,7 @@ const MUZZLE_OFFSET: float = 0.35
 @export var arena_min: Vector2 = Vector2(-10.0, -3.2)
 @export var arena_max: Vector2 = Vector2(10.0, 3.2)
 
+var combat_enabled: bool = true
 var health: int = 0
 var ammo_current: int = 0
 var is_reloading: bool = false
@@ -33,6 +35,10 @@ var is_dashing: bool = false
 var is_invulnerable: bool = false
 
 var _visual: Node3D
+var _sprite: Sprite3D
+var _walk_time: float = 0.0
+var _shot_queued: bool = false
+var _aim_pose: Sprite3D
 var _barrel: Node3D
 var _aim_marker: Node3D
 var _reload_timer: Timer
@@ -43,15 +49,29 @@ var _blink_timer: Timer
 var _dash_direction: Vector3 = Vector3.ZERO
 
 var _hovered_target: Node3D = null
-const TARGET_LOCK_PIXELS: float = 60.0
+const TARGET_LOCK_PIXELS: float = 22.0
 var _aim_marker_original_color: Color
 
 func _ready() -> void:
 	add_to_group("player")
-	_ensure_input_actions()
 	_ensure_timers()
 	_visual = get_node_or_null("Visual") as Node3D
 	_barrel = get_node_or_null("Visual/Barrel") as Node3D
+	if _barrel:
+		_barrel.hide()
+	_sprite = get_node_or_null("Visual/Body") as Sprite3D
+	if _sprite:
+		_aim_pose = Sprite3D.new()
+		_aim_pose.texture = preload("res://assets/characters/alexei/staged_poses.png")
+		_aim_pose.hframes = 4
+		_aim_pose.frame = 0
+		_aim_pose.billboard = _sprite.billboard
+		_aim_pose.shaded = _sprite.shaded
+		_aim_pose.alpha_cut = _sprite.alpha_cut
+		_aim_pose.texture_filter = _sprite.texture_filter
+		_aim_pose.pixel_size = _sprite.pixel_size
+		_visual.add_child(_aim_pose)
+		_aim_pose.hide()
 	_aim_marker = get_node_or_null("AimMarker") as Node3D
 	if _aim_marker != null:
 		_aim_marker.visible = true
@@ -69,40 +89,6 @@ func _ready() -> void:
 		var capsule: CapsuleShape3D = collision.shape as CapsuleShape3D
 		capsule.height = 1.7
 		capsule.radius = 0.25
-
-func _ensure_input_actions() -> void:
-	for pair: Array in [
-		["move_left", [KEY_A, KEY_LEFT]],
-		["move_right", [KEY_D, KEY_RIGHT]],
-		["move_up", [KEY_W, KEY_UP]],
-		["move_down", [KEY_S, KEY_DOWN]],
-	]:
-		var action: String = pair[0]
-		if not InputMap.has_action(action):
-			InputMap.add_action(action)
-			for code: int in pair[1]:
-				var ev: InputEventKey = InputEventKey.new()
-				ev.physical_keycode = code
-				InputMap.action_add_event(action, ev)
-	
-	if not InputMap.has_action("boss_dash"):
-		InputMap.add_action("boss_dash")
-		for code: int in [KEY_SPACE, KEY_SHIFT]:
-			var ev: InputEventKey = InputEventKey.new()
-			ev.physical_keycode = code
-			InputMap.action_add_event("boss_dash", ev)
-	
-	if not InputMap.has_action("combat_shoot"):
-		InputMap.add_action("combat_shoot")
-		var ev_mouse: InputEventMouseButton = InputEventMouseButton.new()
-		ev_mouse.button_index = MOUSE_BUTTON_LEFT
-		InputMap.action_add_event("combat_shoot", ev_mouse)
-	
-	if not InputMap.has_action("combat_reload"):
-		InputMap.add_action("combat_reload")
-		var ev_r: InputEventKey = InputEventKey.new()
-		ev_r.physical_keycode = KEY_R
-		InputMap.action_add_event("combat_reload", ev_r)
 
 func _ensure_timers() -> void:
 	_reload_timer = get_node_or_null("ReloadTimer") as Timer
@@ -184,6 +170,18 @@ func _physics_process(delta: float) -> void:
 	global_position = pos
 	
 	_update_aim()
+	if _shot_queued:
+		_shot_queued = false
+		shoot()
+	if _sprite:
+		var moving: bool = move_input.length_squared() > 0.001 or is_dashing
+		_sprite.visible = moving or is_reloading
+		_aim_pose.visible = not _sprite.visible
+		if moving:
+			_walk_time += delta * (17.0 if is_dashing else 12.0)
+			_sprite.frame = int(_walk_time) % _sprite.hframes
+		else:
+			_sprite.frame = 0
 	
 	if not is_dashing and move_input.length_squared() > 0.001:
 		_face_direction(move_input.x, move_input.y)
@@ -191,13 +189,13 @@ func _physics_process(delta: float) -> void:
 		_face_towards_aim()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if health <= 0:
+	if health <= 0 or not combat_enabled:
 		return
 	
 	if event.is_action_pressed("boss_dash") and not is_dashing and _dash_cooldown_timer.is_stopped():
 		_start_dash()
 	elif event.is_action_pressed("combat_shoot"):
-		shoot()
+		_shot_queued = true
 	elif event.is_action_pressed("combat_reload"):
 		reload()
 
@@ -257,8 +255,10 @@ func _get_aim_point() -> Vector3:
 			if not is_instance_valid(target) or target.is_queued_for_deletion():
 				continue
 			var target_3d: Node3D = target as Node3D
+			if target_3d == null or cam.is_position_behind(target_3d.global_position):
+				continue
 			var screen_pos: Vector2 = cam.unproject_position(target_3d.global_position)
-			if screen_pos == Vector2(-1, -1):
+			if not get_viewport().get_visible_rect().has_point(screen_pos):
 				continue
 			var dist: float = screen_pos.distance_to(mouse)
 			if dist < best_dist:
@@ -283,11 +283,10 @@ func _get_aim_point() -> Vector3:
 			_clear_hovered_target()
 			return hit_pos
 		
-		var plane: Plane = Plane(Vector3.UP, CHEST_HEIGHT)
+		var plane: Plane = Plane(Vector3.BACK, global_position.z)
 		var hit: Variant = plane.intersects_ray(origin, dir)
 		if hit != null:
 			var point: Vector3 = hit as Vector3
-			point.y = CHEST_HEIGHT
 			_clear_hovered_target()
 			return point
 	
@@ -324,23 +323,27 @@ func _get_aim_direction_flat() -> Vector3:
 	return dir
 
 func _get_facing_direction_3d() -> Vector3:
-	if _visual != null:
-		var scale_x: float = _visual.scale.x
-		if scale_x < 0:
-			return Vector3.LEFT
+	if _sprite != null and _sprite.flip_h:
+		return Vector3.LEFT
 	return Vector3.RIGHT
 
 func _face_direction(move_x: float, move_z: float) -> void:
 	if _visual == null:
 		return
 	if move_x != 0.0:
-		_visual.scale.x = abs(_visual.scale.x) * (-1.0 if move_x < 0.0 else 1.0)
+		_face_sprite(move_x < 0.0)
 
 func _face_towards_aim() -> void:
 	var aim_point: Vector3 = _get_aim_point()
 	var dir_x: float = aim_point.x - global_position.x
 	if _visual != null and not is_zero_approx(dir_x):
-		_visual.scale.x = abs(_visual.scale.x) * (-1.0 if dir_x < 0.0 else 1.0)
+		_face_sprite(dir_x < 0.0)
+
+func _face_sprite(left: bool) -> void:
+	if _sprite:
+		_sprite.flip_h = left
+		_aim_pose.flip_h = left
+
 
 func _aim_barrel(target_point: Vector3) -> void:
 	if _barrel == null:
@@ -350,12 +353,13 @@ func _aim_barrel(target_point: Vector3) -> void:
 	_barrel.look_at(from + dir, Vector3.UP)
 
 func shoot() -> void:
-	if health <= 0 or is_reloading or is_dashing:
+	if health <= 0 or is_reloading or is_dashing or not combat_enabled:
 		return
 	if ammo_current <= 0:
-		print("Click")
+		reload()
 		return
 	
+	get_node("/root/Audio").sfx("res://assets/audio/story/pistol_shot.wav", -8.0)
 	ammo_current -= 1
 	ammo_changed.emit(ammo_current, ammo_max)
 	
@@ -363,17 +367,26 @@ func shoot() -> void:
 	var direction: Vector3
 	var target: Node3D = null
 	
-	if _hovered_target != null and is_instance_valid(_hovered_target):
+	var aim_point: Vector3 = _get_aim_point()
+	if is_instance_valid(_hovered_target):
 		target = _hovered_target
-		direction = (target.global_position - from).normalized()
+		var impact: Vector3 = target.global_position
+		if target.is_in_group("conveyor_mount"):
+			var conveyor: OverheadConveyor = get_tree().get_first_node_in_group("boss_conveyor") as OverheadConveyor
+			if conveyor:
+				impact = conveyor.tracked_point(target, from, SHOT_SPEED)
+		direction = (impact - from).normalized()
 	else:
-		var aim_point: Vector3 = _get_aim_point()
 		direction = (aim_point - from).normalized()
 	
 	if _visual != null and not is_zero_approx(direction.x):
-		_visual.scale.x = abs(_visual.scale.x) * (-1.0 if direction.x < 0.0 else 1.0)
+		_face_sprite(direction.x < 0.0)
 	
+	if direction.is_zero_approx():
+		direction = _get_facing_direction_3d()
 	_spawn_bullet(direction, target)
+	if ammo_current == 0:
+		reload()
 
 func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 	var world: Node = get_tree().current_scene
@@ -383,7 +396,7 @@ func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 		return
 	
 	var at: Vector3 = Vector3(global_position.x, CHEST_HEIGHT, global_position.z) + direction * MUZZLE_OFFSET
-	var bullet: Node3D = BulletScene.instantiate() as Node3D
+	var bullet: Bullet = BulletScene.instantiate() as Bullet
 	var parent_3d: Node3D = world as Node3D
 	if parent_3d != null:
 		bullet.position = parent_3d.to_local(at)
@@ -391,13 +404,14 @@ func _spawn_bullet(direction: Vector3, target: Node3D = null) -> void:
 		bullet.global_position = at
 	
 	if bullet.has_method("configure"):
-		bullet.call("configure", direction, false, 25, 40.0, target)
+		bullet.call("configure", direction, false, 25, SHOT_SPEED, target)
 	bullet.collision_mask = 1 | 4 | 128
+	bullet.swept = true
 	
 	world.add_child(bullet)
 
 func reload() -> void:
-	if is_reloading or health <= 0 or ammo_current >= ammo_max:
+	if not combat_enabled or is_reloading or health <= 0 or ammo_current >= ammo_max:
 		return
 	is_reloading = true
 	_reload_timer.start(reload_time)

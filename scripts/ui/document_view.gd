@@ -99,8 +99,9 @@ func open(doc: Dictionary) -> void:
 
 
 func _open_placeholder(doc: Dictionary) -> void:
-	var tex: Texture2D = load(str(doc.get("sprite", "")))
-	var s: Vector2 = tex.get_size() * 2.0
+	var path: String = str(doc.get("sprite", ""))
+	var tex: Texture2D = load(path) if not path.is_empty() and ResourceLoader.exists(path) else null
+	var s: Vector2 = tex.get_size() * 2.0 if tex else Vector2.ZERO
 	_paper.texture = tex
 	_paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_paper.stretch_mode = TextureRect.STRETCH_SCALE

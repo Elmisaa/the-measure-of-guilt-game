@@ -31,6 +31,7 @@ var _awaiting_dialogue: bool = false
 
 
 func _ready() -> void:
+	Audio.play_track("res://assets/audio/story/weight_of_guilt.wav", 1.1, -17.0)
 	Hud.set_hud_visible(false)
 	Letterbox.hide_bars()
 	$Music.finished.connect($Music.play)
@@ -150,7 +151,7 @@ func _confrontation() -> void:
 	rush.parallel().tween_callback(func() -> void: _dmitry.frame = 7).set_delay(0.13)
 	rush.parallel().tween_property(_dmitry, "position:x", -7.25, 0.26).set_delay(0.15)
 	await rush.finished
-	_fyodor.frame = 7
+	_fyodor.frame = 1
 	Audio.sfx(SFX + "punch.wav", -10.0, 0.8)
 	Audio.sfx(SFX + "murmur_viktor_2.wav", -5.0, 0.8)
 	await _shake_camera(0.18, 0.05)

@@ -1,0 +1,69 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_player.tscn" id="1_boss_player"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_hud.tscn" id="2_boss_hud"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/overhead_conveyor.tscn" id="3_overhead_conveyor"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_scales.tscn" id="5_boss_scales"]
+
+[ext_resource type="Script" path="res://scripts/gameplay/boss/final_arena.gd" id="6_story"]
+[ext_resource type="PackedScene" path="res://assets/3d/factory/workshop/FinalWorkshop.tscn" id="7_factory"]
+
+[ext_resource type="Texture2D" path="res://assets/characters/fyodor/staged_injured.png" id="8_fyodor"]
+[ext_resource type="Texture2D" path="res://assets/characters/dmitry/staged_crouched.png" id="9_dmitry"]
+
+[node name="FinalArena" type="Node3D"]
+script = ExtResource("6_story")
+
+[node name="Factory" parent="." instance=ExtResource("7_factory")]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1969281934]
+transform = Transform3D(0.85, 0.32, -0.34, 0, 0.64, 0.68, 0.49, -0.55, 0.59, 0, 10, 5)
+light_color = Color(0.72, 0.78, 0.97, 1)
+light_energy = 0.45
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1125090663]
+transform = Transform3D(1, 0, 0, 0, 0.9848, 0.17365, 0, -0.17365, 0.9848, 10, 4.7, 14)
+current = true
+projection = 1
+size = 8.6
+near = 0.1
+far = 100.0
+
+[node name="Fyodor" type="Sprite3D" parent="."]
+position = Vector3(2.6, 0.62, -2.3)
+pixel_size = 0.0086
+texture_filter = 0
+billboard = 2
+shaded = true
+alpha_cut = 1
+texture = ExtResource("8_fyodor")
+modulate = Color(0.53, 0.54, 0.66, 1)
+
+[node name="Dmitry" type="Sprite3D" parent="."]
+position = Vector3(1.3, 0.62, -2.25)
+pixel_size = 0.0086
+texture_filter = 0
+billboard = 2
+shaded = true
+alpha_cut = 1
+texture = ExtResource("9_dmitry")
+modulate = Color(0.53, 0.54, 0.66, 1)
+
+[node name="BossPlayer" parent="." unique_id=1301041657 instance=ExtResource("1_boss_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, 0.03, 0)
+arena_min = Vector2(2.2, -3.5)
+arena_max = Vector2(23.3, 2.3)
+
+[node name="OverheadConveyor" parent="." unique_id=121967384 instance=ExtResource("3_overhead_conveyor")]
+position = Vector3(12.7, 0, -0.85)
+rail_length = 20.2
+boss_x = 18.8
+boss_hit_half_width = 1.85
+rail_y = 5.35
+
+[node name="BossScales" parent="." unique_id=1640288103 instance=ExtResource("5_boss_scales")]
+
+auto_start = false
+boss_x = 18.8
+boss_z = -0.85
+
+[node name="BossHud" parent="." unique_id=507537563 instance=ExtResource("2_boss_hud")]

@@ -109,8 +109,10 @@ func _run() -> void:
 		await _shot("after_view_down")
 		hud.get("_closeup").close()
 	await _wait(13.0 if _choice == "a" else 2.0)
-	if not gs.has_item("confession"):
-		push_error("FAIL no envelope after the window"); ok = false
+	if gs.has_item("confession") != (_choice == "b"):
+		push_error("FAIL window changed the result of the interrogation"); ok = false
+	if bool(gs.get_flag("argument_1", false)) != (_choice == "b"):
+		push_error("FAIL the window must preserve the interrogation result"); ok = false
 	if not bool(p2.get("_ringing")):
 		push_error("FAIL phone does not ring"); ok = false
 	await _shot("after_2_ring")

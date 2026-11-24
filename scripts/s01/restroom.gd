@@ -18,6 +18,7 @@ var _near: String = ""
 
 
 func _ready() -> void:
+	Audio.play_start_ambience()
 	GameState.item_used.connect(func(id: String, action: String) -> void:
 		if id == "coat" and action == "wear":
 			GameState.set_flag("coat_on", true)
@@ -71,7 +72,7 @@ func _process(_delta: float) -> void:
 	_prompt.visible = _near != ""
 	if _prompt.visible:
 		var r2: Array = _spots[_near]["rect"]
-		_prompt.text = "E — " + _label_for(_near)
+		_prompt.text = Settings.key_label("interact") + " — " + _label_for(_near)
 		var room_w: float = ($World/Background as Sprite2D).texture.get_width()
 		_prompt.position = Vector2(clampf(roundf((float(r2[0]) + float(r2[2])) / 2.0 - _prompt.size.x / 2.0), 4.0, room_w - _prompt.size.x - 4.0), maxf(4.0, float(r2[1]) - 16.0))
 

@@ -3,17 +3,17 @@ extends Node3D
 const SET_SCENE: String = "res://scenes/s04/ivan_set.tscn"
 const NEAR_MARGIN: float = 0.35
 const THOUGHT_TIME: float = 4.5
-const CAM_SIZE: float = 4.35
-const CAM_DROP: float = 0.05
+const CAM_SIZE: float = 5.6
 const CAM_OFFSET_X: float = -1.0
 const CAM_MIN_X: float = -17.3
 const CAM_MAX_X: float = 9.7
 const PX: float = CAM_SIZE / 360.0
 const REVEAL_TIME: float = 3.5
 const MUSIC: String = "res://assets/audio/music/ivan_theme.wav"
-const IVAN_SHEET: String = "res://assets/characters/ivan/ivan_poses.png"
+const IVAN_SHEET: String = "res://assets/characters/ivan/full_poses.png"
 const TALK_SCENE: String = "res://scenes/s04/ivan_talk.tscn"
 const FLASHBACK_SCENE: String = "res://scenes/s05/factory_flashback.tscn"
+const WALK_COLLISION_LAYER: int = 2
 
 var _d: Dictionary = {}
 var _player: ExplorePlayer3D
@@ -26,8 +26,8 @@ var _spots: Array = []
 var _near: String = ""
 var _seen: Dictionary = {}
 var _busy: bool = false
-var _cam_y: float = 4.5
-var _cam_z: float = 28.86
+var _cam_y: float = 7.1
+var _cam_z: float = 20.0
 var _after: bool = false
 
 
@@ -36,8 +36,6 @@ func _ready() -> void:
 	var set_scene: Node3D = (load(SET_SCENE) as PackedScene).instantiate()
 	set_scene.name = "Set"
 	add_child(set_scene)
-	_brighten(set_scene)
-	var ref: Camera3D = set_scene.get_node_or_null("Camera3D3")
 	for c: Node in set_scene.find_children("*", "Camera3D", true, false):
 		(c as Camera3D).current = false
 	_player = ExplorePlayer3D.new()
@@ -48,31 +46,59 @@ func _ready() -> void:
 	var lane: Array = _d.get("lane", [2.1, 3.0])
 	_player.z_far = float(lane[0])
 	_player.z_near = float(lane[1])
+	_player.collision_mask = WALK_COLLISION_LAYER
+	var capsule: CapsuleShape3D = CapsuleShape3D.new()
+	capsule.radius = 0.23
+	capsule.height = 1.1
+	var body: CollisionShape3D = CollisionShape3D.new()
+	body.shape = capsule
+	body.position.y = capsule.height * 0.5
+	_player.add_child(body)
 	add_child(_player)
 	_player.position = Vector3(float(_d.get("spawn_x", -18.6)), 0.0, float(_d.get("spawn_z", 2.6)))
 	var back_x: Variant = GameState.get_flag("ivan_x")
 	if back_x != null:
-		_player.position.x = float(back_x)
+		_player.position.x = clampf(float(back_x), _player.min_x, _player.max_x)
+		_player.position.z = clampf(float(GameState.get_flag("ivan_z", _player.position.z)), _player.z_far, _player.z_near)
+		_restore_safe_position()
 	for id: Variant in GameState.get_flag("ivan_seen", []):
 		_seen[str(id)] = true
 	_spots = _d.get("spots", [])
 	_after = str(GameState.get_flag("ivan_state", "")) == "after"
 	_place_ivan()
+	_player.get_node("AnimatedSprite").layers = 2
+	var character_fill: DirectionalLight3D = DirectionalLight3D.new()
+	character_fill.name = "CharacterFill"
+	character_fill.rotation_degrees = Vector3(-25, -15, 0)
+	character_fill.light_color = Color("#859cc7")
+	character_fill.light_energy = 0.35
+	character_fill.light_cull_mask = 2
+	add_child(character_fill)
 	_cam = Camera3D.new()
 	_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_cam.size = CAM_SIZE
 	_cam.near = 0.05
-	_cam.far = 80.0
-	if ref:
-		_cam.basis = ref.basis
-		_cam_y = ref.position.y - CAM_DROP
-		_cam_z = ref.position.z
+	_cam.far = 75.0
+	_cam.rotation.x = -0.28
 	add_child(_cam)
 	_cam.make_current()
 	_build_ui()
 	_update_camera()
 	Audio.play_track(MUSIC, 3.0, -16.0)
 	_intro()
+
+
+func _restore_safe_position() -> void:
+	await get_tree().physics_frame
+	var pose: Transform3D = _player.global_transform
+	if not _player.test_move(pose, Vector3.ZERO, null, _player.safe_margin, true):
+		return
+	for depth: float in [_player.z_near, _player.z_far]:
+		pose.origin.z = depth
+		if not _player.test_move(pose, Vector3.ZERO, null, _player.safe_margin, true):
+			_player.global_position = pose.origin
+			return
+	_player.position = Vector3(float(_d.get("spawn_x", -18.6)), 0.0, float(_d.get("spawn_z", 2.6)))
 
 
 func _intro() -> void:
@@ -182,7 +208,7 @@ func _update_near() -> void:
 	if _prompt.visible:
 		var r2: Array = best_s["x"]
 		var top: Vector3 = Vector3((float(r2[0]) + float(r2[1])) / 2.0, float(best_s.get("top", 2.2)), 1.0)
-		_prompt.text = "E — " + (str(_d.get("leave_label", "Уйти")) if best == "exit" and _after else str(best_s["name"]))
+		_prompt.text = Settings.key_label("interact") + " — " + (str(_d.get("leave_label", "Уйти")) if best == "exit" and _after else str(best_s["name"]))
 		_prompt.reset_size()
 		var p: Vector2 = _cam.unproject_position(top)
 		_prompt.position = Vector2(clampf(roundf(p.x - _prompt.size.x / 2.0), 4.0, 636.0 - _prompt.size.x), clampf(roundf(p.y - 14.0), 46.0, 300.0))
@@ -233,7 +259,9 @@ func _place_ivan() -> void:
 	s.offset = Vector2(0, 100)
 	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	s.shaded = false
+	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	s.shaded = true
+	s.layers = 2
 	s.modulate = _player.tint
 	s.position = Vector3(float(v.get("x", 3.0)), 0.0, float(v.get("z", 1.6)))
 	add_child(s)
@@ -243,6 +271,7 @@ func _start_talk() -> void:
 	_busy = true
 	_player.frozen = true
 	GameState.set_flag("ivan_x", _player.position.x)
+	GameState.set_flag("ivan_z", _player.position.z)
 	GameState.set_flag("ivan_seen", _seen.keys())
 	Hud.set_hud_visible(false)
 	SceneRouter.go_to(TALK_SCENE, 0.3)
@@ -261,18 +290,7 @@ func _go_to_factory() -> void:
 
 
 func save_state() -> Dictionary:
-	return {"ivan_x": _player.position.x, "ivan_seen": _seen.keys(), "ivan_state": "after" if _after else ""}
-
-
-func _brighten(set_scene: Node3D) -> void:
-	var env: WorldEnvironment = set_scene.get_node_or_null("WorldEnvironment")
-	if env and env.environment:
-		env.environment = env.environment.duplicate()
-		env.environment.ambient_light_energy = maxf(env.environment.ambient_light_energy, 0.2) * 1.5
-		env.environment.adjustment_enabled = true
-		env.environment.adjustment_brightness = 1.12
-	for l: Node in set_scene.find_children("*", "Light3D", true, false):
-		(l as Light3D).light_energy *= 1.15
+	return {"ivan_x": _player.position.x, "ivan_z": _player.position.z, "ivan_seen": _seen.keys(), "ivan_state": "after" if _after else ""}
 
 
 func _type_place() -> void:

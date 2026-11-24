@@ -4,7 +4,7 @@ extends Control
 signal action_chosen(item_id: String, action: String)
 signal closed
 
-const COLS: int = 6
+const COLS: int = 8
 const INVENTORY_ROWS: int = 4
 const CONTAINER_ROWS: int = 2
 const SLOT: float = 40.0
@@ -145,7 +145,7 @@ func _refresh() -> void:
 	var can_take: bool = not container_id.is_empty() and _gs.container_can_take(container_id)
 	_take_all.visible = can_take and not items.is_empty()
 	if container_id.is_empty():
-		_hint.text = "Стрелки / WASD — выбор, Enter или клик — действия.  I / Esc — закрыть"
+		_hint.text = "Стрелки / WASD — выбор, Enter или клик — действия.  %s / Esc — закрыть" % get_node("/root/Settings").key_label("inventory")
 	elif items.is_empty():
 		_hint.text = "Пусто.  Esc — закрыть"
 	else:
@@ -169,6 +169,7 @@ func _refresh() -> void:
 func _make_slot(id: String) -> Panel:
 	var slot: Panel = Panel.new()
 	slot.custom_minimum_size = Vector2(SLOT, SLOT)
+	slot.clip_contents = true
 	var sb: StyleBoxFlat = _style(SLOT_BG, 0.0)
 	slot.add_theme_stylebox_override("panel", sb)
 	if id.is_empty():
@@ -176,6 +177,8 @@ func _make_slot(id: String) -> Panel:
 		return slot
 	var d: Dictionary = _gs.item_def(id)
 	var icon: TextureRect = TextureRect.new()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var path: String = str(d.get("icon", ""))
 	if ResourceLoader.exists(path):
@@ -380,7 +383,7 @@ func is_open() -> bool:
 
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or event.is_action_pressed("inventory"):
 		return
 	var hud: Node = get_node_or_null("/root/Hud")
 	if hud and hud.is_closeup_open():

@@ -7,12 +7,12 @@ const BACK_SCENE: String = "res://scenes/s03/penthouse.tscn"
 const TITLE_SCENE: String = "res://scenes/menu/title.tscn"
 const BG_NORMAL: String = "res://assets/backgrounds/s03/talk_normal.png"
 const BG_MOON: String = "res://assets/backgrounds/s03/talk_moon.png"
-const ALEXEI_SHEET: String = "res://assets/characters/alexei/alexei_talk.png"
-const ALEXEI_WALK: String = "res://assets/characters/alexei/walk_side_depth_coat.png"
+const ALEXEI_SHEET: String = "res://assets/characters/alexei/staged_poses.png"
+const ALEXEI_WALK: String = "res://assets/characters/alexei/story_walk_coat.png"
 const WALK_SPEED: float = 70.0
 const HOLE_POS: Vector2 = Vector2(458, 162)
 const HOLE_SCALE: float = 0.75
-const VIKTOR_SHEET: String = "res://assets/characters/viktor/viktor_poses.png"
+const VIKTOR_SHEET: String = "res://assets/characters/viktor/full_poses.png"
 const ENTITY_TEX: String = "res://assets/characters/entity/entity.png"
 const BULLET_TEX: String = "res://assets/props/s03/bullet.png"
 const GLASS_HOLE: String = "res://assets/props/s03/glass_hole.png"
@@ -27,7 +27,7 @@ const VIKTOR_POS: Vector2 = Vector2(458, 322)
 const ENTITY_POS: Vector2 = Vector2(588, 326)
 const LAMP_POS: Vector2 = Vector2(296, 185)
 const WINDOW_X: float = 458.0
-const CHAR_SCALE: float = 1.0
+const CHAR_SCALE: float = 0.72
 const PAGE_CHARS: int = 110
 const VOICE_PUNCTUATION: String = ".,!?…—-:;\"«»“”"
 const GLASS_RAIN: String = "res://scripts/fx/glass_rain.gdshader"
@@ -36,7 +36,7 @@ const LAMP_UV: Dictionary = {
 	"res://assets/props/s03/shot_viktor.png": Vector2(0.22, 0.28),
 	"res://assets/props/s03/shot_alexei.png": Vector2(0.77, 0.27),
 }
-const MUSIC: String = "res://assets/audio/music/penthouse_theme.wav"
+const MUSIC: String = "res://assets/audio/story/weight_of_guilt.wav"
 const ENTITY_DRONE: String = "res://assets/audio/sfx/entity_drone.wav"
 const VOICE: Dictionary = {"viktor": ["res://assets/audio/sfx/key_viktor_1.wav", "res://assets/audio/sfx/key_viktor_2.wav", "res://assets/audio/sfx/key_viktor_3.wav"], "ivan": ["res://assets/audio/sfx/key_ivan_1.wav", "res://assets/audio/sfx/key_ivan_2.wav", "res://assets/audio/sfx/key_ivan_3.wav"], "dmitry": ["res://assets/audio/sfx/key_viktor_1.wav", "res://assets/audio/sfx/key_viktor_3.wav"]}
 const PITCH: Dictionary = {"alexei": 1.0, "viktor": 0.78, "ivan": 1.0, "dmitry": 1.15}
@@ -109,7 +109,7 @@ func _ready() -> void:
 	_music = _player(str(_d.get("music", MUSIC)), -14.0, true)
 	_music.bus = "Music"
 	_heart = _player(HEARTBEAT, -8.0, true)
-	_wind = _player(SFX + "wind_loop.wav", -10.0, true)
+	_wind = _player("res://assets/audio/story/wind_loop.wav", -13.0, true)
 	if phone:
 		var backdrop: ColorRect = ColorRect.new()
 		backdrop.size = Vector2(640, 360)
@@ -192,7 +192,7 @@ func _build_frame() -> void:
 	_hole.visible = false
 	_frame.add_child(_hole)
 	var op: Array = _d.get("other_pos", [VIKTOR_POS.x, VIKTOR_POS.y])
-	_viktor = _char(str(_d.get("other_sheet", VIKTOR_SHEET)), int(_d.get("other_frames", 7)), Vector2(float(op[0]), float(op[1])), Color(0.55, 0.55, 0.6))
+	_viktor = _char(str(_d.get("other_sheet", VIKTOR_SHEET)), int(_d.get("other_frames", 8)), Vector2(float(op[0]), float(op[1])), Color(0.55, 0.55, 0.6))
 	_viktor.scale *= float(_d.get("other_scale", 1.0))
 	_viktor.flip_h = bool(_d.get("other_flip", true))
 	_entity = Sprite2D.new()
@@ -221,8 +221,22 @@ func _build_frame() -> void:
 	_frame.add_child(_smoke)
 	var ap: Array = _d.get("alexei_pos", [ALEXEI_POS.x, ALEXEI_POS.y])
 	_alexei = _char(ALEXEI_SHEET, 4, Vector2(float(ap[0]), float(ap[1])), Color(0.3, 0.32, 0.4))
+	_alexei.scale *= float(_d.get("alexei_scale", 1.0))
 	if _d.has("lamp_pos"):
 		_lamp.position = Vector2(float(_d["lamp_pos"][0]), float(_d["lamp_pos"][1]))
+	_character_light(_lamp.position + Vector2(0, 20), Color("#f6ac66"), 0.85, 2.7)
+	_character_light(Vector2(280, 125), Color("#759bd8"), 0.4, 4.2)
+
+
+func _character_light(at: Vector2, tint: Color, strength: float, radius: float) -> void:
+	var spot: PointLight2D = PointLight2D.new()
+	spot.position = at
+	spot.texture = _glow_tex
+	spot.color = tint
+	spot.energy = strength
+	spot.texture_scale = radius
+	spot.range_item_cull_mask = 2
+	_frame.add_child(spot)
 
 
 func _char(path: String, frames: int, pos: Vector2, placeholder: Color) -> Sprite2D:
@@ -232,6 +246,8 @@ func _char(path: String, frames: int, pos: Vector2, placeholder: Color) -> Sprit
 	s.offset = Vector2(0, -100)
 	s.scale = Vector2(CHAR_SCALE, CHAR_SCALE)
 	s.position = pos
+	s.light_mask = 2
+	s.modulate = Color(0.76, 0.76, 0.83)
 	_frame.add_child(s)
 	return s
 
@@ -919,10 +935,10 @@ func _entity_voice(text: String) -> void:
 func _gunshot() -> void:
 	_alexei.frame = 1
 	_flash.color.a = 0.8
-	Audio.sfx(SFX + "gunshot.wav", -2.0)
+	Audio.sfx("res://assets/audio/story/pistol_shot.wav", -6.0)
 	var muzzle: Sprite2D = Sprite2D.new()
 	muzzle.texture = _glow_tex
-	muzzle.position = _alexei.position + Vector2(52, -128) * CHAR_SCALE
+	muzzle.position = _alexei.position + Vector2(49, -158) * CHAR_SCALE
 	muzzle.scale = Vector2(1.4, 1.0)
 	muzzle.self_modulate = Color(1.0, 0.85, 0.5)
 	var add: CanvasItemMaterial = CanvasItemMaterial.new()
@@ -938,7 +954,7 @@ func _gunshot() -> void:
 	_alexei.frame = 0
 	var bullet: Sprite2D = Sprite2D.new()
 	bullet.texture = _tex_or_box(BULLET_TEX, Vector2i(8, 4), Color(0.8, 0.75, 0.6))
-	bullet.position = Vector2(_entity.position.x - 56, _alexei.position.y - 128 * CHAR_SCALE)
+	bullet.position = Vector2(_entity.position.x - 56, _alexei.position.y - 158 * CHAR_SCALE)
 	_frame.add_child(bullet)
 	_set_frozen(true)
 	await get_tree().create_timer(1.6).timeout
@@ -993,7 +1009,7 @@ func _viktor_falls() -> void:
 	_black.color.a = 1.0
 	_heart.stop()
 	_drone.stop()
-	Audio.sfx(SFX + "glass_shatter.wav", -2.0)
+	Audio.sfx("res://assets/audio/story/kick_out_window.wav", -5.0)
 	await get_tree().create_timer(1.0).timeout
 	_viktor.visible = false
 	_entity.visible = false

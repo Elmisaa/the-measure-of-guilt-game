@@ -6,9 +6,9 @@
     "dmitry": "Дмитрий"
   },
   "bg": "res://assets/backgrounds/s04/talk_ivan.png",
-  "music": "res://assets/audio/music/ivan_theme.wav",
+  "music": "res://assets/audio/story/weight_of_guilt.wav",
   "clock": false,
-  "other_sheet": "res://assets/characters/ivan/ivan_poses.png",
+  "other_sheet": "res://assets/characters/ivan/full_poses.png",
   "other_frames": 4,
   "other_pos": [
     433,
@@ -378,5 +378,6 @@
     }
   ],
   "rain": 0.0,
-  "other_scale": 1.15
+  "other_scale": 1.15,
+  "alexei_scale": 1.26
 }
