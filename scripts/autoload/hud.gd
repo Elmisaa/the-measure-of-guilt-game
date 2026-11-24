@@ -73,6 +73,7 @@ var _pause: Control
 var _pause_panel: PanelContainer
 var _pause_first: Button
 var _pause_settings: SettingsPanel
+var _focus_before_pause: Control
 const TITLE_SCENE: String = "res://scenes/menu/title.tscn"
 var walk_mode: bool = false
 var _tut_label: Label
@@ -665,8 +666,9 @@ func controls_hint_visible() -> bool:
 
 
 func open_pause() -> void:
-	if _pause.visible:
+	if _pause.visible or SceneRouter.is_transitioning():
 		return
+	_focus_before_pause = get_viewport().gui_get_focus_owner()
 	_root.move_child(_pause, -1)
 	_root.move_child(_pause_settings, -1)
 	_root.move_child(_saves, -1)
@@ -689,6 +691,9 @@ func close_pause() -> void:
 	close_history()
 	_pause.visible = false
 	get_tree().paused = false
+	if is_instance_valid(_focus_before_pause) and _focus_before_pause.is_visible_in_tree():
+		_focus_before_pause.grab_focus()
+	_focus_before_pause = null
 
 
 func is_paused() -> bool:

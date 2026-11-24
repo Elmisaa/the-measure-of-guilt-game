@@ -10,6 +10,7 @@ var _settings: SettingsPanel
 var _saves: SaveSlotsPanel
 var _ui: CanvasLayer
 var _starting: bool = false
+var _status: Label
 var _bg: Sprite2D
 var _sway_t: float = 0.0
 
@@ -75,6 +76,12 @@ func _ready() -> void:
 	_ui.add_child(_saves)
 	_saves.closed.connect(func() -> void: buttons[0].grab_focus())
 	_saves.loading.connect(func() -> void: _starting = true)
+	_saves.load_failed.connect(func() -> void: _starting = false)
+	_status = Label.new()
+	_status.custom_minimum_size.x = 225
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.hide()
+	_menu.add_child(_status)
 	buttons[0].grab_focus.call_deferred()
 
 
@@ -84,14 +91,19 @@ func _new_game() -> void:
 	_starting = true
 	GameState.new_game()
 	Hud.reset_journal()
-	SceneRouter.go_to(INTRO, 0.3)
+	if not await SceneRouter.go_to(INTRO, 0.3):
+		_starting = false
 
 
 func _continue() -> void:
 	if _starting:
 		return
 	_starting = true
-	SaveGame.load_slot(SaveGame.latest())
+	_status.hide()
+	if not await SaveGame.load_slot(SaveGame.latest()):
+		_starting = false
+		_status.text = "Не удалось загрузить сохранение."
+		_status.show()
 
 
 func _open_settings() -> void:

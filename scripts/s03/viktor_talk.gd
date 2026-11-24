@@ -33,8 +33,6 @@ const VOICE_PUNCTUATION: String = ".,!?…—-:;\"«»“”"
 const GLASS_RAIN: String = "res://scripts/fx/glass_rain.gdshader"
 const LAMP_UV: Dictionary = {
 	"res://assets/backgrounds/s03/talk_normal.png": Vector2(0.462, 0.514),
-	"res://assets/props/s03/shot_viktor.png": Vector2(0.22, 0.28),
-	"res://assets/props/s03/shot_alexei.png": Vector2(0.77, 0.27),
 }
 const MUSIC: String = "res://assets/audio/story/weight_of_guilt.wav"
 const ENTITY_DRONE: String = "res://assets/audio/sfx/entity_drone.wav"

@@ -3,6 +3,7 @@ extends Control
 
 signal closed
 signal loading
+signal load_failed
 
 var mode: String = "load"
 var _panel: PanelContainer
@@ -10,6 +11,7 @@ var _col: VBoxContainer
 var _title: Label
 var _status: Label
 var _buttons: Array[Button] = []
+var _loading: bool = false
 
 
 func _ready() -> void:
@@ -74,6 +76,8 @@ func _row_text(slot: String) -> String:
 
 
 func _on_slot(slot: String, b: Button) -> void:
+	if _loading:
+		return
 	var sg: Node = get_node("/root/SaveGame")
 	if mode == "save":
 		if sg.save(slot):
@@ -82,9 +86,16 @@ func _on_slot(slot: String, b: Button) -> void:
 		else:
 			_status.text = "Здесь сохраниться нельзя"
 		return
-	visible = false
+	_loading = true
+	_status.text = "Загрузка…"
 	loading.emit()
-	sg.load_slot(slot)
+	var loaded: bool = await sg.load_slot(slot)
+	_loading = false
+	if loaded:
+		close()
+	else:
+		_status.text = "Не удалось загрузить сохранение."
+		load_failed.emit()
 
 
 func close() -> void:
@@ -99,7 +110,7 @@ func is_open() -> bool:
 
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or _loading:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()

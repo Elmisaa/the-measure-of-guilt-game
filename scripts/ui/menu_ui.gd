@@ -8,7 +8,7 @@ const COLOR_OFF: Color = Color(0.35, 0.37, 0.4)
 
 static func button(text: String) -> Button:
 	var b: Button = Button.new()
-	b.text = "  " + text
+	set_button_text(b, text)
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.focus_mode = Control.FOCUS_ALL
@@ -39,6 +39,10 @@ static func button(text: String) -> Button:
 		if audio:
 			audio.ui_click())
 	return b
+
+
+static func set_button_text(b: Button, text: String) -> void:
+	b.text = ("› " if b.has_focus() else "  ") + text
 
 
 static func wasd_to_focus(event: InputEvent, vp: Viewport) -> bool:

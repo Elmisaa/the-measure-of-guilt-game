@@ -80,6 +80,8 @@ func _run() -> void:
 		push_error("FAIL history from pause did not return to pause"); ok = false
 	if not sg.save("1"):
 		push_error("FAIL save to slot 1"); ok = false
+	if not sg.save("1") or FileAccess.file_exists(sg.DIR + "1.json.tmp"):
+		push_error("FAIL replacing an existing save"); ok = false
 	hud._saves.open("load")
 	await _wait(0.2)
 	await _shot("5_load")
@@ -88,8 +90,10 @@ func _run() -> void:
 	var objective: String = hud.get_objective()
 	gs.remove_item("keys")
 	(w.get_node("World/Player") as Node2D).position.x = 300.0
-	sg.load_slot("1")
-	await _wait(1.6)
+	await _key(KEY_ESCAPE)
+	var loaded_from_pause: bool = await sg.load_slot("1")
+	if not loaded_from_pause or paused:
+		push_error("FAIL loading from pause must reopen the game"); ok = false
 	var w2: Node = current_scene
 	if w2 == null or w2.name != "Walk" or w2 == w:
 		push_error("FAIL load did not reopen the hall: %s" % [w2]); ok = false
@@ -107,6 +111,40 @@ func _run() -> void:
 	if f == null or not (f as Button).text.contains("Продолжить"):
 		push_error("FAIL title does not offer Продолжить"); ok = false
 	await _shot("6_title")
+	var invalid_save: Dictionary = sg.info("1")
+	invalid_save["time"] = float(invalid_save["time"]) + 100.0
+	invalid_save["scene"] = "res://scenes/missing_chapter.tscn"
+	_write_slot(sg.DIR + "auto.json", invalid_save)
+	if sg.latest() != "1":
+		push_error("FAIL latest should skip an unavailable scene"); ok = false
+
+	gs.set_flag("load_rejected_probe", true)
+	root.get_node("SceneRouter").go_to("res://scenes/menu/title.tscn", 0.1)
+	var loaded_while_busy: bool = await sg.load_slot("1")
+	if loaded_while_busy or not gs.get_flag("load_rejected_probe", false):
+		push_error("FAIL a busy transition must reject loading without changing game state"); ok = false
+	await _wait(1.3)
+
+	invalid_save = sg.info("1")
+	var title: Node = current_scene
+	var panel: SaveSlotsPanel = title.get("_saves")
+	await panel.open("load")
+	var slot_button: Button = panel.get("_buttons")[1]
+	invalid_save["game"]["flags"] = []
+	_write_slot(sg.DIR + "1.json", invalid_save)
+	await panel._on_slot("1", slot_button)
+	if not panel.is_open() or title.get("_starting") or not panel.get("_status").text.begins_with("Не удалось"):
+		push_error("FAIL an invalid slot must leave the load panel usable"); ok = false
+	panel.close()
+	await title.call("_continue")
+	if title.get("_starting") or not title.get("_status").visible or not gs.get_flag("load_rejected_probe", false):
+		push_error("FAIL an invalid save must leave Continue usable and preserve state"); ok = false
 	sg.wipe_test_saves()
 	print("SAVES: ", "OK" if ok else "FAILED")
 	quit(0 if ok else 1)
+
+
+func _write_slot(path: String, data: Dictionary) -> void:
+	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()

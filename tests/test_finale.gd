@@ -51,9 +51,20 @@ func run() -> void:
 		return
 	await create_timer(1.1).timeout
 	var button: Button = arena.get("_next")
+	if button.text != "› В бой":
+		fail("the opening dialogue must display the full fight label")
+		return
 	var boss: BossScales = arena.get_node("BossScales")
 	var player: BossPlayer = arena.get_node("BossPlayer")
 	var conveyor: OverheadConveyor = arena.get_node("OverheadConveyor")
+	await _escape()
+	if not paused:
+		fail("Esc must pause the arena intro")
+		return
+	await _escape()
+	if paused or root.gui_get_focus_owner() != button:
+		fail("resuming the intro must restore dialogue focus")
+		return
 	if player.global_position.x <= 0.0 or boss.boss_x <= player.global_position.x or not arena.has_node("Factory/MainHall"):
 		fail("fight should start in the factory's right-hand workshop")
 		return
@@ -66,6 +77,16 @@ func run() -> void:
 		return
 	if boss.current_resistance != 100 or not player.combat_enabled:
 		fail("the first phase didn't start")
+		return
+	await _escape()
+	var attack_time: float = boss._attack_timer.time_left
+	await create_timer(0.2).timeout
+	if not paused or attack_time <= 0.0 or not is_equal_approx(attack_time, boss._attack_timer.time_left):
+		fail("pausing the fight must freeze its attack timer")
+		return
+	await _escape()
+	if paused:
+		fail("Esc must resume the fight")
 		return
 	boss._attack_timer.stop()
 	var wall: CollisionShape3D = arena.get_node("Factory/MainHall/EastWall/WallCollision")
@@ -113,6 +134,14 @@ func run() -> void:
 		return
 	boss.apply_environment_damage(25)
 	await process_frame
+	if button.text != "› Далее":
+		fail("the focused continue button must display the full label")
+		return
+	button.release_focus()
+	if button.text != "  Далее":
+		fail("the continue button must keep its label on focus loss")
+		return
+	button.grab_focus()
 	if player.combat_enabled or int(arena.get("_phase")) != 1:
 		fail("the first argument should pause combat")
 		return
@@ -143,10 +172,11 @@ func run() -> void:
 		button.pressed.emit()
 		await process_frame
 	await create_timer(4.1).timeout
-	for i: int in 2:
-		button.pressed.emit()
-		await process_frame
-	await create_timer(1.0).timeout
+	var last_line: Label = arena.get("_line")
+	if not last_line.text.begins_with("Вот она — настоящая справедливость") or button.is_visible_in_tree():
+		fail("the final dialogue must be shown without a continue button")
+		return
+	await create_timer(8.0).timeout
 	if current_scene == null or current_scene.scene_file_path != "res://scenes/menu/title.tscn":
 		fail("epilogue didn't return to the menu")
 		return
@@ -197,6 +227,19 @@ func check_evidence_matrix(state: Node) -> bool:
 			fail("case %d did not reach the verdict" % mask)
 			return false
 	return true
+
+func _escape() -> void:
+	var event: InputEventKey = InputEventKey.new()
+	event.physical_keycode = KEY_ESCAPE
+	event.keycode = KEY_ESCAPE
+	event.pressed = true
+	Input.parse_input_event(event)
+	await process_frame
+	var release: InputEventKey = event.duplicate()
+	release.pressed = false
+	Input.parse_input_event(release)
+	await process_frame
+
 
 func fail(message: String) -> void:
 	push_error("FINALE: " + message)

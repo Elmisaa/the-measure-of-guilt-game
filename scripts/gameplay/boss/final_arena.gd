@@ -3,6 +3,7 @@ extends Node3D
 const SFX: String = "res://assets/audio/story/"
 const RAIN: String = "res://assets/audio/music/877124__adamdavidsmith__ambience_rain_thunder-2.ogg"
 const TITLE: String = "res://scenes/menu/title.tscn"
+const FINAL_LINE_HOLD: float = 7.0
 const ARGUMENTS: Array[Dictionary] = [
 	{
 		"item": "confession",
@@ -92,6 +93,12 @@ func _process(delta: float) -> void:
 	_impact = move_toward(_impact, 0.0, 0.65 * delta)
 	_camera.position.x = _camera_center + randf_range(-_impact, _impact)
 	_camera.position.y = _camera_y + randf_range(-_impact, _impact)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not Hud.is_blocking():
+		get_viewport().set_input_as_handled()
+		Hud.open_pause()
 
 
 func _on_health_changed(health: int, _maximum: int) -> void:
@@ -221,8 +228,9 @@ func _verdict() -> void:
 	await reveal.finished
 	await get_tree().create_timer(0.7, false).timeout
 	Audio.play_track(SFX + "after_the_verdict.wav", 1.5, -12.0, false)
-	await _say("Алексей", "Вот она — настоящая справедливость. Человек, который провёл семь лет в камере за чужое преступление, наконец свободен.")
-	await _say("Мера вины", "Конец", "В главное меню")
+	_next.hide()
+	_show_line("Алексей", "Вот она — настоящая справедливость. Человек, который провёл семь лет в камере за чужое преступление, наконец свободен.")
+	await get_tree().create_timer(FINAL_LINE_HOLD, false).timeout
 	SceneRouter.go_to(TITLE)
 
 
@@ -281,12 +289,16 @@ func _build_dialogue() -> void:
 
 
 func _say(speaker: String, line: String, button: String = "Далее") -> void:
-	_speaker.text = speaker
-	_line.text = line
-	_next.text = button
-	_panel.show()
-	_panel.reset_size()
-	_panel.position.y = minf(220.0, 350.0 - _panel.size.y)
+	MenuUI.set_button_text(_next, button)
+	_show_line(speaker, line)
 	_next.grab_focus()
 	await _next.pressed
 	_panel.hide()
+
+
+func _show_line(speaker: String, line: String) -> void:
+	_speaker.text = speaker
+	_line.text = line
+	_panel.show()
+	_panel.reset_size()
+	_panel.position.y = minf(220.0, 350.0 - _panel.size.y)
