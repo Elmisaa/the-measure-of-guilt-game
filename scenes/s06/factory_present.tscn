@@ -1,0 +1,204 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/s06/factory_present.gd" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/s05/factory_room.tscn" id="2_room"]
+[ext_resource type="Script" path="res://scripts/s03/explore_player_3d.gd" id="3_player"]
+[ext_resource type="Texture2D" path="res://scenes/s06/mikhail_aftermath.res" id="4_mikhail"]
+[ext_resource type="Texture2D" path="res://scenes/s06/fyodor_aftermath.res" id="5_fyodor"]
+[ext_resource type="Texture2D" path="res://scenes/s06/dmitry_crouched.res" id="6_dmitry"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/dictaphone.png" id="7_recorder"]
+[ext_resource type="Shader" path="res://scripts/fx/screen_glitch.gdshader" id="8_pixel"]
+[ext_resource type="Script" path="res://scripts/ui/dialogue_speech.gd" id="9_speech"]
+
+[ext_resource type="Texture2D" path="res://scenes/s06/recorder_insert.res" id="10_recorder_insert"]
+
+[sub_resource type="StandardMaterial3D" id="BloodMaterial"]
+albedo_color = Color(0.23, 0.017, 0.025, 1)
+roughness = 0.75
+
+[sub_resource type="CylinderMesh" id="Blood"]
+material = SubResource("BloodMaterial")
+top_radius = 0.24
+bottom_radius = 0.25
+height = 0.007
+radial_segments = 9
+
+[sub_resource type="StandardMaterial3D" id="TorchMaterial"]
+albedo_color = Color(0.25, 0.27, 0.28, 1)
+metallic = 0.35
+
+[sub_resource type="CylinderMesh" id="Torch"]
+material = SubResource("TorchMaterial")
+top_radius = 0.038
+bottom_radius = 0.038
+height = 0.18
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="TorchHead"]
+material = SubResource("TorchMaterial")
+top_radius = 0.055
+bottom_radius = 0.041
+height = 0.07
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="LensMaterial"]
+albedo_color = Color(0.66, 0.73, 0.8, 1)
+emission_enabled = true
+emission = Color(0.52, 0.66, 0.85, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="CylinderMesh" id="TorchLens"]
+material = SubResource("LensMaterial")
+top_radius = 0.047
+bottom_radius = 0.047
+height = 0.012
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="BandageMaterial"]
+albedo_color = Color(0.73, 0.69, 0.58, 1)
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="Bandage"]
+material = SubResource("BandageMaterial")
+size = Vector3(0.21, 0.075, 0.017)
+
+[sub_resource type="ShaderMaterial" id="Pixel"]
+shader = ExtResource("8_pixel")
+shader_parameter/pixel_block_size = 2.0
+
+[node name="FactoryPresent" type="Node3D"]
+process_priority = 1
+script = ExtResource("1_scene")
+
+[node name="Room" parent="." instance=ExtResource("2_room")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.99939084, 0.0030720884, -0.034764804, 0, 0.9961183, 0.08802476, 0.034900278, -0.08797113, 0.9955115, -13.2, 2.06, 6.6)
+projection = 1
+size = 4.35
+current = true
+
+[node name="Fill" type="OmniLight3D" parent="."]
+position = Vector3(-12.4, 3.4, 2)
+light_color = Color(0.58, 0.69, 0.87, 1)
+light_energy = 0.22
+omni_range = 10.5
+
+[node name="Player" type="Node3D" parent="."]
+position = Vector3(-15.4, 0, 1)
+script = ExtResource("3_player")
+min_x = -15.6
+max_x = -3.5
+z_far = 1.0
+z_near = 1.7
+
+[node name="WarehouseBeam" type="SpotLight3D" parent="Player"]
+position = Vector3(0.12, 1.04, 0.11)
+light_color = Color(0.77, 0.84, 1, 1)
+light_energy = 4.8
+spot_range = 8.5
+spot_angle = 24.0
+
+[node name="HandTorch" type="Node3D" parent="Player"]
+
+[node name="Body" type="MeshInstance3D" parent="Player/HandTorch"]
+position = Vector3(0.03, 0, 0)
+rotation_degrees = Vector3(0, 0, -90)
+mesh = SubResource("Torch")
+
+[node name="Head" type="MeshInstance3D" parent="Player/HandTorch"]
+position = Vector3(0.135, 0, 0)
+rotation_degrees = Vector3(0, 0, -90)
+mesh = SubResource("TorchHead")
+
+[node name="Lens" type="MeshInstance3D" parent="Player/HandTorch"]
+position = Vector3(0.175, 0, 0)
+rotation_degrees = Vector3(0, 0, -90)
+mesh = SubResource("TorchLens")
+
+[node name="Mikhail" type="Sprite3D" parent="."]
+position = Vector3(-10.4, 0.025, 0.20)
+offset = Vector2(0, 20)
+texture_filter = 0
+alpha_cut = 1
+pixel_size = 0.0109
+texture = ExtResource("4_mikhail")
+modulate = Color(0.84, 0.83, 0.88, 1)
+
+[node name="Fyodor" type="Sprite3D" parent="."]
+position = Vector3(-7.15, 0.025, -2.84)
+offset = Vector2(0, 64)
+texture_filter = 0
+alpha_cut = 1
+pixel_size = 0.0102
+texture = ExtResource("5_fyodor")
+modulate = Color(0.82, 0.82, 0.88, 1)
+
+[node name="Bandage" type="MeshInstance3D" parent="Fyodor"]
+visible = false
+position = Vector3(0.16, 0.55, 0.048)
+rotation_degrees = Vector3(0, 0, 9)
+mesh = SubResource("Bandage")
+
+[node name="BloodOnFloor" type="MeshInstance3D" parent="Fyodor"]
+position = Vector3(0.04, -0.017, 0.28)
+scale = Vector3(1.6, 1, 0.72)
+mesh = SubResource("Blood")
+
+[node name="Dmitry" type="Sprite3D" parent="."]
+position = Vector3(-4.45, 0.61, -2.05)
+flip_h = true
+texture_filter = 0
+alpha_cut = 1
+pixel_size = 0.0092
+texture = ExtResource("6_dmitry")
+
+[node name="Recorder" type="Sprite3D" parent="Dmitry"]
+position = Vector3(-0.25, 0.32, 0.038)
+rotation_degrees = Vector3(0, 0, -15)
+texture_filter = 0
+alpha_cut = 1
+pixel_size = 0.0050
+texture = ExtResource("7_recorder")
+
+[node name="Glitch" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Pixel" type="ColorRect" parent="Glitch"]
+material = SubResource("Pixel")
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 4
+
+[node name="Root" type="Control" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Speech" type="VBoxContainer" parent="UI/Root"]
+script = ExtResource("9_speech")
+
+[node name="TorchHint" type="Label" parent="UI/Root"]
+offset_left = 551.0
+offset_top = 16.0
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.62, 0.72, 0.80, 1)
+text = "F — фонарь"
+
+[node name="InteractionPrompt" type="Button" parent="UI/Root"]
+visible = false
+focus_mode = 0
+
+[node name="RecorderFocus" type="TextureRect" parent="UI/Root"]
+visible = false
+offset_right = 640.0
+offset_bottom = 360.0
+texture_filter = 1
+mouse_filter = 2
+texture = ExtResource("10_recorder_insert")
+expand_mode = 1
+stretch_mode = 0

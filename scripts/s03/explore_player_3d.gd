@@ -44,6 +44,7 @@ func _ready() -> void:
 	_walk_tex = load(WALK_SHEET if coat else PLAIN_WALK)
 	_run_tex = load(RUN_SHEET if coat else PLAIN_RUN)
 	_sprite = Sprite3D.new()
+	_sprite.name = "AnimatedSprite"
 	_sprite.texture = _walk_tex
 	_sprite.hframes = 10
 	_sprite.vframes = 3

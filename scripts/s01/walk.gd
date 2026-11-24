@@ -62,12 +62,12 @@ func _ready() -> void:
 	Hud.show_stamina(true)
 	Hud.set_walk_mode(true)
 	GameState.item_used.connect(_on_item_used)
-	if not (GameState.has_item("cup_old") or GameState.has_item("cup_empty") or GameState.has_item("cup_full")):
+	if not (GameState.owns_item("cup_old") or GameState.owns_item("cup_empty") or GameState.owns_item("cup_full")):
 		GameState.items.append("cup_old")
 	GameState.inventory_changed.connect(_check_locker)
 	var saved: Variant = GameState.get_flag("walk_state")
 	var returning: bool = saved != null
-	_state = str(saved) if returning else ("wash" if GameState.has_item("cup_old") else "coffee1")
+	_state = str(saved) if returning else ("wash" if GameState.owns_item("cup_old") else "coffee1")
 	if _state == "leave":
 		GameState.item_thoughts["coat:wear"] = str(_d["leave"]["worn"])
 	Hud.set_objective(_objective(), true)

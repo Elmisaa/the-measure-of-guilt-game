@@ -13,14 +13,14 @@ const REVEAL_TIME: float = 3.5
 const MUSIC: String = "res://assets/audio/music/ivan_theme.wav"
 const IVAN_SHEET: String = "res://assets/characters/ivan/ivan_poses.png"
 const TALK_SCENE: String = "res://scenes/s04/ivan_talk.tscn"
-const TITLE_SCENE: String = "res://scenes/menu/title.tscn"
-const TICK: String = "res://assets/audio/sfx/key_tick.wav"
+const FLASHBACK_SCENE: String = "res://scenes/s05/factory_flashback.tscn"
 
 var _d: Dictionary = {}
 var _player: ExplorePlayer3D
 var _cam: Camera3D
 var _thought: ThoughtBox
 var _prompt: Button
+var _leave_button: Button
 var _black: ColorRect
 var _spots: Array = []
 var _near: String = ""
@@ -80,6 +80,8 @@ func _intro() -> void:
 	_player.frozen = true
 	Hud.set_hud_visible(false)
 	Letterbox.hide_bars()
+	if _after:
+		_leave_button.show()
 	var slow: bool = bool(GameState.get_flag("ivan_flat_slow_reveal", false))
 	GameState.set_flag("ivan_flat_slow_reveal", false)
 	var t: Tween = create_tween()
@@ -131,6 +133,16 @@ func _build_ui() -> void:
 	root.add_child(_prompt)
 	_thought = ThoughtBox.new()
 	root.add_child(_thought)
+	_leave_button = Button.new()
+	_leave_button.name = "LeaveButton"
+	_leave_button.text = str(_d.get("factory_button", "Отправиться на завод"))
+	_leave_button.position = Vector2(232, 290)
+	_leave_button.size = Vector2(176, 28)
+	_leave_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_leave_button.hide()
+	_leave_button.pressed.connect(_go_to_factory)
+	Audio.bind_button(_leave_button)
+	root.add_child(_leave_button)
 	var top: CanvasLayer = CanvasLayer.new()
 	top.layer = 50
 	add_child(top)
@@ -194,7 +206,7 @@ func _interact(id: String) -> void:
 			_start_talk()
 		return
 	if id == "exit" and _after:
-		_leave()
+		_go_to_factory()
 		return
 	for s: Dictionary in _spots:
 		if str(s["id"]) == id:
@@ -236,34 +248,16 @@ func _start_talk() -> void:
 	SceneRouter.go_to(TALK_SCENE, 0.3)
 
 
-func _leave() -> void:
+func _go_to_factory() -> void:
+	if _leave_button.disabled or Hud.is_blocking():
+		return
 	_busy = true
 	_player.frozen = true
 	Hud.set_hud_visible(false)
-	for i: int in 6:
-		Audio.sfx("res://assets/audio/sfx/body_thud.wav", -24.0, randf_range(1.6, 1.9))
-		await get_tree().create_timer(0.38).timeout
-	Audio.sfx("res://assets/audio/sfx/door.wav", -2.0, 0.8)
-	var t: Tween = create_tween()
-	t.tween_property(_black, "color:a", 1.0, 0.25)
-	await t.finished
-	Audio.stop_music(1.5)
-	await get_tree().create_timer(1.6).timeout
-	var end: Label = Label.new()
-	end.text = str(_d.get("end_stub", ""))
-	end.size = Vector2(640, 20)
-	end.position = Vector2(0, 170)
-	end.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	end.add_theme_color_override("font_color", Color(0.7, 0.72, 0.76))
-	end.modulate.a = 0.0
-	_black.get_parent().add_child(end)
-	var e: Tween = create_tween()
-	e.tween_property(end, "modulate:a", 1.0, 1.0)
-	e.tween_interval(2.5)
-	e.tween_property(end, "modulate:a", 0.0, 1.0)
-	await e.finished
-	if is_inside_tree():
-		SceneRouter.go_to(TITLE_SCENE)
+	_leave_button.disabled = true
+	Audio.sfx("res://assets/audio/sfx/door.wav", -4.0, 0.9)
+	Audio.stop_music(0.6)
+	SceneRouter.go_to(FLASHBACK_SCENE, 0.15)
 
 
 func save_state() -> Dictionary:
@@ -282,39 +276,6 @@ func _brighten(set_scene: Node3D) -> void:
 
 
 func _type_place() -> void:
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.layer = 60
-	add_child(layer)
-	var box: VBoxContainer = VBoxContainer.new()
-	box.position = Vector2(28, 16)
-	box.add_theme_constant_override("separation", 2)
-	layer.add_child(box)
-	var labels: Array[Label] = []
-	var lines: Array = _d.get("place", [])
-	for i: int in lines.size():
-		var l: Label = Label.new()
-		l.text = str(lines[i])
-		l.visible_characters = 0
-		l.add_theme_color_override("font_color", Color(0.93, 0.9, 0.82) if i == 0 else Color(0.62, 0.86, 0.72))
-		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
-		l.add_theme_constant_override("shadow_offset_x", 1)
-		l.add_theme_constant_override("shadow_offset_y", 1)
-		if i == 0:
-			l.add_theme_font_size_override("font_size", 16)
-		box.add_child(l)
-		labels.append(l)
-	await get_tree().create_timer(1.2).timeout
-	for l: Label in labels:
-		for c: int in l.text.length():
-			if not is_inside_tree():
-				return
-			l.visible_characters = c + 1
-			if l.text[c] != " ":
-				Audio.sfx(TICK, -20.0, randf_range(0.9, 1.1))
-			await get_tree().create_timer(0.05).timeout
-		await get_tree().create_timer(0.3).timeout
-	await get_tree().create_timer(4.0).timeout
-	var f: Tween = create_tween()
-	f.tween_property(box, "modulate:a", 0.0, 1.2)
-	await f.finished
-	layer.queue_free()
+	var title: CanvasLayer = preload("res://scripts/ui/place_title.gd").new()
+	add_child(title)
+	title.show_lines(_d.get("place", []))

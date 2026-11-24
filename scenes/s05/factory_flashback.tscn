@@ -1,0 +1,152 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/s05/factory_flashback.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/s05/factory_room.tscn" id="2_room"]
+[ext_resource type="Texture2D" path="res://scenes/s05/dmitry_sheet.res" id="3_dmitry"]
+[ext_resource type="Texture2D" path="res://scenes/s05/fyodor_sheet.res" id="4_fyodor"]
+[ext_resource type="Texture2D" path="res://scenes/s05/mikhail_sheet.res" id="5_mikhail"]
+[ext_resource type="Texture2D" path="res://assets/characters/entity/entity.png" id="6_entity"]
+[ext_resource type="Shader" path="res://scripts/fx/screen_glitch.gdshader" id="7_glitch"]
+
+[ext_resource type="Script" path="res://scripts/ui/dialogue_speech.gd" id="8_speech"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/880038__daniel_brooks__horror-beneath-the-silence.mp3" id="9_music"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/entity_drone.wav" id="10_drone"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/879917__woodbetweenstudio__heartbeat-tense.wav" id="11_heartbeat"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_blade"]
+albedo_color = Color(0.49, 0.52, 0.59, 1)
+roughness = 0.4
+
+[sub_resource type="PrismMesh" id="PrismMesh_blade"]
+material = SubResource("StandardMaterial3D_blade")
+size = Vector3(0.045, 0.19, 0.013)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_handle"]
+albedo_color = Color(0.15, 0.12, 0.1, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+material = SubResource("StandardMaterial3D_handle")
+size = Vector3(0.042, 0.095, 0.022)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_glitch"]
+resource_local_to_scene = true
+shader = ExtResource("7_glitch")
+shader_parameter/pixel_block_size = 2.0
+
+[node name="FactoryFlashback" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9_music")
+volume_db = -22.0
+pitch_scale = 0.85
+bus = &"Music"
+autoplay = true
+
+[node name="EntityDrone" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("10_drone")
+volume_db = -6.0
+bus = &"SFX"
+
+[node name="Heartbeat" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("11_heartbeat")
+volume_db = -8.0
+bus = &"SFX"
+
+[node name="Room" parent="." instance=ExtResource("2_room")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.99939084, 0.0030720884, -0.034764804, 0, 0.9961183, 0.08802476, 0.034900278, -0.08797113, 0.9955115, -8.45, 2.05, 6.3)
+projection = 1
+current = true
+size = 4.35
+near = 0.05
+far = 50.0
+
+[node name="Overhead" type="OmniLight3D" parent="."]
+position = Vector3(-8.6, 3.15, -0.6)
+light_color = Color(1, 0.72, 0.45, 1)
+light_energy = 1.7
+omni_range = 6.8
+
+[node name="Dmitry" type="Sprite3D" parent="."]
+position = Vector3(-8.4, 0.01, 0.15)
+offset = Vector2(0, 100)
+pixel_size = 0.012105263
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("3_dmitry")
+hframes = 8
+
+[node name="Fyodor" type="Sprite3D" parent="."]
+position = Vector3(-5.9, 0.01, 0.06)
+offset = Vector2(0, 100)
+flip_h = true
+pixel_size = 0.012105263
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("4_fyodor")
+hframes = 8
+
+[node name="Mikhail" type="Sprite3D" parent="."]
+position = Vector3(-10.7, 0.01, 0.35)
+offset = Vector2(0, 100)
+pixel_size = 0.012105263
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("5_mikhail")
+hframes = 8
+
+[node name="Knife" type="Node3D" parent="."]
+visible = false
+
+[node name="Blade" type="MeshInstance3D" parent="Knife"]
+position = Vector3(0, 0.112, 0)
+mesh = SubResource("PrismMesh_blade")
+
+[node name="Handle" type="MeshInstance3D" parent="Knife"]
+mesh = SubResource("BoxMesh_handle")
+
+[node name="Entity" type="Sprite3D" parent="."]
+visible = false
+position = Vector3(-9.5, 1.42, -1.6)
+pixel_size = 0.011
+texture_filter = 0
+texture = ExtResource("6_entity")
+
+[node name="Glitch" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="ScreenEffect" type="ColorRect" parent="Glitch"]
+material = SubResource("ShaderMaterial_glitch")
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 4
+
+[node name="Speech" type="VBoxContainer" parent="UI"]
+script = ExtResource("8_speech")
+
+[node name="EntityOverlay" type="Control" parent="UI"]
+mouse_filter = 2
+
+[node name="Fade" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="Black" type="ColorRect" parent="Fade"]
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Caption" type="Label" parent="Fade"]
+offset_top = 140.0
+offset_right = 640.0
+offset_bottom = 220.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1

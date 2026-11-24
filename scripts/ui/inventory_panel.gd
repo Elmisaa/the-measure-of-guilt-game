@@ -5,7 +5,8 @@ signal action_chosen(item_id: String, action: String)
 signal closed
 
 const COLS: int = 6
-const ROWS: int = 2
+const INVENTORY_ROWS: int = 4
+const CONTAINER_ROWS: int = 2
 const SLOT: float = 40.0
 const GAP: float = 4.0
 const PANEL_BG: Color = Color(0.03, 0.03, 0.05, 0.94)
@@ -17,6 +18,8 @@ const HINT_COLOR: Color = Color(0.6, 0.68, 0.72)
 
 var _panel: PanelContainer
 var _grid: GridContainer
+var _scroll: ScrollContainer
+var _row_count: int = INVENTORY_ROWS
 var _tip: PanelContainer
 var _tip_name: Label
 var _tip_desc: Label
@@ -65,7 +68,10 @@ func _ready() -> void:
 	_grid.columns = COLS
 	_grid.add_theme_constant_override("h_separation", int(GAP))
 	_grid.add_theme_constant_override("v_separation", int(GAP))
-	col.add_child(_grid)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(_scroll)
+	_scroll.add_child(_grid)
 	var bottom: HBoxContainer = HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 8)
 	col.add_child(bottom)
@@ -145,7 +151,11 @@ func _refresh() -> void:
 	else:
 		_hint.text = "Стрелки / WASD, Enter или клик — действия.  Esc — закрыть"
 	_slots.clear()
-	for i: int in COLS * ROWS:
+	var visible_rows: int = INVENTORY_ROWS if container_id.is_empty() else CONTAINER_ROWS
+	_row_count = maxi(visible_rows, ceili(float(items.size()) / COLS))
+	var scroll_width: float = 12.0 if _row_count > visible_rows else 0.0
+	_scroll.custom_minimum_size = Vector2(COLS * SLOT + (COLS - 1) * GAP + scroll_width, visible_rows * SLOT + (visible_rows - 1) * GAP)
+	for i: int in COLS * _row_count:
 		var sl: Panel = _make_slot(str(items[i]) if i < items.size() else "")
 		_slots.append(sl)
 		_grid.add_child(sl)
@@ -233,7 +243,8 @@ func _open_menu(id: String, slot: Control) -> void:
 	_menu.visible = true
 	_menu.reset_size()
 	var r: Rect2 = slot.get_global_rect()
-	_menu.position = Vector2(minf(r.end.x + 2.0, 636.0 - _menu.get_combined_minimum_size().x), r.position.y).floor()
+	var menu_size: Vector2 = _menu.get_combined_minimum_size()
+	_menu.position = Vector2(minf(r.end.x + 2.0, 636.0 - menu_size.x), clampf(r.position.y, 4.0, 356.0 - menu_size.y)).floor()
 	_menu_select(0)
 
 
@@ -243,6 +254,8 @@ func _actions_for(id: String) -> Array[String]:
 		out.append("take")
 	for a: String in _gs.item_actions(id):
 		out.append(a)
+	if container_id.is_empty():
+		out.append("drop")
 	return out
 
 
@@ -256,6 +269,8 @@ func _select(i: int, from_keys: bool) -> void:
 		var sb: StyleBoxFlat = _slots[k].get_theme_stylebox("panel") as StyleBoxFlat
 		sb.border_color = SLOT_HOVER if k == i else BORDER
 	var sl: Panel = _slots[i]
+	if from_keys and _row_count > (INVENTORY_ROWS if container_id.is_empty() else CONTAINER_ROWS):
+		_scroll.ensure_control_visible(sl)
 	if sl.has_meta("item_id"):
 		_show_tip(str(sl.get_meta("item_id")), sl)
 		if from_keys:
@@ -345,6 +360,7 @@ func open() -> void:
 	_tip.visible = false
 	_close_menu()
 	visible = true
+	_scroll.scroll_vertical = 0
 	_sel = 0
 	_set_take_focus(false)
 	_select(0, false)
@@ -384,11 +400,11 @@ func _input(event: InputEvent) -> void:
 		else:
 			var c: int = _sel % COLS
 			var r: int = _sel / COLS
-			if step.y > 0 and r == ROWS - 1 and _take_all.visible:
+			if step.y > 0 and r == _row_count - 1 and _take_all.visible:
 				_set_take_focus(true)
 				return
 			c = clampi(c + step.x, 0, COLS - 1)
-			r = clampi(r + step.y, 0, ROWS - 1)
+			r = clampi(r + step.y, 0, _row_count - 1)
 			_select(r * COLS + c, true)
 		return
 	if _is_enter(event):

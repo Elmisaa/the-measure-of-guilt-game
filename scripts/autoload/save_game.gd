@@ -20,6 +20,7 @@ const SCENES: Dictionary = {
 	"res://scenes/s03/ivan_call.tscn": "Звонок Ивана",
 	"res://scenes/s04/ivan_flat.tscn": "Квартира Ивана",
 	"res://scenes/s04/ivan_talk.tscn": "Квартира Ивана. Разговор",
+	"res://scenes/s06/factory_present.tscn": "Заброшенный завод",
 }
 
 var _loading: bool = false

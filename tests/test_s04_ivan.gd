@@ -94,9 +94,60 @@ func _run() -> void:
 	if f2 == null or f2.name != "IvanFlat" or not bool(f2.get("_after")):
 		push_error("FAIL not back in Ivan's flat after the talk: %s" % [f2]); quit(1); return
 	await _shot("after")
-	f2.call("_interact", "exit")
-	await _wait(13.0)
-	if current_scene == null or current_scene.name != "Title":
-		push_error("FAIL leaving did not end on the title: %s" % [current_scene]); ok = false
+	await _wait(0.4)
+	var leave_button: Button = f2.get("_leave_button")
+	if current_scene != f2 or not leave_button.visible or leave_button.text != "Отправиться на завод":
+		push_error("FAIL factory action missing after the dialogue"); quit(1); return
+	leave_button.pressed.emit()
+	await _wait(1.5)
+	var flashback: Node = current_scene
+	var letterbox: Node = root.get_node("Letterbox")
+	if flashback == null or flashback.name != "FactoryFlashback" or letterbox.is_shown():
+		push_error("FAIL factory action did not open a full-frame flashback"); quit(1); return
+	var caption: Label = flashback.get_node("Fade/Caption")
+	if not caption.visible or caption.visible_characters <= 0:
+		push_error("FAIL flashback caption did not start typing"); ok = false
+	await _shot("flashback_intro")
+	var mikhail: Sprite3D = flashback.get_node("Mikhail")
+	var fyodor: Sprite3D = flashback.get_node("Fyodor")
+	var overhead: OmniLight3D = flashback.get_node("Overhead")
+	var lit_lamp: Sprite3D = flashback.get_node("Room/Props/LampFarLeft")
+	var saw_final_pose: bool = false
+	var dialogue: Array[String] = []
+	var last_speaker: String = ""
+	while current_scene == flashback:
+		if bool(flashback.get("_awaiting_dialogue")):
+			var speaker: Label = flashback.get_node("UI/Speech/Speaker")
+			var entity_speech: Control = flashback.get_node_or_null("UI/EntityOverlay/EntitySpeech")
+			var current_speaker: String = "Сущность" if entity_speech != null else speaker.text
+			if current_speaker != last_speaker:
+				last_speaker = current_speaker
+				dialogue.append(last_speaker)
+				if dialogue.size() == 1 or last_speaker == "Сущность":
+					await _wait(0.7)
+					await _shot("flashback_" + str(dialogue.size()))
+			var click: InputEventMouseButton = InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_LEFT
+			click.pressed = true
+			Input.parse_input_event(click)
+			await _wait(0.08)
+			click = InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_LEFT
+			click.pressed = false
+			Input.parse_input_event(click)
+		if not saw_final_pose and mikhail.frame == 7 and fyodor.frame == 7 and overhead.light_energy == 0.0 and lit_lamp.material_override == null:
+			saw_final_pose = true
+			await _wait(0.36)
+			await _shot("flashback_end")
+		await process_frame
+	if not saw_final_pose:
+		push_error("FAIL flashback did not reach the psychic strike under moonlight"); ok = false
+	if dialogue != ["Дмитрий", "Отец", "Михаил", "Отец", "Дмитрий", "Сущность"]:
+		push_error("FAIL flashback dialogue sequence: %s" % [dialogue]); ok = false
+	await _wait(0.3)
+	if current_scene == null or current_scene.name != "FactoryPresent":
+		push_error("FAIL flashback did not lead to the present-time factory: %s" % [current_scene]); ok = false
+	if letterbox.is_shown():
+		push_error("FAIL flashback bars remained on the title"); ok = false
 	print("S04 IVAN (%s): %s" % [_choice, "OK" if ok else "FAILED"])
 	quit(0 if ok else 1)

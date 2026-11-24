@@ -1,0 +1,520 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/3d/factory/download (34).png" id="2_55ym0"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/wooden-crates.png" id="16_4oo3q"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/steel-locker.png" id="16_gkahd"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/steel-door-leaf.png" id="17_76otv"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/drip-bucket.png" id="18_6pctb"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/hanging-lamp.png" id="20_6s8mt"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/approach_floor.png" id="T_approach_floor"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/entry_mark.png" id="T_entry_mark"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/hall_floor.png" id="T_hall_floor"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.32549, 0.329412, 0.352941, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_0_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_0_Surface")
+size = Vector3(8.105957, 0.32, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3_Finish"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_approach_floor")
+roughness = 0.86
+uv1_scale = Vector3(0.5, 1, 1)
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_3_Finish"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_3_Finish")
+size = Vector2(4, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.32549, 0.329412, 0.352941, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_5_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_5_Surface")
+size = Vector3(4, 0.32, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8_Finish"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("T_hall_floor")
+roughness = 0.86
+uv1_scale = Vector3(0.5, 1, 1)
+uv1_offset = Vector3(0.5, 0, 0)
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_8_Finish"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_8_Finish")
+size = Vector2(4, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_70_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.32549, 0.329412, 0.352941, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_70_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_70_Surface")
+size = Vector3(15.802442, 7.622363, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_75_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.32549, 0.329412, 0.352941, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_75_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_75_Surface")
+size = Vector3(5.425, 10.601892, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_78_RightPier_Finish"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("2_55ym0")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_78_RightPier_Finish"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_78_RightPier_Finish")
+size = Vector2(5.425, 5.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_80_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.32549, 0.329412, 0.352941, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_80_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_80_Surface")
+size = Vector3(1.15, 7.8073606, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_94_JambL"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_94_JambL"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_94_JambL")
+size = Vector3(0.12, 2.35, 0.13)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_96_JambR"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_96_JambR"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_96_JambR")
+size = Vector3(0.12, 2.35, 0.13)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_98_Head"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_98_Head"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_98_Head")
+size = Vector3(1.41, 0.16, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_100_Surface"]
+resource_local_to_scene = true
+albedo_color = Color(0.313725, 0.286275, 0.313725, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_100_Surface"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_100_Surface")
+size = Vector3(1.124, 2.334, 0.09)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_115_SectorMark"]
+resource_local_to_scene = true
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("T_entry_mark")
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_115_SectorMark"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_115_SectorMark")
+size = Vector2(1.05, 0.53)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_117_PipeRun0"]
+resource_local_to_scene = true
+albedo_color = Color(0.396078, 0.282353, 0.243137, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_117_PipeRun0"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_117_PipeRun0")
+size = Vector3(16.472359, 0.095, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_119_PipeRun1"]
+resource_local_to_scene = true
+albedo_color = Color(0.396078, 0.282353, 0.243137, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_119_PipeRun1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_119_PipeRun1")
+size = Vector3(16.487862, 0.095, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_121_PipeClamp0"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_121_PipeClamp0"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_121_PipeClamp0")
+size = Vector3(0.08, 0.47, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_123_PipeClamp1"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_123_PipeClamp1"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_123_PipeClamp1")
+size = Vector3(0.08, 0.47, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_125_PipeClamp2"]
+resource_local_to_scene = true
+albedo_color = Color(0.203922, 0.235294, 0.286275, 1)
+roughness = 0.86
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_125_PipeClamp2"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_125_PipeClamp2")
+size = Vector3(0.08, 0.47, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_job1m"]
+transparency = 1
+albedo_color = Color(0.77262706, 0.5684654, 0.21209997, 1)
+albedo_texture = ExtResource("20_6s8mt")
+emission_enabled = true
+emission = Color(0.86, 0.6834133, 0.19780003, 1)
+emission_energy_multiplier = 0.68
+emission_operator = 1
+emission_texture = ExtResource("20_6s8mt")
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8sx2y"]
+sky_top_color = Color(0.03137255, 0.06666667, 0.12156863, 1)
+sky_horizon_color = Color(0.101960786, 0.17254902, 0.3019608, 1)
+ground_bottom_color = Color(0.015686275, 0.02745098, 0.05490196, 1)
+ground_horizon_color = Color(0.039215688, 0.07450981, 0.13725491, 1)
+sun_angle_max = 0.0
+energy_multiplier = 0.55
+
+[sub_resource type="Sky" id="Sky_jv4wu"]
+sky_material = SubResource("ProceduralSkyMaterial_8sx2y")
+
+[sub_resource type="Environment" id="Environment_ubtcc"]
+background_mode = 2
+sky = SubResource("Sky_jv4wu")
+ambient_light_source = 2
+ambient_light_color = Color(0.3254902, 0.39215687, 0.49019608, 1)
+ambient_light_energy = 0.65
+tonemap_mode = 4
+glow_enabled = true
+glow_intensity = 0.4
+glow_strength = 0.7
+glow_bloom = 0.05
+glow_blend_mode = 2
+
+[node name="FactoryRoom" type="Node3D"]
+
+[node name="Approach" type="Node3D" parent="." unique_id=584898622]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.9855645)
+
+[node name="Floors" type="Node3D" parent="Approach" unique_id=1242354843]
+
+[node name="Floor01" type="Node3D" parent="Approach/Floors" unique_id=333936955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.16, 0.6)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/Floors/Floor01" unique_id=688973854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0529785, 0, 0)
+mesh = SubResource("BoxMesh_0_Surface")
+
+[node name="Finish" type="MeshInstance3D" parent="Approach/Floors/Floor01" unique_id=1875724349]
+transform = Transform3D(1.9428025, 0, 0, 0, -4.371139e-08, 0.6707087, 0, -1, -2.931761e-08, -1.8853092, 0.163, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_3_Finish")
+
+[node name="Finish2" type="MeshInstance3D" parent="Approach/Floors/Floor01" unique_id=1812229208]
+transform = Transform3D(1.9428025, 0, 0, 0, -4.371139e-08, 0.6707087, 0, -1, -2.931761e-08, -9.679133, 0.163, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_3_Finish")
+
+[node name="Finish3" type="MeshInstance3D" parent="Approach/Floors/Floor01" unique_id=1734939174]
+transform = Transform3D(1.9428025, 0, 0, 0, -4.371139e-08, 0.6707087, 0, -1, -2.931761e-08, -9.679133, 0.163, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_3_Finish")
+
+[node name="Floor02" type="Node3D" parent="Approach/Floors" unique_id=1126838603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.16, 0.6)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=228221834]
+mesh = SubResource("BoxMesh_5_Surface")
+
+[node name="Finish" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=263554010]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.163, 0)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Finish2" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=704766336]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.163, 5.98334)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Finish3" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=790191938]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -3.9498606, 0.163, 5.98334)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Finish4" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=1482496393]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -7.9402313, 0.163, 5.98334)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Finish5" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=1507424735]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -11.8838005, 0.163, 5.98334)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Finish6" type="MeshInstance3D" parent="Approach/Floors/Floor02" unique_id=381530720]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -15.810329, 0.163, 5.98334)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_8_Finish")
+
+[node name="Walls" type="Node3D" parent="Approach" unique_id=112691509]
+
+[node name="LeftPier" type="Node3D" parent="Approach/Walls" unique_id=369554768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.2875, 2.7, -2.55)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/Walls/LeftPier" unique_id=886939762]
+transform = Transform3D(1, 0, 0, 0, 2.3047898, 0, 0, 0, 1, -7.188721, 1.1111815, 0)
+mesh = SubResource("BoxMesh_70_Surface")
+
+[node name="RightPier" type="Node3D" parent="Approach/Walls" unique_id=558911833]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7125, 2.7, -2.55)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1174801146]
+transform = Transform3D(1, 0, 0, 0, 1.3326697, 0, 0, 0, 1, 0, 3.0985558, 0)
+mesh = SubResource("BoxMesh_75_Surface")
+
+[node name="RightPier_Finish" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1856649696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.153)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish5" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1560940399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.3820934, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish6" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1829280870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.410645, 5.3820934, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish7" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1294195662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.862246, 5.3820934, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish8" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1786800605]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.295725, 5.3820934, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish2" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1427573421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4130816, 0, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish3" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1665905338]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.848633, 0, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="RightPier_Finish4" type="MeshInstance3D" parent="Approach/Walls/RightPier" unique_id=1832212916]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.27488, 0, 0.15299988)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_78_RightPier_Finish")
+
+[node name="DoorLintel" type="Node3D" parent="Approach/Walls" unique_id=2092867993]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 3.875, -2.55)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/Walls/DoorLintel" unique_id=1471254158]
+transform = Transform3D(1, 0, 0, 0, 1.4856915, 0, 0, 0, 1, 0, 3.0031695, 0)
+mesh = SubResource("BoxMesh_80_Surface")
+
+[node name="EntranceDoor" type="Node3D" parent="Approach" unique_id=2036030028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -2.36)
+
+[node name="JambL" type="MeshInstance3D" parent="Approach/EntranceDoor" unique_id=1320821043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.635, 1.175, 0.02)
+mesh = SubResource("BoxMesh_94_JambL")
+
+[node name="JambR" type="MeshInstance3D" parent="Approach/EntranceDoor" unique_id=1780854209]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.635, 1.175, 0.02)
+mesh = SubResource("BoxMesh_96_JambR")
+
+[node name="Head" type="MeshInstance3D" parent="Approach/EntranceDoor" unique_id=307072703]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.43, 0.02)
+mesh = SubResource("BoxMesh_98_Head")
+
+[node name="Hinge" type="Node3D" parent="Approach/EntranceDoor" unique_id=1345138625]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.575, 0, 0)
+
+[node name="Leaf" type="Node3D" parent="Approach/EntranceDoor/Hinge" unique_id=1654023742]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.575, 1.175, 0)
+
+[node name="Surface" type="MeshInstance3D" parent="Approach/EntranceDoor/Hinge/Leaf" unique_id=667612061]
+mesh = SubResource("BoxMesh_100_Surface")
+
+[node name="EntranceLamp" type="Node3D" parent="Approach" unique_id=298775982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.85, -2.18)
+
+[node name="EntryAmber" type="OmniLight3D" parent="Approach/EntranceLamp" unique_id=811423537]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0.5)
+light_color = Color(1, 0.678431, 0.396078, 1)
+light_energy = 2.2
+omni_range = 5.4
+
+[node name="SectorMark" type="MeshInstance3D" parent="Approach" unique_id=695856861]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3190713, 1.91, -2.385)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_115_SectorMark")
+
+[node name="Pipes" type="Node3D" parent="Approach" unique_id=695471245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.88, -2.2)
+
+[node name="PipeRun0" type="MeshInstance3D" parent="Approach/Pipes" unique_id=737191938]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.266179, -0.119999886, 0.00999999)
+mesh = SubResource("BoxMesh_117_PipeRun0")
+
+[node name="PipeRun1" type="MeshInstance3D" parent="Approach/Pipes" unique_id=2032733417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2739305, 0.119999886, 0.00999999)
+mesh = SubResource("BoxMesh_119_PipeRun1")
+
+[node name="PipeClamp0" type="MeshInstance3D" parent="Approach/Pipes" unique_id=2139366354]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.66, 0, -0.01)
+mesh = SubResource("BoxMesh_121_PipeClamp0")
+
+[node name="PipeClamp3" type="MeshInstance3D" parent="Approach/Pipes" unique_id=1551063834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5859594, 0, -0.00999999)
+mesh = SubResource("BoxMesh_121_PipeClamp0")
+
+[node name="PipeClamp1" type="MeshInstance3D" parent="Approach/Pipes" unique_id=175486251]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0, -0.01)
+mesh = SubResource("BoxMesh_123_PipeClamp1")
+
+[node name="PipeClamp2" type="MeshInstance3D" parent="Approach/Pipes" unique_id=1497285495]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.58, 0, -0.01)
+mesh = SubResource("BoxMesh_125_PipeClamp2")
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="Locker1" type="Sprite3D" parent="Props" unique_id=1390987012]
+transform = Transform3D(0.14426242, 0, 0, 0, 0.14365488, 0, 0, 0, 1, -4.009119, 1.0196087, -3.2976992)
+shaded = true
+texture_filter = 0
+texture = ExtResource("16_gkahd")
+
+[node name="DoorSkin" type="Sprite3D" parent="Props" unique_id=1152994720]
+transform = Transform3D(0.21452777, 0, 0, 0, 0.24094328, 0, 0, 0, 1, -6.003534, 1.0196087, -3.2976992)
+shaded = true
+texture_filter = 0
+texture = ExtResource("17_76otv")
+
+[node name="Locker2" type="Sprite3D" parent="Props" unique_id=691423248]
+transform = Transform3D(0.14426242, 0, 0, 0, 0.14365488, 0, 0, 0, 1, -3.113761, 1.0196087, -3.2976992)
+shaded = true
+texture_filter = 0
+texture = ExtResource("16_gkahd")
+
+[node name="Locker3" type="Sprite3D" parent="Props" unique_id=310561800]
+transform = Transform3D(0.14426242, 0, 0, 0, 0.14365488, 0, 0, 0, 1, -2.2182353, 1.0196087, -3.2976992)
+shaded = true
+texture_filter = 0
+texture = ExtResource("16_gkahd")
+
+[node name="Locker4" type="Sprite3D" parent="Props" unique_id=63678345]
+transform = Transform3D(0.14426242, 0, 0, 0, 0.14365488, 0, 0, 0, 1, -1.3234564, 1.0196087, -3.2976992)
+shaded = true
+texture_filter = 0
+texture = ExtResource("16_gkahd")
+
+[node name="DripBucket" type="Sprite3D" parent="Props" unique_id=1598860683]
+transform = Transform3D(0.04926229, 0, 0, 0, 0.058108374, 0, 0, 0, 1, -7.8479576, 0.2729578, -2.3601484)
+shaded = true
+texture_filter = 0
+texture = ExtResource("18_6pctb")
+
+[node name="Crates" type="Sprite3D" parent="Props" unique_id=260586237]
+transform = Transform3D(0.17934828, 0, 0, 0, 0.16440064, 0, 0, 0, 1, -10.037415, 0.7811996, -1.7634497)
+shaded = true
+texture_filter = 0
+texture = ExtResource("16_4oo3q")
+
+[node name="LampCenter" type="Sprite3D" parent="Props" unique_id=1143847243]
+transform = Transform3D(0.096692696, 0, 0, 0, 0.15027206, 0, 0, 0, 1.0000006, -6.427647, 4.8116093, -0.33903098)
+shaded = true
+texture_filter = 0
+texture = ExtResource("20_6s8mt")
+
+[node name="LampLeft" type="Sprite3D" parent="Props" unique_id=1550559098]
+transform = Transform3D(0.096692696, 0, 0, 0, 0.15027206, 0, 0, 0, 1.0000006, -10.303295, 4.8116093, -0.33903098)
+shaded = true
+texture_filter = 0
+texture = ExtResource("20_6s8mt")
+
+[node name="LampRight" type="Sprite3D" parent="Props" unique_id=261162278]
+transform = Transform3D(0.096692696, 0, 0, 0, 0.15027206, 0, 0, 0, 1.0000006, -3.031009, 4.8116093, -0.33903098)
+shaded = true
+texture_filter = 0
+texture = ExtResource("20_6s8mt")
+
+[node name="LampFarLeft" type="Sprite3D" parent="Props" unique_id=24241358]
+transform = Transform3D(0.096692696, 0, 0, 0, 0.15027206, 0, 0, 0, 1.0000006, -12.444607, 4.8116093, -0.33903098)
+material_override = SubResource("StandardMaterial3D_job1m")
+shaded = true
+texture_filter = 0
+texture = ExtResource("20_6s8mt")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1724897477]
+environment = SubResource("Environment_ubtcc")
+
+[node name="moonlight" type="DirectionalLight3D" parent="WorldEnvironment" unique_id=1189999328]
+transform = Transform3D(1, 0, 0, 0, -0.8029685, 0.5960215, 0, -0.5960215, -0.8029685, 14.417182, 8.107298, -9.855795)
+light_color = Color(0.50980395, 0.62352943, 0.79607844, 1)
+light_energy = 0.4
+shadow_enabled = true
+shadow_opacity = 0.65

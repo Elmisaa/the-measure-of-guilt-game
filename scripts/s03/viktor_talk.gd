@@ -29,6 +29,7 @@ const LAMP_POS: Vector2 = Vector2(296, 185)
 const WINDOW_X: float = 458.0
 const CHAR_SCALE: float = 1.0
 const PAGE_CHARS: int = 110
+const VOICE_PUNCTUATION: String = ".,!?…—-:;\"«»“”"
 const GLASS_RAIN: String = "res://scripts/fx/glass_rain.gdshader"
 const LAMP_UV: Dictionary = {
 	"res://assets/backgrounds/s03/talk_normal.png": Vector2(0.462, 0.514),
@@ -314,25 +315,10 @@ func _build_ui() -> void:
 	_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(_ui)
-	_box = VBoxContainer.new()
-	_box.add_theme_constant_override("separation", 2)
-	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_box.visible = false
+	_box = preload("res://scripts/ui/dialogue_speech.gd").new()
 	_ui.add_child(_box)
-	_name = Label.new()
-	_name.add_theme_font_size_override("font_size", 8)
-	_box.add_child(_name)
-	_text = RichTextLabel.new()
-	_text.bbcode_enabled = true
-	_text.fit_content = true
-	_text.scroll_active = false
-	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.custom_minimum_size = Vector2(250, 0)
-	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
-	_text.add_theme_constant_override("shadow_offset_x", 1)
-	_text.add_theme_constant_override("shadow_offset_y", 1)
-	_box.add_child(_text)
+	_name = _box.get_node("Speaker")
+	_text = _box.get_node("Line")
 	_thought = ThoughtBox.new()
 	_ui.add_child(_thought)
 	_notice = PanelContainer.new()
@@ -449,6 +435,8 @@ func _say(who: String, text: String) -> void:
 			_box.position = Vector2(16, 18) if who == "alexei" else Vector2(374, 18)
 		_shown = 0
 		_last_space = -1
+		if data_name == "s04_ivan_talk":
+			Audio.blip(float(PITCH.get(who, 1.0)))
 		_typing = create_tween()
 		_typing.tween_property(_text, "visible_ratio", 1.0, maxf(0.15, pages[pi].length() / CHARS_PER_SEC))
 		await _advance()
@@ -463,7 +451,10 @@ func _update_blips() -> void:
 	while _shown < n and _shown < txt.length():
 		var c: String = txt[_shown]
 		_shown += 1
-		if VOICE.has(_speaker):
+		if data_name == "s04_ivan_talk":
+			if _shown % 2 == 0 and not c.strip_edges().is_empty() and c not in VOICE_PUNCTUATION:
+				Audio.blip(float(PITCH.get(_speaker, 1.0)))
+		elif VOICE.has(_speaker):
 			if (_shown == 1 or c == " ") and _shown - _last_space > 1:
 				_last_space = _shown
 				var list: Array = VOICE[_speaker]
@@ -912,24 +903,7 @@ func _entity_arrives() -> void:
 
 func _entity_voice(text: String) -> void:
 	_box.visible = false
-	var layer: Control = Control.new()
-	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ui.add_child(layer)
-	var offs: Array[Vector2] = [Vector2(-3, -1), Vector2(3, 1), Vector2(0, 0)]
-	var alphas: Array[float] = [0.35, 0.35, 0.95]
-	for i: int in 3:
-		var l: RichTextLabel = RichTextLabel.new()
-		l.bbcode_enabled = true
-		l.fit_content = true
-		l.scroll_active = false
-		l.autowrap_mode = TextServer.AUTOWRAP_OFF
-		l.size = Vector2(640, 60)
-		l.position = Vector2(0, 140) + offs[i]
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		l.text = "[center][font_size=36][shake rate=14.0 level=%d connected=0][color=#e8e8ee]%s[/color][/shake][/font_size][/center]" % [4 + i * 3, text]
-		l.modulate.a = 0.0
-		layer.add_child(l)
-		create_tween().tween_property(l, "modulate:a", alphas[i], 0.5)
+	var layer: Control = preload("res://scripts/ui/entity_speech.gd").show_in(_ui, text)
 	Audio.sfx(SFX + "entity_voice.wav", -3.0, randf_range(0.9, 1.0))
 	_glitch_spike = 0.7
 	_shake = 0.8

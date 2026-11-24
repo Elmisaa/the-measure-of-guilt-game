@@ -260,7 +260,7 @@ func _at_window() -> void:
 		await get_tree().create_timer(THOUGHT_TIME).timeout
 	if not is_inside_tree():
 		return
-	if not bool(GameState.get_flag("argument_1", false)) and not GameState.has_item("confession"):
+	if not bool(GameState.get_flag("argument_1", false)) and not GameState.owns_item("confession"):
 		_thought.show_text(str(_d.get("envelope_pick", "")), THOUGHT_TIME)
 		GameState.add_item("confession")
 		await get_tree().create_timer(THOUGHT_TIME).timeout

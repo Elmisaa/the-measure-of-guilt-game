@@ -40,6 +40,7 @@ var _controls_tween: Tween
 var _cursor_scale: int = 0
 var _inventory: InventoryPanel
 var _container: InventoryPanel
+var _ground_pickup: Button
 var _item_thought: ThoughtBox
 var _closeup: DocumentView
 var _stamina_root: Control
@@ -71,6 +72,8 @@ func _ready() -> void:
 	_build_task_panel()
 	_build_history()
 	_build_stamina()
+	_ground_pickup = preload("res://scripts/ui/ground_pickup.gd").new()
+	_root.add_child(_ground_pickup)
 	_item_thought = ThoughtBox.new()
 	_root.add_child(_item_thought)
 	_inventory = InventoryPanel.new()
@@ -162,6 +165,7 @@ func _build_history() -> void:
 
 func _process(delta: float) -> void:
 	_update_cursor()
+	_ground_pickup.refresh(_hud_on and not is_blocking())
 	if _held_icon.visible:
 		_held_icon.position = (_root.get_global_mouse_position() + Vector2(6, 4)).floor()
 		if not GameState.has_item(held_item):
@@ -183,6 +187,11 @@ func _input(event: InputEvent) -> void:
 		close_history()
 		return
 	if _pause.visible:
+		return
+	var key: InputEventKey = event as InputEventKey
+	if key and key.pressed and not key.echo and key.physical_keycode == KEY_G and _ground_pickup.visible and not is_blocking():
+		get_viewport().set_input_as_handled()
+		_ground_pickup.pick_up()
 		return
 	if not held_item.is_empty() and not is_blocking():
 		var mb: InputEventMouseButton = event as InputEventMouseButton
@@ -278,6 +287,7 @@ func toggle_inventory() -> void:
 		_inventory.close()
 	else:
 		close_history()
+		hide_controls_hint()
 		_task_panel.visible = false
 		_inventory.open()
 
@@ -768,6 +778,13 @@ func set_held(id: String) -> void:
 
 
 func _on_item_action(id: String, action: String) -> void:
+	if action == "drop":
+		if _ground_pickup.drop(id):
+			if held_item == id:
+				set_held("")
+			_inventory.close()
+			_ground_pickup.refresh(_hud_on and not is_blocking())
+		return
 	if action == "hold":
 		_inventory.close()
 		set_held(id)

@@ -19,6 +19,7 @@ var stamina: float = 1.0:
 
 var _defs: Dictionary = {}
 var containers: Dictionary = {}
+var dropped_items: Dictionary = {}
 var take_locks: Dictionary = {}
 
 
@@ -47,6 +48,7 @@ func get_flag(key: String, default: Variant = null) -> Variant:
 
 func to_dict() -> Dictionary:
 	return {"flags": flags.duplicate(true), "items": Array(items), "containers": containers.duplicate(true),
+		"dropped_items": dropped_items.duplicate(true),
 		"stamina": stamina, "item_thoughts": item_thoughts.duplicate(true)}
 
 
@@ -56,6 +58,7 @@ func from_dict(d: Dictionary) -> void:
 	items.clear()
 	for it: Variant in d.get("items", []):
 		items.append(str(it))
+	dropped_items = (d.get("dropped_items", {}) as Dictionary).duplicate(true)
 	var cs: Dictionary = d.get("containers", {})
 	for cid: String in cs:
 		var arr: Array[String] = []
@@ -73,6 +76,7 @@ func reset_inventory() -> void:
 	for id: Variant in _defs.get("start", []):
 		items.append(str(id))
 	containers.clear()
+	dropped_items.clear()
 	take_locks.clear()
 	for cid: String in _defs.get("containers", {}):
 		var arr: Array[String] = []
@@ -97,7 +101,7 @@ func container_can_take(cid: String) -> bool:
 
 func take_from(cid: String, id: String) -> void:
 	var arr: Array = containers.get(cid, [])
-	if arr.has(id):
+	if arr.has(id) and not dropped_items.has(id):
 		arr.erase(id)
 		add_item(id)
 
@@ -121,8 +125,28 @@ func has_item(id: String) -> bool:
 	return items.has(id)
 
 
+func owns_item(id: String) -> bool:
+	return has_item(id) or dropped_items.has(id)
+
+
+func drop_item(id: String, scene_path: String, position: Array) -> bool:
+	if scene_path.is_empty() or not has_item(id):
+		return false
+	dropped_items[id] = {"scene": scene_path, "position": position.duplicate()}
+	remove_item(id)
+	return true
+
+
+func take_dropped_item(id: String, scene_path: String) -> void:
+	var drop: Dictionary = dropped_items.get(id, {})
+	if drop.is_empty() or drop["scene"] != scene_path:
+		return
+	dropped_items.erase(id)
+	add_item(id)
+
+
 func add_item(id: String) -> void:
-	if not items.has(id):
+	if not owns_item(id):
 		items.append(id)
 		inventory_changed.emit()
 		item_added.emit(id)
@@ -135,9 +159,19 @@ func remove_item(id: String) -> void:
 
 
 func replace_item(old_id: String, new_id: String) -> void:
+	if old_id == new_id:
+		return
+	if dropped_items.has(old_id):
+		if not owns_item(new_id):
+			dropped_items[new_id] = dropped_items[old_id]
+		dropped_items.erase(old_id)
+		return
 	var i: int = items.find(old_id)
 	if i < 0:
 		add_item(new_id)
+		return
+	if owns_item(new_id):
+		remove_item(old_id)
 		return
 	items[i] = new_id
 	inventory_changed.emit()
