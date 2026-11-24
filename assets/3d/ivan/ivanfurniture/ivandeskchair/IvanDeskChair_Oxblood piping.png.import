@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfjwdg8i40mq1"
-path="res://.godot/imported/IvanDeskChair_Oxblood piping.png-07f7f4a53f7d4c5b60756a0976af9b18.ctex"
+path.s3tc="res://.godot/imported/IvanDeskChair_Oxblood piping.png-07f7f4a53f7d4c5b60756a0976af9b18.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d1c0b658937d0b714ac2446071e4a639"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/3d/ivan/ivanfurniture/ivandeskchair/IvanDeskChair_Oxblood piping.png"
-dest_files=["res://.godot/imported/IvanDeskChair_Oxblood piping.png-07f7f4a53f7d4c5b60756a0976af9b18.ctex"]
+dest_files=["res://.godot/imported/IvanDeskChair_Oxblood piping.png-07f7f4a53f7d4c5b60756a0976af9b18.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

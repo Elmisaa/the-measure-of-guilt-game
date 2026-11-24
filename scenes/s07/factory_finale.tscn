@@ -1,0 +1,116 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/s07/factory_finale.gd" id="1_scene"]
+[ext_resource type="PackedScene" path="res://assets/3d/factory/final_workshop/FinalWorkshop.tscn" id="2_workshop"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_scales.tscn" id="4_boss"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/overhead_conveyor.tscn" id="5_conveyor"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/boss/boss_hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://scripts/ui/dialogue_speech.gd" id="7_speech"]
+[ext_resource type="Shader" path="res://scripts/fx/screen_glitch.gdshader" id="8_pixel"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/factory_battle.wav" id="9_music"]
+[ext_resource type="Texture2D" path="res://assets/3d/factory/final_workshop/art/03_transit_crate.png" id="10_crate"]
+
+[ext_resource type="AudioStream" path="res://assets/audio/music/877124__adamdavidsmith__ambience_rain_thunder-2.ogg" id="11_rain"]
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(24, 0.2, 8)
+
+[sub_resource type="ShaderMaterial" id="Pixel"]
+resource_local_to_scene = true
+shader = ExtResource("8_pixel")
+shader_parameter/pixel_block_size = 2.0
+
+[node name="FactoryFinale" type="Node3D"]
+script = ExtResource("1_scene")
+
+[node name="Workshop" parent="." instance=ExtResource("2_workshop")]
+position = Vector3(-12.5, 0, 0)
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="Camera" type="Camera3D" parent="."]
+current = true
+fov = 59.0
+
+[node name="BossPlayer" parent="." instance=ExtResource("3_player")]
+position = Vector3(-6, 0, 0.6)
+target_lock_pixels = 18.0
+
+[node name="OverheadConveyor" parent="." instance=ExtResource("5_conveyor")]
+rail_y = 5.5
+boss_x = 5.5
+show_counter_markers = true
+
+[node name="BossScales" parent="." instance=ExtResource("4_boss")]
+story_controlled = true
+boss_x = 5.5
+thrown_prop_texture = ExtResource("10_crate")
+
+[node name="BossHud" parent="." instance=ExtResource("6_hud")]
+visible = false
+
+[node name="BattleMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9_music")
+bus = &"Music"
+volume_db = -30.0
+
+[node name="Wind" type="AudioStreamPlayer" parent="."]
+bus = &"SFX"
+volume_db = -19.0
+
+[node name="Rain" type="AudioStreamPlayer" parent="."]
+bus = &"SFX"
+stream = ExtResource("11_rain")
+volume_db = -25.0
+
+[node name="PostFX" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="Pixel" type="ColorRect" parent="PostFX"]
+material = SubResource("Pixel")
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 4
+
+[node name="Root" type="Control" parent="UI"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Speech" type="VBoxContainer" parent="UI/Root"]
+script = ExtResource("7_speech")
+
+[node name="EntityLine" type="Label" parent="UI/Root"]
+offset_left = 38.0
+offset_top = 214.0
+offset_right = 602.0
+offset_bottom = 322.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.88, 0.83, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.03, 0.04, 1)
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 21
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Bark" type="Label" parent="UI/Root"]
+offset_left = 84.0
+offset_top = 270.0
+offset_right = 556.0
+offset_bottom = 333.0
+mouse_filter = 2
+theme_override_colors/font_shadow_color = Color(0.015, 0.015, 0.02, 1)
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 2

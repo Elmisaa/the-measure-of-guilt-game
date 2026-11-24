@@ -8,6 +8,10 @@ const BANDAGED_FLAG: String = "factory_fyodor_bandaged"
 const PULSE_FLAG: String = "factory_mikhail_pulse_checked"
 const RECORDER_ITEM: String = "dmitry_recorder"
 const CHOICE_FLAG: String = "factory_recorder_choice"
+const WARNING_FLAG: String = "factory_fyodor_warned"
+const RETURN_FLAG: String = "factory_finale_return"
+const END_FLAG: String = "factory_case_closed"
+const HALL_PATH: String = "res://scenes/s07/factory_finale.tscn"
 # Hand coordinates in one cell of Alexei's walk and run sprite sheets.
 const WALK_HAND: Array[Vector2] = [
 	Vector2(47, 115), Vector2(43, 115), Vector2(70, 107), Vector2(59, 107), Vector2(70, 105),
@@ -48,10 +52,15 @@ var _noticed_factory: bool = false
 var _noticed_mikhail: bool = false
 var _noticed_fyodor: bool = false
 var _choice: int = -1
+var _at_hall: bool = false
+var _ending: bool = false
+var _cutscene_walk: bool = false
+var _finale: Dictionary
 
 
 func _ready() -> void:
 	_data = DialogueData.load_file("s06_factory_present")
+	_finale = DialogueData.load_file("s07_factory_finale")
 	_choice = int(GameState.get_flag(CHOICE_FLAG, -1))
 	_noticed_factory = bool(GameState.get_flag("factory_noticed_surroundings", false))
 	_noticed_mikhail = bool(GameState.get_flag("factory_noticed_mikhail", false))
@@ -65,7 +74,7 @@ func _ready() -> void:
 	Hud.set_hud_visible(true)
 	Hud.set_walk_mode(true)
 	Hud.show_stamina(true)
-	Hud.set_objective("Осмотрите завод" if _choice < 0 else "Место происшествия")
+	Hud.set_objective("Осмотрите завод" if _choice < 0 else "Пройдите в цех")
 	$Room/Approach/EntranceLamp/EntryAmber.light_energy = 0.20
 	$Room/WorldEnvironment/moonlight.light_energy = 0.08
 	var world: WorldEnvironment = $Room/WorldEnvironment
@@ -81,7 +90,12 @@ func _ready() -> void:
 	_update_camera()
 	_location = preload("res://scripts/ui/place_title.gd").new()
 	add_child(_location)
-	_location.show_lines(_data["place"], 0.35)
+	if GameState.get_flag(END_FLAG, false):
+		_show_ending()
+	elif GameState.get_flag(RETURN_FLAG, false):
+		_arrest_fyodor.call_deferred()
+	else:
+		_location.show_lines(_data["place"], 0.35)
 
 
 func _exit_tree() -> void:
@@ -100,10 +114,16 @@ func save_state() -> Dictionary:
 
 
 func _process(_delta: float) -> void:
+	if _cutscene_walk:
+		_player_sprite.frame = 2 + int(Time.get_ticks_msec() / 75.0) % 8
 	_update_hand_torch()
 	_update_camera()
 	_update_interaction_prompt()
 	if _talking or _interacting or Hud.is_blocking():
+		return
+	if _choice >= 0 and not GameState.get_flag(WARNING_FLAG, false):
+		await _warn_fyodor()
+		SaveGame.autosave()
 		return
 	var x: float = _player.position.x
 	if not _noticed_factory and x >= -14.7:
@@ -120,6 +140,8 @@ func _process(_delta: float) -> void:
 
 
 func _update_camera() -> void:
+	if _ending:
+		return
 	var pixel: float = _camera.size / 360.0
 	var target: float = clampf(_player.position.x + 1.15, -14.05, -6.1)
 	_camera.position.x = snappedf(target, pixel)
@@ -144,6 +166,7 @@ func _update_hand_torch() -> void:
 
 func _update_interaction_prompt() -> void:
 	_target = null
+	_at_hall = false
 	if not _talking and not _interacting and not Hud.is_blocking():
 		if not GameState.get_flag(PULSE_FLAG, false) and absf(_player.position.x - _mikhail.position.x) <= 1.2:
 			_target = _mikhail
@@ -151,8 +174,15 @@ func _update_interaction_prompt() -> void:
 		elif not _bandage.visible and absf(_player.position.x - _fyodor.position.x) <= 1.25:
 			_target = _fyodor
 			_prompt.text = "E — Перевязать рану" if GameState.has_item("bandage") else "E — Осмотреть Фёдора"
-	_prompt.visible = _target != null
-	if _target != null:
+		elif _choice >= 0 and GameState.get_flag(WARNING_FLAG, false) and _player.position.x >= -4.5:
+			_at_hall = true
+			_prompt.text = "E — Войти в цех"
+	_prompt.visible = _target != null or _at_hall
+	if _at_hall:
+		_prompt.reset_size()
+		var point: Vector2 = _camera.unproject_position(Vector3(-4.15, 1.9, 0.6))
+		_prompt.position = (point - _prompt.size * Vector2(0.5, 1.0)).round()
+	elif _target != null:
 		_prompt.reset_size()
 		var height: float = 0.7 if _target == _mikhail else 1.4
 		var point: Vector2 = _camera.unproject_position(_target.global_position + Vector3(0, height, 0))
@@ -160,7 +190,16 @@ func _update_interaction_prompt() -> void:
 
 
 func _interact() -> void:
-	if _target == null or _talking or _interacting or Hud.is_blocking():
+	if _talking or _interacting or Hud.is_blocking():
+		return
+	if _at_hall:
+		_player.frozen = true
+		_interacting = true
+		_prompt.hide()
+		SaveGame.autosave()
+		SceneRouter.go_to(HALL_PATH)
+		return
+	if _target == null:
 		return
 	var checking_pulse: bool = _target == _mikhail
 	if not checking_pulse and not GameState.has_item("bandage"):
@@ -214,15 +253,120 @@ func _talk_to_dmitry() -> void:
 	GameState.set_flag(CHOICE_FLAG, selected)
 	var received: bool = selected == 2
 	GameState.set_flag("argument_3", received)
-	_player.frozen = false
-	_talking = false
-	Hud.set_hud_visible(true)
-	Hud.set_objective("Место происшествия")
+	await _warn_fyodor()
 	if received:
 		GameState.add_item(RECORDER_ITEM)
 	else:
 		_thought.show_text("Улика не получена.", 3.0)
 	SaveGame.autosave()
+
+
+func _warn_fyodor() -> void:
+	_talking = true
+	_player.frozen = true
+	Hud.set_hud_visible(false)
+	var lamp: OmniLight3D = $Room/Approach/EntranceLamp/EntryAmber
+	var flicker: Tween = create_tween()
+	flicker.tween_property(lamp, "light_energy", 0.035, 0.22)
+	flicker.tween_property(lamp, "light_energy", 0.20, 0.09)
+	flicker.tween_property(lamp, "light_energy", 0.09, 0.28)
+	Audio.sfx(SFX + "entity_drone.wav", -17.0)
+	await flicker.finished
+	await _say("Фёдор", str(_finale["warning"]), true)
+	_player_sprite.flip_h = true
+	_cutscene_walk = true
+	await create_tween().tween_property(_player, "position:x", -6.1, 0.55).finished
+	_cutscene_walk = false
+	await _say("Алексей", str(_finale["reassurance"]), false)
+	GameState.set_flag(WARNING_FLAG, true)
+	Hud.set_objective("Пройдите в цех")
+	Hud.set_hud_visible(true)
+	_player.frozen = false
+	_talking = false
+
+
+func _arrest_fyodor() -> void:
+	_talking = true
+	_player.frozen = true
+	_player.position = Vector3(-6.25, 0, 1.0)
+	_player_sprite.flip_h = true
+	Hud.set_hud_visible(false)
+	$UI/Root/TorchHint.hide()
+	await get_tree().create_timer(0.8).timeout
+	var cuffs: Node3D = _make_cuffs()
+	var lines: Array = _finale["arrest"]
+	for index: int in lines.size():
+		if index == 3:
+			cuffs.show()
+		var entry: Array = lines[index]
+		await _say(str(entry[0]), str(entry[1]), entry[0] == "Фёдор")
+	var arrest: Tween = create_tween()
+	arrest.tween_property(cuffs, "global_position", _fyodor.global_position + Vector3(0.22, 0.65, 0.12), 0.42)
+	await arrest.finished
+	Audio.sfx(SFX + "metal_clang.wav", -15.0, 1.32)
+	await get_tree().create_timer(0.42).timeout
+	var ending: Tween = create_tween().set_parallel(true)
+	_ending = true
+	ending.tween_property(_camera, "size", 6.8, 1.8)
+	var black: ColorRect = _ending_overlay()
+	ending.tween_property(black, "color:a", 1.0, 1.8)
+	await ending.finished
+	GameState.set_flag(END_FLAG, true)
+	SaveGame.autosave()
+	_show_ending(black)
+
+
+func _make_cuffs() -> Node3D:
+	var cuffs: Node3D = Node3D.new()
+	_player.add_child(cuffs)
+	cuffs.position = Vector3(-0.52, 1.0, 0.15)
+	cuffs.rotation_degrees.z = -17.0
+	var metal: StandardMaterial3D = StandardMaterial3D.new()
+	metal.albedo_color = Color(0.63, 0.69, 0.76)
+	metal.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var ring: TorusMesh = TorusMesh.new()
+	ring.inner_radius = 0.039
+	ring.outer_radius = 0.06
+	ring.material = metal
+	for side: int in [-1, 1]:
+		var loop: MeshInstance3D = MeshInstance3D.new()
+		loop.mesh = ring
+		loop.rotation.x = PI * 0.5
+		loop.position.x = side * 0.06
+		cuffs.add_child(loop)
+	cuffs.hide()
+	return cuffs
+
+
+func _ending_overlay() -> ColorRect:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ui.add_child(overlay)
+	return overlay
+
+
+func _show_ending(overlay: ColorRect = null) -> void:
+	_ending = true
+	_talking = true
+	_player.frozen = true
+	Hud.set_hud_visible(false)
+	if overlay == null:
+		overlay = _ending_overlay()
+		overlay.color = Color.BLACK
+	var column: VBoxContainer = VBoxContainer.new()
+	column.position = Vector2(215, 150)
+	column.custom_minimum_size.x = 210
+	column.add_theme_constant_override("separation", 16)
+	overlay.add_child(column)
+	var title: Label = Label.new()
+	title.text = "КОНЕЦ"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(title)
+	var button: Button = MenuUI.button("В главное меню")
+	column.add_child(button)
+	button.pressed.connect(func() -> void: SceneRouter.go_to("res://scenes/menu/title.tscn"))
+	button.grab_focus()
 
 
 func _say(name_text: String, text: String, is_dmitry: bool) -> void:
@@ -259,7 +403,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _waiting:
 		if _talking or _interacting or Hud.is_blocking():
 			return
-		if event.is_action_pressed("interact") and _target != null:
+		if event.is_action_pressed("interact") and (_target != null or _at_hall):
 			get_viewport().set_input_as_handled()
 			_interact()
 		elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F:

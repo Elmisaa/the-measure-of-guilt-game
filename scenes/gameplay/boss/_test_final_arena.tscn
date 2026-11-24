@@ -65,9 +65,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0)
 
 [node name="ExplosiveBarrel1" parent="." unique_id=494767815 instance=ExtResource("4_explosive_barrel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.45, 2)
+near_boss = false
 
 [node name="ExplosiveBarrel2" parent="." unique_id=1771595661 instance=ExtResource("4_explosive_barrel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.45, -2)
+near_boss = true
 
 [node name="BossScales" parent="." unique_id=1640288103 instance=ExtResource("5_boss_scales")]
 

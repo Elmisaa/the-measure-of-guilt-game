@@ -1,12 +1,15 @@
 class_name ExplosiveBarrel
 extends Area3D
+## Взрывная бочка для босс-арены. Слой 128 (BossTarget), группа "boss_targets".
+## Красный цилиндр (0.6×0.9 м) + яркое кольцо-мишень сверху.
+## При попадании: взрыв -25 урона боссу, -20 игроку в радиусе 2.2 м.
 
 signal exploded(near_boss: bool, boss_damage: int, world_pos: Vector3)
 
 @export var boss_damage: int = 25
 @export var player_damage: int = 20
 @export var blast_radius: float = 2.2
-@export var near_boss: bool = true
+@export var near_boss: bool = false
 
 var _body: MeshInstance3D
 var _target_ring: MeshInstance3D
@@ -54,6 +57,7 @@ func take_bullet_hit(_dmg: int = 0) -> void:
 	if _body != null:
 		_body.visible = false
 	
+	# Показать сферу взрыва
 	if _explosion_sphere != null:
 		_explosion_sphere.visible = true
 		var mat: StandardMaterial3D = _explosion_sphere.material_override as StandardMaterial3D
@@ -69,8 +73,10 @@ func take_bullet_hit(_dmg: int = 0) -> void:
 	
 	_explosion_timer.start()
 	
+	# Урон игроку в радиусе
 	_damage_player_in_radius()
 	
+	# Сигнал для босса
 	exploded.emit(near_boss, boss_damage, global_position)
 
 func _damage_player_in_radius() -> void:

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bq62763d8brpp"
-path="res://.godot/imported/IvanCoffeeTable_Shadow walnut.png-cda9d1751e1e4fddb3dc0d700dcc9a92.ctex"
+path.s3tc="res://.godot/imported/IvanCoffeeTable_Shadow walnut.png-cda9d1751e1e4fddb3dc0d700dcc9a92.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b4262538334fdeceb9002bc81271ab71"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/3d/ivan/ivanfurniture/ivancoffeetable/IvanCoffeeTable_Shadow walnut.png"
-dest_files=["res://.godot/imported/IvanCoffeeTable_Shadow walnut.png-cda9d1751e1e4fddb3dc0d700dcc9a92.ctex"]
+dest_files=["res://.godot/imported/IvanCoffeeTable_Shadow walnut.png-cda9d1751e1e4fddb3dc0d700dcc9a92.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
