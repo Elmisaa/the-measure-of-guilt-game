@@ -43,6 +43,7 @@ var _dark: CanvasModulate
 
 
 func _ready() -> void:
+	Audio.play_start_ambience()
 	_data = DialogueData.load_file("s01_precinct").get("desk", {})
 	_build_led()
 	_dark = CanvasModulate.new()

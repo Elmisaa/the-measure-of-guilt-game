@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/s01/restroom.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/s01/restroom.png" id="2_bg"]
@@ -20,6 +20,9 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
+[sub_resource type="RectangleShape2D" id="player_feet"]
+size = Vector2(36, 10)
+
 [node name="Restroom" type="Node2D"]
 script = ExtResource("1_script")
 
@@ -28,6 +31,18 @@ script = ExtResource("1_script")
 [node name="Background" type="Sprite2D" parent="World"]
 texture = ExtResource("2_bg")
 centered = false
+
+[node name="RoomCollisions" type="StaticBody2D" parent="World"]
+collision_mask = 0
+
+[node name="BackWall" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(0, 0, 640, 0, 640, 319, 0, 319)
+
+[node name="Sink" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(160, 310, 252, 310, 252, 325, 160, 325)
+
+[node name="Stalls" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(316, 309, 624, 309, 624, 323, 316, 323)
 
 [node name="Dark" type="CanvasModulate" parent="World"]
 color = Color(0.72, 0.75, 0.78, 1)
@@ -60,12 +75,16 @@ breath_speed = 0.5
 
 [node name="Spots" type="Node2D" parent="World"]
 
-[node name="Player" type="Node2D" parent="World"]
+[node name="Player" type="CharacterBody2D" parent="World"]
 position = Vector2(64, 350)
+collision_layer = 0
 script = ExtResource("3_player")
 sheet = ExtResource("4_sheet")
 depth_rows = 3
 run_sheet = ExtResource("7_run")
+
+[node name="Feet" type="CollisionShape2D" parent="World/Player"]
+shape = SubResource("player_feet")
 
 [node name="Prompt" type="Label" parent="World"]
 visible = false

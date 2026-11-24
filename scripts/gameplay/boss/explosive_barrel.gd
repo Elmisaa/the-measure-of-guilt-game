@@ -8,7 +8,7 @@ signal exploded(near_boss: bool, boss_damage: int, world_pos: Vector3)
 @export var blast_radius: float = 2.2
 @export var near_boss: bool = true
 
-var _body: MeshInstance3D
+var _body: Node3D
 var _target_ring: MeshInstance3D
 var _explosion_sphere: MeshInstance3D
 var _explosion_timer: Timer
@@ -19,7 +19,17 @@ func _ready() -> void:
 	collision_mask = 1 | 4 | 128
 	add_to_group("boss_targets")
 	
-	_body = get_node_or_null("Body") as MeshInstance3D
+	var mesh: MeshInstance3D = get_node_or_null("Body")
+	var sprite: Sprite3D = Sprite3D.new()
+	sprite.texture = preload("res://assets/3d/factory/workshop/art/02_red_drum.png")
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	sprite.pixel_size = 1.0 / sprite.texture.get_height()
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	add_child(sprite)
+	if mesh:
+		sprite.position = mesh.position
+		mesh.hide()
+	_body = sprite
 	_target_ring = get_node_or_null("TargetRing") as MeshInstance3D
 	_explosion_sphere = get_node_or_null("ExplosionSphere") as MeshInstance3D
 	
@@ -36,16 +46,13 @@ func _ready() -> void:
 	if not _explosion_timer.timeout.is_connected(_on_explosion_timeout):
 		_explosion_timer.timeout.connect(_on_explosion_timeout)
 	
-	area_entered.connect(_on_area_entered)
 
-func _on_area_entered(area: Area3D) -> void:
-	if area is Bullet:
-		take_bullet_hit()
 
 func take_bullet_hit(_dmg: int = 0) -> void:
 	if _is_exploding:
 		return
 	_is_exploding = true
+	get_node("/root/Audio").sfx("res://assets/audio/story/vzryv.wav", -8.0)
 	
 	remove_from_group("boss_targets")
 	

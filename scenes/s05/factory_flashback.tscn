@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/s05/factory_flashback.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/s05/factory_room.tscn" id="2_room"]
-[ext_resource type="Texture2D" path="res://scenes/s05/dmitry_sheet.res" id="3_dmitry"]
-[ext_resource type="Texture2D" path="res://scenes/s05/fyodor_sheet.res" id="4_fyodor"]
+[ext_resource type="Texture2D" path="res://assets/characters/dmitry/staged_poses.png" id="3_dmitry"]
+[ext_resource type="Texture2D" path="res://assets/characters/fyodor/staged_poses.png" id="4_fyodor"]
 [ext_resource type="Texture2D" path="res://scenes/s05/mikhail_sheet.res" id="5_mikhail"]
 [ext_resource type="Texture2D" path="res://assets/characters/entity/entity.png" id="6_entity"]
 [ext_resource type="Shader" path="res://scripts/fx/screen_glitch.gdshader" id="7_glitch"]
@@ -73,7 +73,9 @@ omni_range = 6.8
 [node name="Dmitry" type="Sprite3D" parent="."]
 position = Vector3(-8.4, 0.01, 0.15)
 offset = Vector2(0, 100)
-pixel_size = 0.012105263
+pixel_size = 0.01085
+billboard = 2
+shaded = true
 alpha_cut = 1
 texture_filter = 0
 texture = ExtResource("3_dmitry")
@@ -83,16 +85,20 @@ hframes = 8
 position = Vector3(-5.9, 0.01, 0.06)
 offset = Vector2(0, 100)
 flip_h = true
-pixel_size = 0.012105263
+pixel_size = 0.01085
+billboard = 2
+shaded = true
 alpha_cut = 1
 texture_filter = 0
 texture = ExtResource("4_fyodor")
-hframes = 8
+hframes = 2
 
 [node name="Mikhail" type="Sprite3D" parent="."]
 position = Vector3(-10.7, 0.01, 0.35)
 offset = Vector2(0, 100)
-pixel_size = 0.012105263
+pixel_size = 0.01085
+billboard = 2
+shaded = true
 alpha_cut = 1
 texture_filter = 0
 texture = ExtResource("5_mikhail")

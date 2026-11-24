@@ -3,6 +3,9 @@ extends Node3D
 signal advanced
 signal choice_selected(index: int)
 
+const WORKSHOP_GATE: float = -3.85
+const FINALE_SCENE: String = "res://scenes/s07/final_arena.tscn"
+const STORY_AUDIO: String = "res://assets/audio/story/"
 const SFX: String = "res://assets/audio/sfx/"
 const BANDAGED_FLAG: String = "factory_fyodor_bandaged"
 const PULSE_FLAG: String = "factory_mikhail_pulse_checked"
@@ -16,6 +19,11 @@ const WALK_HAND: Array[Vector2] = [
 const RUN_HAND: Array[Vector2] = [
 	Vector2(113, 84), Vector2(98, 112), Vector2(108, 85), Vector2(118, 61),
 	Vector2(113, 110), Vector2(100, 111), Vector2(116, 86), Vector2(119, 61),
+]
+const COAT_HAND: Array[Vector2] = [
+	Vector2(86, 108), Vector2(86, 108), Vector2(96, 101), Vector2(96, 100),
+	Vector2(96, 105), Vector2(76, 98), Vector2(82, 95), Vector2(95, 106),
+	Vector2(95, 102), Vector2(85, 89),
 ]
 const PUNCTUATION: String = ".,!?…—-:;\"«»“”"
 
@@ -38,6 +46,7 @@ const PUNCTUATION: String = ".,!?…—-:;\"«»“”"
 
 var _location: CanvasLayer
 var _target: Sprite3D
+var _continue_button: Button
 var _interacting: bool = false
 var _data: Dictionary
 var _thought: ThoughtBox
@@ -51,6 +60,7 @@ var _choice: int = -1
 
 
 func _ready() -> void:
+	Audio.play_track(STORY_AUDIO + "unknown_presence.wav", 1.0, -18.0)
 	_data = DialogueData.load_file("s06_factory_present")
 	_choice = int(GameState.get_flag(CHOICE_FLAG, -1))
 	_noticed_factory = bool(GameState.get_flag("factory_noticed_surroundings", false))
@@ -65,7 +75,7 @@ func _ready() -> void:
 	Hud.set_hud_visible(true)
 	Hud.set_walk_mode(true)
 	Hud.show_stamina(true)
-	Hud.set_objective("Осмотрите завод" if _choice < 0 else "Место происшествия")
+	Hud.set_objective("Осмотрите завод" if _choice < 0 else "Идите вправо, в главный цех")
 	$Room/Approach/EntranceLamp/EntryAmber.light_energy = 0.20
 	$Room/WorldEnvironment/moonlight.light_energy = 0.08
 	var world: WorldEnvironment = $Room/WorldEnvironment
@@ -77,6 +87,12 @@ func _ready() -> void:
 	_prompt.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_prompt.pressed.connect(_interact)
 	Audio.bind_button(_prompt)
+	_continue_button = MenuUI.button("Войти в правый цех")
+	_continue_button.position = Vector2(464, 298)
+	_continue_button.custom_minimum_size.x = 164
+	_continue_button.pressed.connect(_start_finale)
+	_ui.add_child(_continue_button)
+	_continue_button.hide()
 	_update_hand_torch()
 	_update_camera()
 	_location = preload("res://scripts/ui/place_title.gd").new()
@@ -103,6 +119,7 @@ func _process(_delta: float) -> void:
 	_update_hand_torch()
 	_update_camera()
 	_update_interaction_prompt()
+	_continue_button.visible = _choice >= 0 and _player.position.x >= WORKSHOP_GATE and not _talking and not _interacting and not Hud.is_blocking()
 	if _talking or _interacting or Hud.is_blocking():
 		return
 	var x: float = _player.position.x
@@ -121,14 +138,19 @@ func _process(_delta: float) -> void:
 
 func _update_camera() -> void:
 	var pixel: float = _camera.size / 360.0
-	var target: float = clampf(_player.position.x + 1.15, -14.05, -6.1)
+	var target: float = clampf(_player.position.x + 1.15, -14.05, -3.6)
 	_camera.position.x = snappedf(target, pixel)
 
 
 func _update_hand_torch() -> void:
 	var hands: Array[Vector2] = RUN_HAND if _player.is_running() else WALK_HAND
 	var columns: int = _player_sprite.hframes
-	var hand: Vector2 = hands[_player_sprite.frame % columns]
+	var column: int = _player_sprite.frame % columns
+	var hand: Vector2 = hands[column]
+	if _player_sprite.texture.resource_path.ends_with("/story_walk_coat.png"):
+		hand = COAT_HAND[column]
+	elif _player_sprite.texture.resource_path.ends_with("/story_run.png"):
+		hand = COAT_HAND[column + 2] + Vector2(4, 0)
 	var cell: Vector2 = _player_sprite.texture.get_size() / Vector2(columns, _player_sprite.vframes)
 	var offset: Vector2 = hand - cell * 0.5
 	var facing: float = -1.0 if _player_sprite.flip_h else 1.0
@@ -147,10 +169,10 @@ func _update_interaction_prompt() -> void:
 	if not _talking and not _interacting and not Hud.is_blocking():
 		if not GameState.get_flag(PULSE_FLAG, false) and absf(_player.position.x - _mikhail.position.x) <= 1.2:
 			_target = _mikhail
-			_prompt.text = "E — Проверить пульс"
+			_prompt.text = Settings.key_label("interact") + " — Проверить пульс"
 		elif not _bandage.visible and absf(_player.position.x - _fyodor.position.x) <= 1.25:
 			_target = _fyodor
-			_prompt.text = "E — Перевязать рану" if GameState.has_item("bandage") else "E — Осмотреть Фёдора"
+			_prompt.text = Settings.key_label("interact") + (" — Перевязать рану" if GameState.has_item("bandage") else " — Осмотреть Фёдора")
 	_prompt.visible = _target != null
 	if _target != null:
 		_prompt.reset_size()
@@ -188,6 +210,7 @@ func _interact() -> void:
 
 func _talk_to_dmitry() -> void:
 	_talking = true
+	Audio.play_track(STORY_AUDIO + "weight_of_guilt.wav", 0.7, -17.0)
 	_player.frozen = true
 	if is_instance_valid(_location):
 		_location.hide()
@@ -217,12 +240,31 @@ func _talk_to_dmitry() -> void:
 	_player.frozen = false
 	_talking = false
 	Hud.set_hud_visible(true)
-	Hud.set_objective("Место происшествия")
+	Hud.set_objective("Идите вправо, в главный цех")
+	Audio.play_track(STORY_AUDIO + "unknown_presence.wav", 1.0, -18.0)
 	if received:
 		GameState.add_item(RECORDER_ITEM)
 	else:
 		_thought.show_text("Улика не получена.", 3.0)
 	SaveGame.autosave()
+
+
+func _start_finale() -> void:
+	if _talking or _interacting or _choice < 0 or Hud.is_blocking():
+		return
+	_talking = true
+	_player.frozen = true
+	_continue_button.hide()
+	Hud.set_hud_visible(false)
+	_thought.show_text("Тени снова сгущаются. Отец, увидев их, выхватывает мой пистолет.")
+	await _wait_for_advance()
+	_thought.hide_box()
+	await _say("Фёдор", "Оно идёт! Я чувствую! Я виноват! Я всё сделал!", true)
+	Audio.sfx(SFX + "metal_clang.wav", -8.0)
+	_thought.show_text("Выбиваю пистолет. Он скользит по бетону. Подбираю его прежде, чем тень заслоняет Фёдора.")
+	await _wait_for_advance()
+	_thought.hide_box()
+	SceneRouter.go_to(FINALE_SCENE)
 
 
 func _say(name_text: String, text: String, is_dmitry: bool) -> void:
@@ -259,10 +301,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _waiting:
 		if _talking or _interacting or Hud.is_blocking():
 			return
-		if event.is_action_pressed("interact") and _target != null:
+		if event.is_action_pressed("interact") and _continue_button.visible:
+			get_viewport().set_input_as_handled()
+			_start_finale()
+		elif event.is_action_pressed("interact") and _target != null:
 			get_viewport().set_input_as_handled()
 			_interact()
-		elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F:
+		elif event.is_action_pressed("flashlight"):
 			get_viewport().set_input_as_handled()
 			_beam.visible = not _beam.visible
 			_lens.visible = _beam.visible

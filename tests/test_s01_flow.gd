@@ -101,8 +101,24 @@ func _run() -> void:
 		await _wait(1.6)
 		if id == "papers":
 			await _shot("9_placeholder_doc")
-		view.close()
+			view.close()
+		else:
+			var inspect_key: InputEventKey = InputEventKey.new()
+			inspect_key.keycode = KEY_T
+			inspect_key.physical_keycode = KEY_T
+			inspect_key.pressed = true
+			Input.parse_input_event(inspect_key)
+			await process_frame
+			if not view.is_open() or root.get_node("GameState").has_item("s01_desk_note"):
+				push_error("FAIL desk note should stay open and stay out of the inventory"); ok = false
+			var next: InputEventKey = InputEventKey.new()
+			next.keycode = KEY_SPACE
+			next.physical_keycode = KEY_SPACE
+			next.pressed = true
+			Input.parse_input_event(next)
 		await _wait(0.5)
+		if view.is_open():
+			push_error("FAIL document did not close: %s" % id); ok = false
 	await _wait(0.6)
 	var answer: Button = desk.get_node("UI/Root/AnswerButton")
 	var audio: Node = root.get_node("Audio")

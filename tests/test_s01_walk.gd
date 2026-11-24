@@ -318,6 +318,9 @@ func _run() -> void:
 	if pl.depth_row() == 0:
 		push_error("FAIL depth did not switch to a smaller row"); ok = false
 	await _shot("4_depth")
+	Input.action_press("move_down")
+	await _wait(0.6)
+	Input.action_release("move_down")
 	await _walk_to(w, 420.0)
 	w._interact("desk")
 	await _wait(0.3)

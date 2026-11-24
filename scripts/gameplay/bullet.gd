@@ -15,6 +15,7 @@ const EMISSION_ENERGY: float = 3.0
 @export var lifetime: float = 2.0
 @export var damage: int = 25
 var is_enemy: bool = false
+var swept: bool = false
 var intended_target: Node3D = null
 
 var direction: Vector3 = Vector3.RIGHT
@@ -75,10 +76,26 @@ func _orient() -> void:
 	rotation = basis.get_euler()
 
 func _physics_process(delta: float) -> void:
-	var step: Vector3 = direction * speed * delta
-	global_position += step
+	var destination: Vector3 = global_position + direction * speed * delta
+	if swept:
+		var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(global_position, destination, collision_mask, [get_rid()])
+		query.collide_with_areas = true
+		query.hit_from_inside = true
+		var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var collider: Node3D = hit["collider"] as Node3D
+			if collider != null and not _fly_through(collider):
+				global_position = hit["position"]
+				if collider is Area3D:
+					_on_area_entered(collider)
+				else:
+					_on_body_entered(collider)
+				return
+	global_position = destination
 
 func _on_body_entered(body: Node3D) -> void:
+	if is_queued_for_deletion():
+		return
 	if body != null:
 		if _fly_through(body):
 			return
@@ -101,7 +118,13 @@ func _fly_through(body: Node3D) -> bool:
 	return body.is_in_group("enemies")
 
 func _on_area_entered(area: Area3D) -> void:
+	if is_queued_for_deletion():
+		return
 	if area != null:
+		if not is_enemy and area.is_in_group("conveyor_mount"):
+			var conveyor: Node = get_tree().get_first_node_in_group("boss_conveyor")
+			if conveyor:
+				conveyor.call("hit_mount", area)
 		if area.has_method("take_bullet_hit"):
 			area.call("take_bullet_hit")
 		elif area.has_method("take_hit"):

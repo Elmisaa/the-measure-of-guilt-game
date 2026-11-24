@@ -17,7 +17,7 @@ var _sway_t: float = 0.0
 func _ready() -> void:
 	Hud.set_hud_visible(false)
 	Letterbox.hide_bars()
-	Audio.play_start_ambience()
+	Audio.play_track("res://assets/audio/story/traces.wav", 1.5, -12.0)
 	var bg: Sprite2D = Sprite2D.new()
 	bg.texture = load(BACKGROUND)
 	bg.centered = false

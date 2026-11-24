@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/s01/walk.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/s01/walk_hall.png" id="2_bg"]
@@ -21,6 +21,9 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
+[sub_resource type="RectangleShape2D" id="player_feet"]
+size = Vector2(36, 10)
+
 [node name="Walk" type="Node2D"]
 script = ExtResource("1_script")
 
@@ -29,6 +32,39 @@ script = ExtResource("1_script")
 [node name="Background" type="Sprite2D" parent="World"]
 texture = ExtResource("2_bg")
 centered = false
+
+[node name="RoomCollisions" type="StaticBody2D" parent="World"]
+collision_mask = 0
+
+[node name="BackWall" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(0, 0, 2012, 0, 2012, 300, 848, 300, 836, 318, 0, 318)
+
+[node name="Lockers" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(0, 308, 80, 308, 80, 322, 0, 322)
+
+[node name="CoworkerDeskAndChair" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(90, 307, 302, 307, 302, 321, 248, 321, 244, 326, 192, 326, 188, 321, 90, 321)
+
+[node name="AlexeiChair" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(308, 309, 382, 309, 382, 320, 372, 328, 316, 328, 308, 322)
+
+[node name="AlexeiDesk" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(386, 309, 470, 309, 470, 332, 386, 332)
+
+[node name="CabinetAndPillar" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(550, 309, 652, 309, 652, 323, 550, 323)
+
+[node name="SarahDeskAndChair" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(1030, 290, 1268, 290, 1268, 304, 1170, 304, 1166, 310, 1112, 310, 1108, 304, 1030, 304)
+
+[node name="CoffeeCounter" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(1290, 290, 1400, 290, 1400, 304, 1290, 304)
+
+[node name="WaterCooler" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(1408, 290, 1452, 290, 1452, 307, 1408, 307)
+
+[node name="KowalskiDeskAndChair" type="CollisionPolygon2D" parent="World/RoomCollisions"]
+polygon = PackedVector2Array(1494, 290, 1722, 290, 1722, 304, 1634, 304, 1630, 310, 1568, 310, 1564, 304, 1494, 304)
 
 [node name="Dark" type="CanvasModulate" parent="World"]
 color = Color(0.74, 0.76, 0.8, 1)
@@ -100,12 +136,16 @@ breath_speed = 0.4
 position = Vector2(1700, 236)
 script = ExtResource("8_radio")
 
-[node name="Player" type="Node2D" parent="World"]
+[node name="Player" type="CharacterBody2D" parent="World"]
 position = Vector2(360, 346)
+collision_layer = 0
 script = ExtResource("3_player")
 sheet = ExtResource("4_sheet")
 depth_rows = 3
 run_sheet = ExtResource("7_run")
+
+[node name="Feet" type="CollisionShape2D" parent="World/Player"]
+shape = SubResource("player_feet")
 
 [node name="Prompt" type="Label" parent="World"]
 visible = false

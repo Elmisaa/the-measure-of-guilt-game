@@ -17,15 +17,17 @@ signal container_crashed(hit_boss: bool, boss_damage: int, impact_pos: Vector3)
 
 var _rail_mesh: MeshInstance3D
 var _carriages: Array[Node3D] = []
-var _container_meshes: Array[MeshInstance3D] = []
+var _cargo: Array[Sprite3D] = []
 var _attachment_targets: Array[Area3D] = []
 var _has_container: Array[bool] = []
 var _dropping: Array[bool] = []
 var _respawn_timers: Array[Timer] = []
 var _drop_zone_meshes: Array[MeshInstance3D] = []
-var _direction: float = 1.0
+var _armed: bool = true
+var _warned: Array[int] = []
 
 func _ready() -> void:
+	add_to_group("boss_conveyor")
 	_build_rail()
 	_build_carriages()
 	for i in _carriages.size():
@@ -73,28 +75,27 @@ func _build_carriages() -> void:
 		claw.position = Vector3(0, _get_claw_y(), 0)
 		carriage.add_child(claw)
 		
-		var container: MeshInstance3D = MeshInstance3D.new()
+		var container: Sprite3D = Sprite3D.new()
 		container.name = "Container"
-		var cont_box: BoxMesh = BoxMesh.new()
-		cont_box.size = Vector3(1.6, 1.1, 1.0)
-		container.mesh = cont_box
-		var cont_mat: StandardMaterial3D = StandardMaterial3D.new()
-		cont_mat.albedo_color = Color(0.35, 0.25, 0.15, 1)
-		container.material_override = cont_mat
+		container.texture = preload("res://assets/3d/factory/workshop/art/01_suspended_load.png")
+		container.pixel_size = 1.6 / container.texture.get_width()
+		container.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		container.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		container.shaded = true
 		container.position = Vector3(0, _get_container_y(), 0)
 		container.visible = false
 		carriage.add_child(container)
-		_container_meshes.append(container)
-		
+		_cargo.append(container)
+
 		var target: Area3D = Area3D.new()
 		target.name = "AttachmentTarget"
 		target.collision_layer = 128
-		target.collision_mask = 133
+		target.collision_mask = 16
 		var target_shape: SphereShape3D = SphereShape3D.new()
 		target_shape.radius = 0.3
 		var target_col: CollisionShape3D = CollisionShape3D.new()
 		target_col.shape = target_shape
-		target_col.position = Vector3(0, _get_target_y(), 0)
+		target_col.position = Vector3.ZERO
 		target.add_child(target_col)
 		var target_vis: MeshInstance3D = MeshInstance3D.new()
 		target_vis.name = "TargetVisual"
@@ -109,14 +110,13 @@ func _build_carriages() -> void:
 		target_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		target_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		target_vis.material_override = target_mat
-		target_vis.position = Vector3(0, _get_target_y(), 0)
-		target_vis.visible = false
+		target_vis.position = Vector3.ZERO
 		target.add_child(target_vis)
-		target.position = Vector3(0, 0, 0)
+		target.position = Vector3(0, _get_target_y(), 0)
 		carriage.add_child(target)
+		target.add_to_group("conveyor_mount")
 		_attachment_targets.append(target)
 		
-		target.area_entered.connect(_on_attachment_hit.bind(i))
 		
 		var timer: Timer = Timer.new()
 		timer.name = "RespawnTimer_%d" % i
@@ -151,7 +151,7 @@ func _physics_process(delta: float) -> void:
 	for i in _carriages.size():
 		if _dropping[i]:
 			_process_drop(i, delta)
-		else:
+		elif i not in _warned:
 			_move_carriage(i, delta)
 	
 	_update_boss_zone_highlight()
@@ -159,21 +159,14 @@ func _physics_process(delta: float) -> void:
 func _move_carriage(index: int, delta: float) -> void:
 	var carriage: Node3D = _carriages[index]
 	var pos: Vector3 = carriage.position
-	pos.x += speed * _direction * delta
-	
 	var half_len: float = rail_length * 0.5
-	if _direction > 0 and pos.x > half_len:
-		pos.x = -half_len
-		_direction = -1.0
-	elif _direction < 0 and pos.x < -half_len:
-		pos.x = half_len
-		_direction = 1.0
+	pos.x = wrapf(pos.x + speed * delta, -half_len, half_len)
 	
 	carriage.position = pos
 
 func _process_drop(index: int, delta: float) -> void:
 	var carriage: Node3D = _carriages[index]
-	var container: MeshInstance3D = _container_meshes[index]
+	var container: Sprite3D = _cargo[index]
 	var drop_zone: MeshInstance3D = _drop_zone_meshes[index]
 	
 	var container_pos: Vector3 = container.position
@@ -187,7 +180,7 @@ func _process_drop(index: int, delta: float) -> void:
 
 func _finish_drop(index: int) -> void:
 	var carriage: Node3D = _carriages[index]
-	var container: MeshInstance3D = _container_meshes[index]
+	var container: Sprite3D = _cargo[index]
 	var drop_zone: MeshInstance3D = _drop_zone_meshes[index]
 	var target: Area3D = _attachment_targets[index]
 	
@@ -197,7 +190,12 @@ func _finish_drop(index: int) -> void:
 	target.visible = false
 	
 	var impact_x: float = carriage.global_position.x
-	var hit_boss: bool = abs(impact_x - boss_x) <= boss_hit_half_width
+	var hit_boss: bool = absf(impact_x - boss_x) <= boss_hit_half_width
+	var player: BossPlayer = get_tree().get_first_node_in_group("player") as BossPlayer
+	if _armed and player != null:
+		var impact: Vector2 = Vector2(impact_x, carriage.global_position.z)
+		if impact.distance_to(Vector2(player.global_position.x, player.global_position.z)) <= 1.5:
+			player.take_damage(25)
 	
 	_create_impact_flash(carriage.global_position)
 	
@@ -219,17 +217,62 @@ func _create_impact_flash(pos: Vector3) -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	flash.material_override = mat
-	flash.position = Vector3(pos.x, 0.5, pos.z)
 	add_child(flash)
+	flash.global_position = Vector3(pos.x, 0.5, pos.z)
 	
 	var tween: Tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(flash, "material_override:emission_energy_multiplier", 0.0, 0.3)
 	tween.tween_property(flash, "scale", Vector3(0.1, 0.1, 0.1), 0.3)
-	tween.tween_callback(flash.queue_free.bind())
+	tween.chain().tween_callback(flash.queue_free)
 
-func _on_attachment_hit(carriage_index: int, area: Area3D) -> void:
-	if area is Bullet and _has_container[carriage_index] and not _dropping[carriage_index]:
+func set_armed(active: bool) -> void:
+	_armed = active
+	_warned.clear()
+	for i: int in _carriages.size():
+		_dropping[i] = false
+		_has_container[i] = true
+		_respawn_timers[i].stop()
+		_drop_zone_meshes[i].hide()
+		_update_carriage_visual(i)
+
+func tracked_point(target: Node3D, from: Vector3, projectile_speed: float) -> Vector3:
+	var point: Vector3 = target.global_position
+	var index: int = _attachment_targets.find(target)
+	if index < 0 or index in _warned or _dropping[index]:
+		return point
+	var travel: float = from.distance_to(point) / projectile_speed
+	return point + Vector3.RIGHT * speed * travel
+
+
+func threaten(x: float) -> bool:
+	var best: int = -1
+	var distance: float = 3.0
+	for i: int in _carriages.size():
+		var pos: float = _carriages[i].global_position.x
+		if _has_container[i] and i not in _warned and absf(pos - boss_x) > boss_hit_half_width:
+			if absf(pos - x) < distance:
+				best = i
+				distance = absf(pos - x)
+	if best < 0:
+		return false
+	_warned.append(best)
+	var zone: MeshInstance3D = _drop_zone_meshes[best]
+	zone.global_position = _carriages[best].global_position + Vector3.UP * 0.05
+	zone.show()
+	_drop_after_warning(best)
+	return true
+
+func _drop_after_warning(index: int) -> void:
+	await get_tree().create_timer(0.85, false).timeout
+	if _armed and _warned.has(index):
+		_warned.erase(index)
+		_start_drop(index)
+
+func hit_mount(mount: Area3D) -> void:
+	var carriage_index: int = _attachment_targets.find(mount)
+	if _armed and carriage_index >= 0 and _has_container[carriage_index]:
+		_warned.erase(carriage_index)
 		_start_drop(carriage_index)
 
 func _start_drop(index: int) -> void:
@@ -239,10 +282,11 @@ func _start_drop(index: int) -> void:
 	_has_container[index] = false
 	
 	var target: Area3D = _attachment_targets[index]
-	target.visible = false
+	_update_carriage_visual(index)
+	_cargo[index].show()
 	
 	var drop_zone: MeshInstance3D = _drop_zone_meshes[index]
-	drop_zone.position = Vector3(_carriages[index].global_position.x, 0.05, _carriages[index].global_position.z)
+	drop_zone.global_position = _carriages[index].global_position + Vector3.UP * 0.05
 	drop_zone.visible = true
 
 func _on_respawn_timeout(carriage_index: int) -> void:
@@ -250,13 +294,17 @@ func _on_respawn_timeout(carriage_index: int) -> void:
 	_update_carriage_visual(carriage_index)
 
 func _update_carriage_visual(index: int) -> void:
-	var container: MeshInstance3D = _container_meshes[index]
+	var container: Sprite3D = _cargo[index]
 	var target: Area3D = _attachment_targets[index]
 	container.visible = _has_container[index]
-	if _has_container[index] and not _dropping[index]:
-		target.visible = true
-	else:
-		target.visible = false
+	container.position.y = _get_container_y()
+	var can_shoot: bool = _armed and _has_container[index] and not _dropping[index]
+	target.visible = can_shoot
+	target.set_deferred("collision_layer", 128 if can_shoot else 0)
+	if can_shoot:
+		target.add_to_group("boss_targets")
+	elif target.is_in_group("boss_targets"):
+		target.remove_from_group("boss_targets")
 
 func _update_boss_zone_highlight() -> void:
 	for i in _attachment_targets.size():
@@ -273,6 +321,6 @@ func _update_boss_zone_highlight() -> void:
 			mat.emission = Color(0.1, 1.0, 0.2, 1)
 			mat.emission_energy_multiplier = 8.0
 		else:
-			mat.albedo_color = Color(0.2, 0.8, 0.2, 0.7)
-			mat.emission = Color(0.1, 0.6, 0.1, 1)
+			mat.albedo_color = Color(0.78, 0.48, 0.18, 0.75)
+			mat.emission = Color(0.66, 0.31, 0.08, 1)
 			mat.emission_energy_multiplier = 2.0

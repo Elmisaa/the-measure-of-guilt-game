@@ -18,6 +18,8 @@ const HMM_DB: float = -9.0
 var _hmm_last: int = -1
 var _hmm_ready_at: float = 4.0
 var _music: AudioStreamPlayer
+var _music_fade: Tween
+var _music_loops: bool = true
 var _blips: Array[AudioStreamPlayer] = []
 var _next_blip: int = 0
 var _ui_hover: AudioStreamPlayer
@@ -33,7 +35,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_music = AudioStreamPlayer.new()
 	_music.volume_db = -60.0
-	_music.finished.connect(_music.play)
+	_music.finished.connect(func() -> void:
+		if _music_loops:
+			_music.play())
+	_loop = AudioStreamPlayer.new()
 	add_child(_music)
 	var blip: AudioStream = load(BLIP)
 	for i in BLIP_VOICES:
@@ -45,8 +50,8 @@ func _ready() -> void:
 	_ui_hover = _make_player(UI_HOVER, UI_DB - 4.0)
 	_ui_click = _make_player(UI_CLICK, UI_DB)
 	_icon_click = _make_player(UI_CLICK, ICON_DB)
-	_loop = AudioStreamPlayer.new()
 	add_child(_loop)
+	_loop.finished.connect(_loop.play)
 	for i in BLIP_VOICES:
 		_phone_blips.append(_make_player("res://assets/audio/sfx/blip_phone.wav", BLIP_DB - 2.0))
 	for i in 4:
@@ -83,9 +88,13 @@ func bind_icon(b: BaseButton) -> void:
 
 
 func stop_music(fade: float = 0.6) -> void:
-	var t: Tween = create_tween()
-	t.tween_property(_music, "volume_db", -60.0, fade)
-	t.tween_callback(_music.stop)
+	_cancel_music_fade()
+	if fade <= 0.0:
+		_music.stop()
+		return
+	_music_fade = create_tween()
+	_music_fade.tween_property(_music, "volume_db", -60.0, fade)
+	_music_fade.tween_callback(_music.stop)
 
 
 func play_loop(path: String, db: float = -4.0) -> void:
@@ -124,13 +133,7 @@ func play_start_ambience(fade: float = 2.5) -> void:
 		var current_path: String = _music.stream.get_path()
 		if current_path != "" and START_AMBIENCE_ID in current_path:
 			return
-	var start: AudioStream = load(_find_start_ambience())
-	if "loop" in start:
-		start.set("loop", true)
-	_music.stream = start
-	_music.volume_db = -60.0
-	_music.play()
-	create_tween().tween_property(_music, "volume_db", MUSIC_DB, fade)
+	play_track(_find_start_ambience(), fade)
 
 
 func play_music(fade: float = 2.5) -> void:
@@ -166,15 +169,29 @@ func sfx(path: String, db: float = -6.0, pitch: float = 1.0) -> void:
 	p.play()
 
 
-func play_track(path: String, fade: float = 1.5, db: float = MUSIC_DB) -> void:
+func play_track(path: String, fade: float = 1.5, db: float = MUSIC_DB, loop: bool = true) -> void:
+	_cancel_music_fade()
 	_music.stop()
-	var s: AudioStream = load(path)
-	if "loop" in s:
-		s.set("loop", true)
-	_music.stream = s
-	_music.volume_db = -60.0
+	_music_loops = loop
+	var stream: AudioStream = load(path)
+	_music.stream = stream.duplicate()
+	if _music.stream is AudioStreamWAV:
+		var wav: AudioStreamWAV = _music.stream as AudioStreamWAV
+		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD if loop else AudioStreamWAV.LOOP_DISABLED
+		if loop:
+			wav.loop_end = roundi(wav.get_length() * wav.mix_rate)
+	elif "loop" in _music.stream:
+		_music.stream.set("loop", loop)
+	_music.volume_db = -60.0 if fade > 0.0 else db
 	_music.play()
-	create_tween().tween_property(_music, "volume_db", db, fade)
+	if fade > 0.0:
+		_music_fade = create_tween()
+		_music_fade.tween_property(_music, "volume_db", db, fade)
+
+
+func _cancel_music_fade() -> void:
+	if _music_fade and _music_fade.is_valid():
+		_music_fade.kill()
 
 
 func blip(pitch: float = 1.0) -> void:
@@ -187,4 +204,6 @@ func blip(pitch: float = 1.0) -> void:
 func duck_music(on: bool, fade: float = 0.8) -> void:
 	if not _music.playing:
 		return
-	create_tween().tween_property(_music, "volume_db", MUSIC_DB - 14.0 if on else MUSIC_DB, fade)
+	_cancel_music_fade()
+	_music_fade = create_tween()
+	_music_fade.tween_property(_music, "volume_db", MUSIC_DB - 14.0 if on else MUSIC_DB, fade)

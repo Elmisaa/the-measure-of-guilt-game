@@ -10,6 +10,7 @@ var _boss_bar: ProgressBar
 var _boss_label: Label
 var _phase_label: Label
 var _hint_label: Label
+var _attack_label: Label
 
 var _boss_resistance: int = 100
 var _boss_resistance_max: int = 100
@@ -30,9 +31,11 @@ func _ready() -> void:
 	_player.reload_finished.connect(_on_reload_finished)
 	_player.dash_started.connect(_on_dash_started)
 	
-	call_deferred("_connect_boss_signals")
-	
-	call_deferred("_build_ui")
+	_build_ui()
+	var boss: BossScales = get_tree().get_first_node_in_group("boss") as BossScales
+	if boss != null:
+		boss.resistance_changed.connect(set_boss_resistance)
+		boss.attack_started.connect(_on_attack_started)
 	_update_all()
 
 func _build_ui() -> void:
@@ -68,6 +71,7 @@ func _build_ui() -> void:
 	left_vbox.add_child(hp_hbox)
 	
 	_hp_bar = ProgressBar.new()
+	_hp_bar.show_percentage = false
 	_hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_hp_bar.custom_minimum_size = Vector2(0, 12)
 	_hp_bar.max_value = _player.max_health
@@ -97,11 +101,9 @@ func _build_ui() -> void:
 	left_vbox.add_child(_dash_label)
 	
 	var right_panel: Panel = Panel.new()
-	right_panel.anchors_preset = Control.PRESET_TOP_RIGHT
-	right_panel.offset_left = 370 - 640
-	right_panel.offset_top = 8
-	right_panel.offset_right = -8
-	right_panel.offset_bottom = 48
+	right_panel.name = "ResistancePanel"
+	right_panel.position = Vector2(370, 8)
+	right_panel.size = Vector2(262, 40)
 	var right_style: StyleBoxFlat = StyleBoxFlat.new()
 	right_style.bg_color = Color(0.1, 0, 0, 0.8)
 	right_style.corner_radius_top_left = 4
@@ -144,67 +146,38 @@ func _build_ui() -> void:
 	phase_hbox.add_child(_boss_label)
 	
 	_boss_bar = ProgressBar.new()
+	_boss_bar.show_percentage = false
 	_boss_bar.custom_minimum_size = Vector2(0, 14)
 	_boss_bar.max_value = 100
 	_boss_bar.value = 100
 	_boss_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right_vbox.add_child(_boss_bar)
 	
+	var hint_bg: ColorRect = ColorRect.new()
+	hint_bg.color = Color(0.018, 0.02, 0.036, 0.87)
+	hint_bg.position = Vector2(0, 326)
+	hint_bg.size = Vector2(640, 34)
+	hint_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hint_bg)
 	_hint_label = Label.new()
-	_hint_label.anchors_preset = Control.PRESET_BOTTOM_WIDE
-	_hint_label.anchor_top = 1.0
-	_hint_label.anchor_bottom = 1.0
-	_hint_label.offset_top = -18
-	_hint_label.offset_bottom = -2
-	_hint_label.offset_left = 8
-	_hint_label.offset_right = -8
+	_hint_label.position = Vector2(8, 326)
+	_hint_label.size = Vector2(624, 32)
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint_label.add_theme_font_size_override("font_size", 8)
 	_hint_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 1))
 	_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint_label.text = "WASD — движение | Пробел/Shift — рывок | ЛКМ — выстрел | R — перезарядка"
+	_hint_label.text = get_node("/root/Settings").format_keys(
+		"{move_left}/{move_right}/{move_up}/{move_down} — движение | {boss_dash} — рывок | ЛКМ — выстрел | {combat_reload} — перезарядка · авто при 0\nСтреляйте по бочкам и зелёным креплениям над Весами")
 	add_child(_hint_label)
-
-func _connect_boss_signals() -> void:
-	for barrel in get_tree().get_nodes_in_group("boss_targets"):
-		if barrel.get_class() == "ExplosiveBarrel" and barrel.has_signal("exploded"):
-			barrel.exploded.connect(_on_barrel_exploded)
-	
-	for conveyor in get_tree().get_nodes_in_group("boss_targets"):
-		if conveyor.get_class() == "OverheadConveyor" and conveyor.has_signal("container_crashed"):
-			conveyor.container_crashed.connect(_on_container_crashed)
-	
-	for boss in get_tree().get_nodes_in_group("boss"):
-		if boss.get_class() == "BossScales" and boss.has_signal("resistance_changed"):
-			boss.resistance_changed.connect(_on_boss_resistance_changed)
-
-func _on_barrel_exploded(near_boss: bool, boss_damage: int, world_pos: Vector3) -> void:
-	if near_boss:
-		_boss_resistance = maxi(0, _boss_resistance - boss_damage)
-		set_boss_resistance(_boss_resistance, _boss_resistance_max)
-		call_deferred("_respawn_barrel_at", world_pos)
-
-func _on_container_crashed(hit_boss: bool, boss_damage: int, impact_pos: Vector3) -> void:
-	if hit_boss:
-		_boss_resistance = maxi(0, _boss_resistance - boss_damage)
-		set_boss_resistance(_boss_resistance, _boss_resistance_max)
-
-func _on_boss_resistance_changed(cur: int, max_val: int) -> void:
-	_boss_resistance = cur
-	_boss_resistance_max = max_val
-	set_boss_resistance(cur, max_val)
-
-func _respawn_barrel_at(pos: Vector3) -> void:
-	await get_tree().create_timer(3.0).timeout
-	if not is_inside_tree():
-		return
-	var barrel_scene: PackedScene = preload("res://scenes/gameplay/boss/explosive_barrel.tscn")
-	var barrel: Node3D = barrel_scene.instantiate() as Node3D
-	barrel.global_position = pos
-	add_child(barrel)
-	if barrel.has_signal("exploded"):
-		barrel.exploded.connect(_on_barrel_exploded)
+	_attack_label = Label.new()
+	_attack_label.position = Vector2(350, 52)
+	_attack_label.size.x = 282
+	_attack_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_attack_label.add_theme_font_size_override("font_size", 9)
+	_attack_label.add_theme_color_override("font_color", Color("#ffba83"))
+	_attack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_attack_label)
 
 func _update_all() -> void:
 	if _player == null:
@@ -219,27 +192,27 @@ func _on_health_changed(cur: int, max_h: int) -> void:
 		_hp_bar.max_value = max_h
 		_hp_bar.value = cur
 	if _hp_label != null:
-		_hp_label.text = "HP: %d / %d" % [cur, max_h]
+		_hp_label.text = "Здоровье: %d / %d" % [cur, max_h]
 
 func _on_ammo_changed(cur: int, max_a: int) -> void:
 	if _ammo_label != null:
 		if cur <= 0:
 			_ammo_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3, 1))
-			_ammo_label.text = "AMMO: 0 / %d" % max_a
+			_ammo_label.text = "Патроны: 0 / %d" % max_a
 		else:
 			_ammo_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-			_ammo_label.text = "AMMO: %d / %d" % [cur, max_a]
+			_ammo_label.text = "Патроны: %d / %d" % [cur, max_a]
 
 func _on_reload_started() -> void:
 	if _ammo_label != null:
 		_ammo_label.add_theme_color_override("font_color", Color(1, 0.9, 0.2, 1))
-		_ammo_label.text = "RELOADING..."
+		_ammo_label.text = "Перезарядка…"
 
 func _on_reload_finished() -> void:
 	if _ammo_label != null:
 		_ammo_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 		if _player != null:
-			_ammo_label.text = "AMMO: %d / %d" % [_player.ammo_current, _player.ammo_max]
+			_ammo_label.text = "Патроны: %d / %d" % [_player.ammo_current, _player.ammo_max]
 
 func _on_dash_started() -> void:
 	_on_dash_cooldown(_player.dash_cooldown if _player != null else 0.85)
@@ -248,17 +221,17 @@ func _on_dash_cooldown(time_left: float) -> void:
 	if _dash_label != null:
 		if time_left > 0.01:
 			_dash_label.add_theme_color_override("font_color", Color(1, 0.5, 0.2, 1))
-			_dash_label.text = "DASH: CD %.1fs" % time_left
+			_dash_label.text = "Рывок: %.1f с" % time_left
 		else:
 			_dash_label.add_theme_color_override("font_color", Color(0.3, 1, 0.3, 1))
-			_dash_label.text = "DASH: READY"
+			_dash_label.text = "Рывок готов"
 
 func _physics_process(delta: float) -> void:
 	if _player != null and _player._dash_cooldown_timer != null:
 		var left: float = _player._dash_cooldown_timer.time_left
 		if left > 0.01:
 			_on_dash_cooldown(left)
-		elif _dash_label != null and _dash_label.text != "DASH: READY":
+		elif _dash_label != null and _dash_label.text != "Рывок готов":
 			_on_dash_cooldown(0.0)
 
 func set_boss_resistance(cur: int, max_val: int) -> void:
@@ -268,6 +241,17 @@ func set_boss_resistance(cur: int, max_val: int) -> void:
 	if _boss_label != null:
 		_boss_label.text = "ВЕСЫ: %d / %d" % [cur, max_val]
 
+func _on_attack_started(index: int) -> void:
+	var names: Array[String] = [
+		"Шипы — уйдите с линии огня",
+		"Ударная волна — смените полосу",
+		"Подвешенная бочка — цельтесь в неё",
+		"Падающий груз — выйдите из зоны",
+	]
+	_attack_label.text = names[index]
+
+
 func set_phase_title(text: String) -> void:
+	_attack_label.text = ""
 	if _phase_label != null:
 		_phase_label.text = text

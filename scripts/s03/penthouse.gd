@@ -4,19 +4,19 @@ const NEAR_MARGIN: float = 0.35
 const BARS_HOLD: float = 1.6
 const BARS_TIME: float = 1.0
 const THOUGHT_TIME: float = 4.5
-const CAM_SIZE: float = 4.35
+const CAM_SIZE: float = 5.6
 const CAM_DROP: float = 0.05
 const CAM_OFFSET_X: float = -1.0
 const CAM_MIN_X: float = -17.3
 const CAM_MAX_X: float = 1.2
 const PX: float = CAM_SIZE / 360.0
-const VIKTOR_SHEET: String = "res://assets/characters/viktor/viktor_poses.png"
+const VIKTOR_SHEET: String = "res://assets/characters/viktor/full_poses.png"
 const TALK_SCENE: String = "res://scenes/s03/viktor_talk.tscn"
 const CALL_SCENE: String = "res://scenes/s03/ivan_call.tscn"
 const GLASS_HOLE: String = "res://assets/props/s03/glass_hole.png"
-const WIND: String = "res://assets/audio/sfx/wind_loop.wav"
+const STORY_AUDIO: String = "res://assets/audio/story/"
 const RING: String = "res://assets/audio/sfx/mobile_ring.wav"
-const MUSIC: String = "res://assets/audio/music/penthouse_theme.wav"
+const MUSIC: String = "res://assets/audio/story/unknown_presence.wav"
 const AMBIENCE: String = "res://assets/audio/music/877124__adamdavidsmith__ambience_rain_thunder-2.ogg"
 
 var _d: Dictionary = {}
@@ -34,6 +34,7 @@ var _after: bool = false
 var _ringing: bool = false
 var _viktor: Sprite3D
 var _wind: AudioStreamPlayer
+var _sirens: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -76,6 +77,9 @@ func _ready() -> void:
 		_cam.basis = set_cam.basis
 		_cam_y = set_cam.position.y - CAM_DROP
 		_cam_z = set_cam.position.z
+		var side_angle: float = -0.285
+		_cam_y += (_cam_z - 0.55) * (tan(-side_angle) - tan(-_cam.rotation.x))
+		_cam.rotation.x = side_angle
 	add_child(_cam)
 	_cam.make_current()
 	_build_ui()
@@ -116,6 +120,13 @@ func _after_intro() -> void:
 	Hud.show_stamina(true)
 	Hud.set_walk_mode(true)
 	Hud.set_objective(_objective(), true)
+	if bool(GameState.get_flag("window_done", false)):
+		_ring()
+		return
+	_wind = _play_scene_sound("wind_intro.wav", -20.0, false)
+	_wind.finished.connect(func() -> void:
+		_wind.stream = _sound_stream("wind_loop.wav", true)
+		_wind.play())
 	_thought.show_text(str(_d.get("after_enter", "")), THOUGHT_TIME)
 
 
@@ -180,7 +191,7 @@ func _update_near() -> void:
 	if _prompt.visible:
 		var r2: Array = best_s["x"]
 		var top: Vector3 = Vector3((float(r2[0]) + float(r2[1])) / 2.0, float(best_s.get("top", 1.6)), -0.6)
-		_prompt.text = "E — " + str(best_s["name"])
+		_prompt.text = Settings.key_label("interact") + " — " + str(best_s["name"])
 		_prompt.reset_size()
 		var p: Vector2 = _cam.unproject_position(top)
 		_prompt.position = Vector2(clampf(roundf(p.x - _prompt.size.x / 2.0), 4.0, 636.0 - _prompt.size.x), clampf(roundf(p.y - 14.0), 46.0, 300.0))
@@ -249,6 +260,7 @@ func _at_window() -> void:
 	if bool(GameState.get_flag("window_done", false)):
 		return
 	GameState.set_flag("window_done", true)
+	_sirens = _play_scene_sound("police_siren.wav", -23.0, true)
 	_busy = true
 	var vd: String = str(_d.get("view_down", ""))
 	if ResourceLoader.exists(vd):
@@ -260,11 +272,10 @@ func _at_window() -> void:
 		await get_tree().create_timer(THOUGHT_TIME).timeout
 	if not is_inside_tree():
 		return
-	if not bool(GameState.get_flag("argument_1", false)) and not GameState.owns_item("confession"):
-		_thought.show_text(str(_d.get("envelope_pick", "")), THOUGHT_TIME)
-		GameState.add_item("confession")
 		await get_tree().create_timer(THOUGHT_TIME).timeout
-		var fin: String = str(DialogueData.load_file("s03_viktor").get("final_thought", ""))
+		var fin: String = "Он мёртв. Без суда. Без защиты. Без шанса. А я стоял и смотрел."
+		if bool(GameState.get_flag("argument_1", false)):
+			fin = str(DialogueData.load_file("s03_viktor").get("final_thought", fin))
 		_thought.show_text(fin, 0.0)
 		await get_tree().create_timer(7.0).timeout
 	if not is_inside_tree():
@@ -284,10 +295,33 @@ func _ring() -> void:
 
 func _answer() -> void:
 	_ringing = false
+	if is_instance_valid(_wind):
+		_wind.stop()
+	if is_instance_valid(_sirens):
+		_sirens.stop()
+	Audio.sfx(STORY_AUDIO + "wind_out.wav", -20.0)
 	_busy = true
 	_player.frozen = true
 	Hud.set_hud_visible(false)
 	SceneRouter.go_to(CALL_SCENE, 0.4)
+
+
+func _sound_stream(filename: String, loop: bool) -> AudioStreamWAV:
+	var stream: AudioStreamWAV = (load(STORY_AUDIO + filename) as AudioStreamWAV).duplicate()
+	if loop:
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
+	return stream
+
+
+func _play_scene_sound(filename: String, db: float, loop: bool) -> AudioStreamPlayer:
+	var sound: AudioStreamPlayer = AudioStreamPlayer.new()
+	sound.stream = _sound_stream(filename, loop)
+	sound.bus = "SFX"
+	sound.volume_db = db
+	add_child(sound)
+	sound.play()
+	return sound
 
 
 func _place_props() -> void:
@@ -368,13 +402,14 @@ func _place_viktor() -> void:
 	_viktor = s
 	s.name = "Viktor"
 	s.texture = load(VIKTOR_SHEET)
-	s.hframes = 7
+	s.hframes = 8
 	s.frame = int(v.get("pose", 0))
 	s.pixel_size = _player.height_m / 190.0
 	s.offset = Vector2(0, 100)
 	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	s.shaded = false
+	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	s.shaded = true
 	s.modulate = _player.tint
 	s.position = Vector3(float(v.get("x", -3.0)), 0.0, float(v.get("z", -1.95)))
 	add_child(s)

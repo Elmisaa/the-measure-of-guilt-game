@@ -14,6 +14,7 @@ func _ready() -> void:
 	add_theme_constant_override("icon_max_width", 20)
 	Audio.bind_button(self)
 	pressed.connect(pick_up)
+	get_node("/root/Settings").bindings_changed.connect(func() -> void: _item_id = "")
 
 
 func drop(id: String) -> bool:
@@ -74,7 +75,7 @@ func refresh(can_interact: bool) -> void:
 	if nearest != _item_id:
 		_item_id = nearest
 		var item: Dictionary = GameState.item_def(nearest)
-		text = "G — Поднять: " + str(item.get("name", nearest))
+		text = "%s — Поднять: %s" % [get_node("/root/Settings").key_label("pickup_dropped"), item.get("name", nearest)]
 		var path: String = str(item.get("icon", ""))
 		icon = load(path) if ResourceLoader.exists(path) else null
 		reset_size()

@@ -33,8 +33,8 @@ func _run() -> void:
 	if hud.controls_hint_visible():
 		_fail("the controls hint should not overlap the inventory")
 		return
-	if inventory.get("_grid").get_child_count() != 24 or not inventory.call("_actions_for", "bandage").has("drop"):
-		_fail("inventory should have 24 cells and a drop action")
+	if inventory.get("_grid").get_child_count() != 32 or not inventory.call("_actions_for", "bandage").has("drop"):
+		_fail("inventory should have 32 cells and a drop action")
 		return
 	if not _snapshot.is_empty():
 		await RenderingServer.frame_post_draw
@@ -85,6 +85,28 @@ func _run() -> void:
 	if not state.has_item("bandage") or pickup.visible:
 		_fail("clicking the pickup should restore the item and hide the prompt")
 		return
+	var legacy: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	legacy["items"].append("s01_desk_note")
+	legacy["dropped_items"]["s03_abstract"] = {"scene": HALL, "position": [900, 346]}
+	state.from_dict(legacy)
+	if state.has_item("s01_desk_note") or state.dropped_items.has("s03_abstract") or not state.has_item("bandage"):
+		_fail("loading an older save should discard removed props and retain original items")
+		return
+	var definitions: Dictionary = state.get("_defs")["items"]
+	for item: String in definitions:
+		state.add_item(item)
+	hud.toggle_inventory()
+	await process_frame
+	for slot: Panel in inventory.get("_grid").get_children():
+		if not slot.has_meta("item_id"):
+			continue
+		var icon: TextureRect = slot.get_child(0)
+		if icon.texture == null or icon.texture.get_width() > 32 or icon.texture.get_height() > 32:
+			_fail("missing or oversized thumbnail for %s" % slot.get_meta("item_id"))
+			return
+		if not Rect2(Vector2.ZERO, slot.size).encloses(Rect2(icon.position, icon.size)):
+			_fail("icon exceeds its slot: %s" % slot.get_meta("item_id"))
+			return
 	print("INVENTORY DROP: OK")
 	quit()
 

@@ -1,12 +1,10 @@
 class_name ExplorePlayer3D
-extends Node3D
+extends CharacterBody3D
 
 signal moved(x: float)
 
-const WALK_SHEET: String = "res://assets/characters/alexei/walk_side_depth_coat.png"
-const RUN_SHEET: String = "res://assets/characters/alexei/run_side_depth_coat.png"
-const PLAIN_WALK: String = "res://assets/characters/alexei/walk_side_depth.png"
-const PLAIN_RUN: String = "res://assets/characters/alexei/run_side_depth.png"
+const WALK_SHEET: String = "res://assets/characters/alexei/story_walk_coat.png"
+const RUN_SHEET: String = "res://assets/characters/alexei/story_run.png"
 
 @export var speed: float = 1.6
 @export var run_speed: float = 3.9
@@ -14,12 +12,12 @@ const PLAIN_RUN: String = "res://assets/characters/alexei/run_side_depth.png"
 @export var max_x: float = 5.5
 @export var z_far: float = 0.0
 @export var z_near: float = 1.0
-@export var depth_speed: float = 0.5
+@export var depth_speed: float = 3.2
 @export var floor_y: float = 0.0
-@export var height_m: float = 2.3
+@export var height_m: float = 2.10
 @export var run_seconds: float = 14.0
 @export var recover_seconds: float = 7.0
-@export var tint: Color = Color(0.78, 0.78, 0.86)
+@export var tint: Color = Color.WHITE
 
 var frozen: bool = false
 
@@ -37,12 +35,11 @@ var _hud: Node
 
 
 func _ready() -> void:
-	_ensure_actions()
+	collision_layer = 0
 	_gs = get_node_or_null("/root/GameState")
 	_hud = get_node_or_null("/root/Hud")
-	var coat: bool = _gs == null or bool(_gs.get_flag("coat_on", true))
-	_walk_tex = load(WALK_SHEET if coat else PLAIN_WALK)
-	_run_tex = load(RUN_SHEET if coat else PLAIN_RUN)
+	_walk_tex = load(WALK_SHEET)
+	_run_tex = load(RUN_SHEET)
 	_sprite = Sprite3D.new()
 	_sprite.name = "AnimatedSprite"
 	_sprite.texture = _walk_tex
@@ -52,23 +49,12 @@ func _ready() -> void:
 	_sprite.offset = Vector2(0, 100)
 	_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	_sprite.shaded = false
+	_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	_sprite.shaded = true
 	_sprite.modulate = tint
 	_sprite.double_sided = false
 	add_child(_sprite)
 	position.y = floor_y
-
-
-func _ensure_actions() -> void:
-	for pair: Array in [["move_left", [KEY_A, KEY_LEFT]], ["move_right", [KEY_D, KEY_RIGHT]], ["move_up", [KEY_W, KEY_UP]], ["move_down", [KEY_S, KEY_DOWN]], ["interact", [KEY_E]], ["run", [KEY_SHIFT]]]:
-		var action: String = pair[0]
-		if InputMap.has_action(action):
-			continue
-		InputMap.add_action(action)
-		for code: int in pair[1]:
-			var ev: InputEventKey = InputEventKey.new()
-			ev.physical_keycode = code
-			InputMap.action_add_event(action, ev)
 
 
 func is_walking() -> bool:
@@ -79,19 +65,23 @@ func is_running() -> bool:
 	return _running
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	var stop: bool = frozen or (_hud != null and _hud.is_blocking())
-	var dir: float = 0.0 if stop else Input.get_axis("move_left", "move_right")
-	var vdir: float = 0.0 if stop else Input.get_axis("move_up", "move_down")
-	_walking = absf(dir) > 0.1 or absf(vdir) > 0.1
-	_running = _walking and Input.is_action_pressed("run") and not _winded
+	var input: Vector2 = Vector2.ZERO if stop else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var sprint: bool = Input.is_action_pressed("run") and not _winded
+	var previous: Vector3 = position
+	if not is_zero_approx(input.x):
+		var target_x: float = clampf(position.x + input.x * (run_speed if sprint else speed) * delta, min_x, max_x)
+		move_and_collide(Vector3(target_x - position.x, 0, 0))
+		_sprite.flip_h = input.x < 0.0
+	if not is_zero_approx(input.y):
+		var target_z: float = clampf(position.z + input.y * depth_speed * (1.55 if sprint else 1.0) * delta, z_far, z_near)
+		move_and_collide(Vector3(0, 0, target_z - position.z))
+	_walking = previous.distance_squared_to(position) > 0.000001
+	_running = _walking and sprint
 	_update_stamina(delta)
-	if absf(dir) > 0.1:
-		position.x = clampf(position.x + dir * (run_speed if _running else speed) * delta, min_x, max_x)
-		_sprite.flip_h = dir < 0.0
+	if not is_equal_approx(previous.x, position.x):
 		moved.emit(position.x)
-	if absf(vdir) > 0.1:
-		position.z = clampf(position.z + vdir * depth_speed * delta, z_far, z_near)
 	var k: float = 0.0 if z_near == z_far else (position.z - z_far) / (z_near - z_far)
 	_row = clampi(int(roundf((1.0 - k) * 2.0)), 0, 2)
 	_t += delta
